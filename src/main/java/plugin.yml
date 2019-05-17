@@ -1,0 +1,11 @@
+main: com.ryanjhuston.SkcraftBasics
+name: SkcraftBasics
+version: 1.0
+api-version: 1.14
+commands:
+  accept:
+    description: Your description
+  invite:
+    description: Description
+  setspawn:
+    description: lkjasdf
