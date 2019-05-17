@@ -5,6 +5,7 @@ import com.ryanjhuston.Modules.CraftingModule;
 import com.ryanjhuston.Modules.EnderPearlTeleportModule;
 import com.ryanjhuston.Modules.StargateModule;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -67,6 +68,11 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("invite").setExecutor(new SkcraftCommandHandler(this));
         this.getCommand("accept").setExecutor(new SkcraftCommandHandler(this));
         this.getCommand("setspawn").setExecutor(new SkcraftCommandHandler(this));
+
+        if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
+            Location loc = Bukkit.getWorlds().get(0).getSpawnLocation();
+            getConfig().set("Spawn-Location", loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + loc.getYaw() + "," + loc.getPitch());
+        }
 
         logger.info("has started.");
     }
