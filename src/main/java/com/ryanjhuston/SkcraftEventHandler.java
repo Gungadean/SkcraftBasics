@@ -5,6 +5,7 @@ import com.ryanjhuston.Events.PlayerEnderPearlTeleportEvent;
 import org.bukkit.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
@@ -78,5 +79,10 @@ public class SkcraftEventHandler implements Listener {
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
         event.setRespawnLocation(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        plugin.stargateModule.blockBreak(event);
     }
 }

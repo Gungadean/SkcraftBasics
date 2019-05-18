@@ -4,11 +4,13 @@ import com.ryanjhuston.Database.SqlHandler;
 import com.ryanjhuston.Modules.CraftingModule;
 import com.ryanjhuston.Modules.EnderPearlTeleportModule;
 import com.ryanjhuston.Modules.StargateModule;
+import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -16,6 +18,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class SkcraftBasics extends JavaPlugin {
@@ -38,10 +42,15 @@ public class SkcraftBasics extends JavaPlugin {
 
     public HashMap<String, ArrayList<String>> teleportAuth = new HashMap<>();
 
+    public HashMap<String, Stargate> stargateList = new HashMap<>();
+    public HashMap<String, List<String>> networkList = new HashMap<>();
+
     private File playerItemsFile = new File(getDataFolder(), "playerItems.yml");
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
+    private File networksFile = new File(getDataFolder(), "stargateNetworks.yml");
     private FileConfiguration playerItems;
-    private FileConfiguration stargates;
+    private FileConfiguration stargatesConfig;
+    private FileConfiguration networksConfig;
 
     public boolean debug = true;
 
@@ -74,12 +83,15 @@ public class SkcraftBasics extends JavaPlugin {
             getConfig().set("Spawn-Location", loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + loc.getYaw() + "," + loc.getPitch());
         }
 
+        loadStargatesFromFile();
+
         logger.info("has started.");
     }
 
     public void onDisable() {
         saveConfig();
         saveConfigs();
+        saveStargatesToFile();
         logger.info("has stopped.");
     }
 
@@ -119,12 +131,19 @@ public class SkcraftBasics extends JavaPlugin {
             saveResource("stargates.yml", false);
         }
 
+        if(!networksFile.exists()) {
+            networksFile.getParentFile().mkdirs();
+            saveResource("stargateNetworks.yml", false);
+        }
+
         playerItems = new YamlConfiguration();
-        stargates = new YamlConfiguration();
+        stargatesConfig = new YamlConfiguration();
+        networksConfig = new YamlConfiguration();
 
         try {
             playerItems.load(playerItemsFile);
-            stargates.load(stargatesFile);
+            stargatesConfig.load(stargatesFile);
+            networksConfig.load(networksFile);
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }
@@ -138,8 +157,91 @@ public class SkcraftBasics extends JavaPlugin {
         saveConfig();
         try {
             playerItems.save(playerItemsFile);
+            stargatesConfig.save(stargatesFile);
+            networksConfig.save(networksFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void loadStargatesFromFile() {
+        logger.info("[SkcraftBasics] Loading stargates from config.");
+
+        List<String> networksList = (List<String>)networksConfig.getList("Networks-List");
+        Iterator networkIt = networksList.iterator();
+
+        while(networkIt.hasNext()) {
+            String network = (String)networkIt.next();
+            List<String> stargatesList = (List<String>)networksConfig.getList("Networks." + network);
+
+            networkList.put(network, stargatesList);
+
+            Iterator stargateIt = stargatesList.iterator();
+            while(stargateIt.hasNext()) {
+                String stargate = (String)stargateIt.next();
+                String owner = stargatesConfig.getString(stargate  + ".Owner");
+                network = stargatesConfig.getString(stargate + ".Network");
+                String[] signLocationString = stargatesConfig.getString(stargate + ".Sign-Location").split(",");
+                String[] buttonLocationString = stargatesConfig.getString(stargate + ".Button-Location").split(",");
+                List<String> blocksString = (List<String>)stargatesConfig.getList(stargate + ".Blocks");
+
+                Location signLocation = new Location(Bukkit.getWorld(signLocationString[0]), Double.valueOf(signLocationString[1]), Double.valueOf(signLocationString[2]), Double.valueOf(signLocationString[3]));
+                Location buttonLocation = new Location(Bukkit.getWorld(buttonLocationString[0]), Double.valueOf(buttonLocationString[1]), Double.valueOf(buttonLocationString[2]), Double.valueOf(buttonLocationString[3]));
+
+                List<Location> blocks = new ArrayList<>();
+
+                Iterator it = blocksString.iterator();
+                while(it.hasNext()) {
+                    String[] blockLocation = ((String)it.next()).split(",");
+                    Location block = new Location(Bukkit.getWorld(blockLocation[0]), Double.valueOf(blockLocation[1]), Double.valueOf(blockLocation[2]), Double.valueOf(blockLocation[3]));
+
+                    block.getBlock().setMetadata("Stargate", new FixedMetadataValue(this, stargate));
+
+                    blocks.add(block);
+                }
+
+                stargateList.put(stargate, new Stargate(owner, network, signLocation, buttonLocation, blocks));
+            }
+        }
+
+        logger.info("[SkcraftBasics] Finished loading stargates from config.");
+    }
+
+    public void saveStargatesToFile() {
+        logger.info("[SkcraftBasics] Saving stargates to config.");
+
+        for(HashMap.Entry<String, List<String>> entry : networkList.entrySet()) {
+            networksConfig.set(entry.getKey(), entry.getValue());
+            System.out.println(entry.getKey() + " " + entry.getValue().toString());
+        }
+
+        for(HashMap.Entry<String, Stargate> entry : stargateList.entrySet()) {
+            stargatesConfig.set(entry.getKey() + ".Owner", entry.getValue().getOwner());
+            stargatesConfig.set(entry.getKey() + ".Network", entry.getValue().getNetwork());
+            stargatesConfig.set(entry.getKey() + ".Sign-Location", entry.getValue().getSignLocation().getWorld().getName() + ","
+                    + entry.getValue().getSignLocation().getX() + ","
+                    + entry.getValue().getSignLocation().getY() + ","
+                    + entry.getValue().getSignLocation().getZ());
+            stargatesConfig.set(entry.getKey() + ".Button-Location", entry.getValue().getButtonLocation().getWorld().getName() + ","
+                    + entry.getValue().getButtonLocation().getX() + ","
+                    + entry.getValue().getButtonLocation().getY() + ","
+                    + entry.getValue().getButtonLocation().getZ());
+
+            List<String> blocks = new ArrayList<>();
+
+            Iterator it = entry.getValue().getBlocks().iterator();
+            while(it.hasNext()) {
+                Location blockLocation = (Location)it.next();
+
+                blocks.add(blockLocation.getWorld().getName() + ","
+                        + blockLocation.getX() + ","
+                        + blockLocation.getY() + ","
+                        + blockLocation.getZ());
+            }
+
+            stargatesConfig.set(entry.getKey() + ".Blocks", blocks);
+        }
+
+        logger.info("[SkcraftBasics] Finished saving stargates to config.");
     }
 }
