@@ -85,4 +85,14 @@ public class SkcraftEventHandler implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         plugin.stargateModule.blockBreak(event);
     }
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        plugin.stargateModule.playerMove(event);
+    }
+
+    @EventHandler
+    public void onPlayerPortal(PlayerPortalEvent event) {
+        plugin.stargateModule.playerTeleport(event);
+    }
 }

@@ -7,6 +7,7 @@ import com.ryanjhuston.Modules.StargateModule;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -16,10 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class SkcraftBasics extends JavaPlugin {
@@ -89,9 +87,10 @@ public class SkcraftBasics extends JavaPlugin {
     }
 
     public void onDisable() {
+        saveStargatesToFile();
+
         saveConfig();
         saveConfigs();
-        saveStargatesToFile();
         logger.info("has stopped.");
     }
 
@@ -181,14 +180,20 @@ public class SkcraftBasics extends JavaPlugin {
                 String stargate = (String)stargateIt.next();
                 String owner = stargatesConfig.getString(stargate  + ".Owner");
                 network = stargatesConfig.getString(stargate + ".Network");
+                String[] teleportLocationString = stargatesConfig.getString(stargate + ".Teleport-Location").split(",");
                 String[] signLocationString = stargatesConfig.getString(stargate + ".Sign-Location").split(",");
                 String[] buttonLocationString = stargatesConfig.getString(stargate + ".Button-Location").split(",");
-                List<String> blocksString = (List<String>)stargatesConfig.getList(stargate + ".Blocks");
+                String direction = stargatesConfig.getString(stargate + ".Direction");
 
+                List<String> blocksString = (List<String>)stargatesConfig.getList(stargate + ".Blocks");
+                List<String> portalBlocksString = (List<String>)stargatesConfig.getList(stargate + ".Portal-Blocks");
+
+                Location teleportLocation = new Location(Bukkit.getWorld(teleportLocationString[0]), Double.valueOf(teleportLocationString[1]), Double.valueOf(teleportLocationString[2]), Double.valueOf(teleportLocationString[3]), Float.valueOf(teleportLocationString[4]), -0);
                 Location signLocation = new Location(Bukkit.getWorld(signLocationString[0]), Double.valueOf(signLocationString[1]), Double.valueOf(signLocationString[2]), Double.valueOf(signLocationString[3]));
                 Location buttonLocation = new Location(Bukkit.getWorld(buttonLocationString[0]), Double.valueOf(buttonLocationString[1]), Double.valueOf(buttonLocationString[2]), Double.valueOf(buttonLocationString[3]));
 
                 List<Location> blocks = new ArrayList<>();
+                List<Location> portalBlocks = new ArrayList<>();
 
                 Iterator it = blocksString.iterator();
                 while(it.hasNext()) {
@@ -200,7 +205,26 @@ public class SkcraftBasics extends JavaPlugin {
                     blocks.add(block);
                 }
 
-                stargateList.put(stargate, new Stargate(owner, network, signLocation, buttonLocation, blocks));
+                it = portalBlocksString.iterator();
+                while(it.hasNext()) {
+                    String[] blockLocation = ((String)it.next()).split(",");
+                    Location block = new Location(Bukkit.getWorld(blockLocation[0]), Double.valueOf(blockLocation[1]), Double.valueOf(blockLocation[2]), Double.valueOf(blockLocation[3]));
+
+                    portalBlocks.add(block);
+                }
+
+                signLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(this, stargate));
+
+                Sign sign = ((Sign)signLocation.getBlock().getState());
+                sign.setLine(0, "-" + stargate + "-");
+                sign.setLine(1, "Right click");
+                sign.setLine(2, "to use gate");
+                sign.setLine(3, "(" + network + ")");
+                sign.update();
+
+                buttonLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(this, stargate));
+
+                stargateList.put(stargate, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
             }
         }
 
@@ -210,26 +234,36 @@ public class SkcraftBasics extends JavaPlugin {
     public void saveStargatesToFile() {
         logger.info("[SkcraftBasics] Saving stargates to config.");
 
-        for(HashMap.Entry<String, List<String>> entry : networkList.entrySet()) {
-            networksConfig.set(entry.getKey(), entry.getValue());
-            System.out.println(entry.getKey() + " " + entry.getValue().toString());
+        List<String> networks = new ArrayList<>();
+
+        for(HashMap.Entry<String, List<String>> entryNetwork : networkList.entrySet()) {
+            networksConfig.set("Networks." + entryNetwork.getKey(), entryNetwork.getValue());
+            networks.add(entryNetwork.getKey());
         }
 
-        for(HashMap.Entry<String, Stargate> entry : stargateList.entrySet()) {
-            stargatesConfig.set(entry.getKey() + ".Owner", entry.getValue().getOwner());
-            stargatesConfig.set(entry.getKey() + ".Network", entry.getValue().getNetwork());
-            stargatesConfig.set(entry.getKey() + ".Sign-Location", entry.getValue().getSignLocation().getWorld().getName() + ","
-                    + entry.getValue().getSignLocation().getX() + ","
-                    + entry.getValue().getSignLocation().getY() + ","
-                    + entry.getValue().getSignLocation().getZ());
-            stargatesConfig.set(entry.getKey() + ".Button-Location", entry.getValue().getButtonLocation().getWorld().getName() + ","
-                    + entry.getValue().getButtonLocation().getX() + ","
-                    + entry.getValue().getButtonLocation().getY() + ","
-                    + entry.getValue().getButtonLocation().getZ());
+        networksConfig.set("Networks-List", networks);
+
+        for(HashMap.Entry<String, Stargate> entryStargate : stargateList.entrySet()) {
+            stargatesConfig.set(entryStargate.getKey() + ".Owner", entryStargate.getValue().getOwner());
+            stargatesConfig.set(entryStargate.getKey() + ".Network", entryStargate.getValue().getNetwork());
+            stargatesConfig.set(entryStargate.getKey() + ".Teleport-Location", entryStargate.getValue().getTeleportLocation().getWorld().getName() + ","
+                    + entryStargate.getValue().getTeleportLocation().getX() + ","
+                    + entryStargate.getValue().getTeleportLocation().getY() + ","
+                    + entryStargate.getValue().getTeleportLocation().getZ() + ","
+                    + entryStargate.getValue().getTeleportLocation().getYaw());
+            stargatesConfig.set(entryStargate.getKey() + ".Sign-Location", entryStargate.getValue().getSignLocation().getWorld().getName() + ","
+                    + entryStargate.getValue().getSignLocation().getX() + ","
+                    + entryStargate.getValue().getSignLocation().getY() + ","
+                    + entryStargate.getValue().getSignLocation().getZ());
+            stargatesConfig.set(entryStargate.getKey() + ".Button-Location", entryStargate.getValue().getButtonLocation().getWorld().getName() + ","
+                    + entryStargate.getValue().getButtonLocation().getX() + ","
+                    + entryStargate.getValue().getButtonLocation().getY() + ","
+                    + entryStargate.getValue().getButtonLocation().getZ());
+            stargatesConfig.set(entryStargate.getKey() + ".Direction", entryStargate.getValue().getDirection());
 
             List<String> blocks = new ArrayList<>();
 
-            Iterator it = entry.getValue().getBlocks().iterator();
+            Iterator it = entryStargate.getValue().getBlocks().iterator();
             while(it.hasNext()) {
                 Location blockLocation = (Location)it.next();
 
@@ -239,7 +273,20 @@ public class SkcraftBasics extends JavaPlugin {
                         + blockLocation.getZ());
             }
 
-            stargatesConfig.set(entry.getKey() + ".Blocks", blocks);
+            List<String> portalBlocks = new ArrayList<>();
+
+            it = entryStargate.getValue().getPortalBlocks().iterator();
+            while(it.hasNext()) {
+                Location blockLocation = (Location)it.next();
+
+                portalBlocks.add(blockLocation.getWorld().getName() + ","
+                        + blockLocation.getX() + ","
+                        + blockLocation.getY() + ","
+                        + blockLocation.getZ());
+            }
+
+            stargatesConfig.set(entryStargate.getKey() + ".Blocks", blocks);
+            stargatesConfig.set(entryStargate.getKey() + ".Portal-Blocks", portalBlocks);
         }
 
         logger.info("[SkcraftBasics] Finished saving stargates to config.");

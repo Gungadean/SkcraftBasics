@@ -1,3 +1,4 @@
-Networks-List: ["public"]
+Networks-List:
+  - public
 Networks:
   public: []
