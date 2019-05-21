@@ -37,7 +37,7 @@ public class StargateModule {
         List<Location> portalBlocks = new ArrayList<>();
         Location signLocation = clicked.getLocation();
         Location buttonLocation = clicked.getLocation();
-        Location teleportLocation = clicked.getLocation();
+        Location teleportLocation;
 
         String portalName = "";
         String network = "public";
@@ -46,20 +46,24 @@ public class StargateModule {
 
         if(clicked.getRelative(1, 0, 0).getType() == Material.DIAMOND_BLOCK && clicked.getRelative(1, 1, 0).getType() == Material.AIR) {
             blocks.add(clicked.getRelative(1, 0, 0).getLocation());
+            teleportLocation = clicked.getLocation().getBlock().getRelative(1, 1, 0).getLocation();
             direction = "NS";
             x = 1;
         } else if(clicked.getRelative(0, 0, -1).getType() == Material.DIAMOND_BLOCK && clicked.getRelative(0, 1, -1).getType() == Material.AIR) {
             blocks.add(clicked.getRelative(0, 0, -1).getLocation());
+            teleportLocation = clicked.getLocation().getBlock().getRelative(0, 1, 0).getLocation();
             direction = "EW";
             z = -1;
         } else if(clicked.getRelative(-1, 0, 0).getType() == Material.DIAMOND_BLOCK && clicked.getRelative(-1, 1, 0).getType() == Material.AIR) {
             blocks.add(clicked.getLocation());
             clicked = clicked.getRelative(-1, 0, 0);
+            teleportLocation = clicked.getLocation().getBlock().getRelative(1, 1, 0).getLocation();
             direction = "NS";
             x = 1;
         } else if(clicked.getRelative(0, 0, 1).getType() == Material.DIAMOND_BLOCK && clicked.getRelative(0, 1, 1).getType() == Material.AIR) {
             blocks.add(clicked.getLocation());
             clicked = clicked.getRelative(0, 0, 1);
+            teleportLocation = clicked.getLocation().getBlock().getRelative(0, 1, 0).getLocation();
             direction = "EW";
             z = -1;
         } else {
@@ -92,13 +96,11 @@ public class StargateModule {
             if(clicked.getRelative(-1, 2, 1).getType().toString().contains("_SIGN") && clicked.getRelative(2, 2, 1).getType().toString().contains("_BUTTON")) {
                 signLocation = clicked.getRelative(-1, 2, 1).getLocation();
                 buttonLocation = clicked.getRelative(2, 2, 1).getLocation();
-                teleportLocation = clicked.getRelative(0, 1, 0).getLocation();
-                teleportLocation.setYaw(-180);
+                teleportLocation.setYaw(0);
             } else if(clicked.getRelative(2, 2, -1).getType().toString().contains("_SIGN") && clicked.getRelative(-1, 2, -1).getType().toString().contains("_BUTTON")) {
                 signLocation = clicked.getRelative(2, 2, -1).getLocation();
                 buttonLocation = clicked.getRelative(-1, 2, -1).getLocation();
-                teleportLocation = clicked.getRelative(0, 1, 0).getLocation();
-                teleportLocation.setYaw(0);
+                teleportLocation.setYaw(-180);
             } else {
                 return false;
             }
@@ -113,12 +115,10 @@ public class StargateModule {
             if(clicked.getRelative(1, 2, 1).getType().toString().contains("_SIGN") && clicked.getRelative(1, 2, -2).getType().toString().contains("_BUTTON")) {
                 signLocation = clicked.getRelative(1, 2, 1).getLocation();
                 buttonLocation = clicked.getRelative(1, 2, -2).getLocation();
-                teleportLocation = clicked.getRelative(0, 1, 0).getLocation();
                 teleportLocation.setYaw(-90);
             } else if(clicked.getRelative(-1, 2, -2).getType().toString().contains("_SIGN") && clicked.getRelative(-1, 2, 1).getType().toString().contains("_BUTTON")) {
                 signLocation = clicked.getRelative(-1, 2, -2).getLocation();
                 buttonLocation = clicked.getRelative(-1, 2, 1).getLocation();
-                teleportLocation = clicked.getRelative(0, 1, 0).getLocation();
                 teleportLocation.setYaw(90);
             } else {
                 return false;
@@ -415,7 +415,7 @@ public class StargateModule {
     }
 
     public void playerTeleport(PlayerPortalEvent event) {
-        if(event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
+        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL || event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
             event.setCancelled(true);
         }
     }
