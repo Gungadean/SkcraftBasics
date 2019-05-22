@@ -11,7 +11,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -213,6 +212,10 @@ public class StargateModule {
             ((Location)it.next()).getBlock().removeMetadata("Stargate", plugin);
         }
 
+        if(stargate.getNetwork().isEmpty()) {
+            plugin.networkList.remove(stargate.getNetwork());
+        }
+
         stargate.getSignLocation().getBlock().removeMetadata("Stargate", plugin);
 
         Sign sign = (Sign)stargate.getSignLocation().getBlock().getState();
@@ -228,20 +231,14 @@ public class StargateModule {
 
         stargate.getButtonLocation().getBlock().removeMetadata("Stargate", plugin);
 
+        plugin.stargatesConfig.set(portalName, null);
+
         plugin.stargateList.remove(portalName);
     }
 
     public void playerInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
-        }
-
-        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ARROW) {
-            if(event.getClickedBlock().hasMetadata("Stargate")) {
-                event.getPlayer().sendMessage(event.getClickedBlock().getMetadata("Stargate").get(0).asString());
-            } else {
-                event.getPlayer().sendMessage("No metadata present.");
-            }
         }
 
         if(event.getClickedBlock().getType().toString().contains("_SIGN")) {
@@ -412,11 +409,5 @@ public class StargateModule {
                 }
             }
         }.runTaskLater(plugin, 80);
-    }
-
-    public void playerTeleport(PlayerPortalEvent event) {
-        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL || event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
-            event.setCancelled(true);
-        }
     }
 }

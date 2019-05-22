@@ -3,14 +3,19 @@ package com.ryanjhuston;
 import com.ryanjhuston.Lib.ChatColorLib;
 import com.ryanjhuston.Events.PlayerEnderPearlTeleportEvent;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 public class SkcraftEventHandler implements Listener {
@@ -51,10 +56,8 @@ public class SkcraftEventHandler implements Listener {
         String item;
         if(!plugin.getPlayerItemsList().contains(event.getPlayer().getUniqueId().toString())) {
             Random random = new Random();
-            do {
-                item = Material.values()[random.nextInt(Material.values().length-1)].toString();
-            } while(item.contains("Legacy") || item.contains("Air"));
-                plugin.getPlayerItemsList().set(event.getPlayer().getUniqueId().toString(), item);
+            item = plugin.visibleMaterials.get(random.nextInt(plugin.visibleMaterials.size()-1)).toString();
+            plugin.getPlayerItemsList().set(event.getPlayer().getUniqueId().toString(), item);
         }
 
         plugin.teleportAuth.put(event.getPlayer().getUniqueId().toString(), new ArrayList<String>());
@@ -92,7 +95,61 @@ public class SkcraftEventHandler implements Listener {
     }
 
     @EventHandler
-    public void onPlayerPortal(PlayerPortalEvent event) {
-        plugin.stargateModule.playerTeleport(event);
+    public void onPistonPush(BlockPistonExtendEvent event) {
+        for(int i = 0; i < event.getBlocks().size(); i++) {
+            if(event.getBlocks().get(i).hasMetadata("Stargate")) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPistonPull(BlockPistonRetractEvent event) {
+        for(int i = 0; i < event.getBlocks().size(); i++) {
+            if(event.getBlocks().get(i).hasMetadata("Stargate")) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onExplosion(EntityExplodeEvent event) {
+        List<Block> cleanup = new ArrayList<Block>();
+
+
+        Iterator it = event.blockList().iterator();
+        while(it.hasNext()) {
+            Block block = (Block)it.next();
+            if(block.hasMetadata("Stargate")) {
+                cleanup.add(block);
+            }
+        }
+
+        for(int i = 0; i < cleanup.size(); i++) {
+            event.blockList().remove(cleanup.get(i));
+        }
+    }
+
+    @EventHandler
+    public void onPlayerSleep(PlayerBedEnterEvent event) {
+        Iterator it = Bukkit.getOnlinePlayers().iterator();
+        int sleeping = 0;
+
+        while(it.hasNext()) {
+            Player player = (Player)it.next();
+            if(player.isSleeping()) {
+                sleeping++;
+            }
+        }
+
+        if(sleeping >= (Bukkit.getOnlinePlayers().size()/2)) {
+            Bukkit.getWorlds().get(0).setTime(1000);
+
+            it = Bukkit.getOnlinePlayers().iterator();
+            while(it.hasNext()) {
+                Player player = (Player)it.next();
+                player.setStatistic(Statistic.TIME_SINCE_REST, 0);
+            }
+        }
     }
 }

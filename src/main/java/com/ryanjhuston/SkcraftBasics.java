@@ -7,6 +7,7 @@ import com.ryanjhuston.Modules.StargateModule;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -46,9 +47,11 @@ public class SkcraftBasics extends JavaPlugin {
     private File playerItemsFile = new File(getDataFolder(), "playerItems.yml");
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
     private File networksFile = new File(getDataFolder(), "stargateNetworks.yml");
-    private FileConfiguration playerItems;
-    private FileConfiguration stargatesConfig;
-    private FileConfiguration networksConfig;
+    public FileConfiguration playerItems;
+    public FileConfiguration stargatesConfig;
+    public FileConfiguration networksConfig;
+
+    public List<Material> visibleMaterials = new ArrayList<Material>();
 
     public boolean debug = true;
 
@@ -82,6 +85,12 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         loadStargatesFromFile();
+
+        for(Material material : Material.values()) {
+            if(material.isItem() && material != Material.BARRIER) {
+                visibleMaterials.add(material);
+            }
+        }
 
         logger.info("has started.");
     }
