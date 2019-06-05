@@ -3,6 +3,7 @@ package com.ryanjhuston;
 import com.ryanjhuston.Database.SqlHandler;
 import com.ryanjhuston.Modules.CraftingModule;
 import com.ryanjhuston.Modules.EnderPearlTeleportModule;
+import com.ryanjhuston.Modules.JetBootModule;
 import com.ryanjhuston.Modules.StargateModule;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
@@ -14,6 +15,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,8 +39,10 @@ public class SkcraftBasics extends JavaPlugin {
     public EnderPearlTeleportModule enderPearlTeleportModule;
     public CraftingModule craftingModule;
     public StargateModule stargateModule;
+    public JetBootModule jetBootModule;
 
     public HashMap<String, ArrayList<String>> teleportAuth = new HashMap<>();
+    public HashMap<String, PotionEffectType> jetboots = new HashMap<>();
 
     public HashMap<String, Stargate> stargateList = new HashMap<>();
     public HashMap<String, List<String>> networkList = new HashMap<>();
@@ -63,6 +67,7 @@ public class SkcraftBasics extends JavaPlugin {
         enderPearlTeleportModule = new EnderPearlTeleportModule(this);
         craftingModule = new CraftingModule(this);
         stargateModule = new StargateModule(this);
+        jetBootModule = new JetBootModule(this);
 
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
@@ -82,12 +87,14 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         loadStargatesFromFile();
+        loadFlyersFromFile();
 
         logger.info("has started.");
     }
 
     public void onDisable() {
         saveStargatesToFile();
+        saveFlyersToFile();
 
         saveConfig();
         saveConfigs();
@@ -161,6 +168,28 @@ public class SkcraftBasics extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void loadFlyersFromFile() {
+        List<String> stringData = getConfig().getStringList("Jetboot-Players");
+        Iterator it = stringData.iterator();
+
+        while(it.hasNext()) {
+            String[] data = ((String) it.next()).split(":");
+            jetboots.put(data[0], PotionEffectType.getByName(data[1]));
+        }
+    }
+
+    public void saveFlyersToFile() {
+        Iterator it = jetboots.entrySet().iterator();
+        List<String> stringData = new ArrayList<>();
+
+        while(it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            stringData.add(pair.getKey() + ":" + ((PotionEffectType)pair.getValue()).toString());
+        }
+
+        getConfig().set("Jetboot-Players", stringData);
     }
 
     public void loadStargatesFromFile() {

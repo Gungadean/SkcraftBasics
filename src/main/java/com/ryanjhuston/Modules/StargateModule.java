@@ -314,6 +314,10 @@ public class StargateModule {
         BukkitTask bukrun = new BukkitRunnable() {
             @Override
             public void run() {
+                if(clicked.getMetadata("Stargate").get(0) == null) {
+                    return;
+                }
+
                 sign.setLine(0, "-" + clicked.getMetadata("Stargate").get(0).asString() + "-");
                 sign.setLine(1, "Right click");
                 sign.setLine(2, "to use gate");

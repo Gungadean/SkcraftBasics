@@ -26,7 +26,7 @@ public class EnderPearlTeleportModule {
         this.plugin = plugin;
     }
 
-    public void inventoryInteract(InventoryClickEvent event) {
+    public void inventoryClick(InventoryClickEvent event) {
         if(event.getClickedInventory() == null) {
             return;
         }

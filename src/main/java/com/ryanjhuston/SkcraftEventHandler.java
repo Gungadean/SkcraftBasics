@@ -3,14 +3,21 @@ package com.ryanjhuston;
 import com.ryanjhuston.Lib.ChatColorLib;
 import com.ryanjhuston.Events.PlayerEnderPearlTeleportEvent;
 import org.bukkit.*;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDispenseEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 
 public class SkcraftEventHandler implements Listener {
@@ -28,6 +35,7 @@ public class SkcraftEventHandler implements Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         plugin.enderPearlTeleportModule.playerInteract(event);
         plugin.stargateModule.playerInteract(event);
+        plugin.jetBootModule.playerInteract(event);
     }
 
     @EventHandler
@@ -37,6 +45,8 @@ public class SkcraftEventHandler implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        plugin.jetBootModule.playerJoin(event);
+
         event.getPlayer().setDisplayName(ChatColorLib.getRandomColor() + event.getPlayer().getDisplayName() + ChatColor.WHITE);
 
         if(!event.getPlayer().isWhitelisted()) {
@@ -66,8 +76,9 @@ public class SkcraftEventHandler implements Listener {
     }
 
     @EventHandler
-    public void onInventoryInteract(InventoryClickEvent event) {
-        plugin.enderPearlTeleportModule.inventoryInteract(event);
+    public void onInventoryClick(InventoryClickEvent event) {
+        plugin.enderPearlTeleportModule.inventoryClick(event);
+        plugin.jetBootModule.removeJetboots(event);
     }
 
     @EventHandler
@@ -94,5 +105,71 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onPlayerPortal(PlayerPortalEvent event) {
         plugin.stargateModule.playerTeleport(event);
+    }
+
+    @EventHandler
+    public void onPlayerSleep(PlayerBedEnterEvent event) {
+        if(Bukkit.getWorlds().get(0).getTime() < 12545) {
+            return;
+        }
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                int sleeping = 0;
+                Iterator it = Bukkit.getOnlinePlayers().iterator();
+
+                while(it.hasNext())
+                {
+                    Player player = (Player)it.next();
+                    if(player.isSleeping()) {
+                        sleeping++;
+                    }
+                }
+
+                int percent = (sleeping*100)/Bukkit.getOnlinePlayers().size();
+
+                if(percent >= 50) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+
+                        @Override
+                        public void run() {
+                            Iterator it = Bukkit.getOnlinePlayers().iterator();
+
+                            while(it.hasNext()) {
+                                Player player = (Player)it.next();
+                                player.setStatistic(Statistic.TIME_SINCE_REST, 0);
+                            }
+
+                            Bukkit.getWorlds().get(0).setTime(1000);
+                        }
+                    }, 20);
+                }
+            }
+        }, 1);
+    }
+
+    @EventHandler
+    public void onItemDispense(BlockDispenseEvent event) {
+        if(event.getItem().getType() == Material.MINECART && event.getBlock().getType() == Material.DISPENSER) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+
+                @Override
+                public void run() {
+                    InventoryHolder dispenser = (InventoryHolder)event.getBlock().getState();
+                    dispenser.getInventory().addItem(new ItemStack(Material.MINECART));
+                }
+            }, 1);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerPotion(EntityPotionEffectEvent event) {
+        plugin.jetBootModule.onPotionEffect(event);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        plugin.jetBootModule.playerDeath(event);
     }
 }
