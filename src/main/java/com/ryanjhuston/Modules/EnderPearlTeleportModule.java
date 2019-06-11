@@ -16,11 +16,15 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class EnderPearlTeleportModule {
 
     private SkcraftBasics plugin;
+
+    public HashMap<String, ArrayList<String>> teleportAuth = new HashMap<>();
 
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -45,7 +49,7 @@ public class EnderPearlTeleportModule {
 
         if(event.getCurrentItem().getType() != Material.AIR) {
             String playerName = event.getCurrentItem().getItemMeta().getDisplayName();
-            if(plugin.teleportAuth.get(Bukkit.getPlayer(playerName).getUniqueId().toString()).contains(event.getWhoClicked().getUniqueId().toString())) {
+            if(teleportAuth.get(Bukkit.getPlayer(playerName).getUniqueId().toString()).contains(event.getWhoClicked().getUniqueId().toString())) {
                 event.getWhoClicked().teleport(Bukkit.getPlayer(playerName));
 
                 PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent((Player)event.getWhoClicked(), Bukkit.getPlayer(playerName), true);
@@ -91,7 +95,7 @@ public class EnderPearlTeleportModule {
 
         if(event.isPlayerTeleport()) {
             event.getPlayer().closeInventory();
-            plugin.teleportAuth.get(event.getTarget().getUniqueId().toString()).remove(event.getPlayer().getUniqueId().toString());
+            teleportAuth.get(event.getTarget().getUniqueId().toString()).remove(event.getPlayer().getUniqueId().toString());
         }
     }
 

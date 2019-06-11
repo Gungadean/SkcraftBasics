@@ -9,3 +9,13 @@ commands:
     description: Invite players to server.
   setspawn:
     description: Change spawn location.
+  nethercoords:
+    description: Get needed portal location in other world.
+  here:
+    description: List players in current chat channel.
+  join:
+    description: Join chat channel.
+  leave:
+    description: Leave chat channel.
+  g:
+    description: Message global chat when in a channel.

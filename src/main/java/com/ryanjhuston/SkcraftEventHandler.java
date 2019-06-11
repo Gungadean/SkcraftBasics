@@ -9,7 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.*;
@@ -46,6 +46,7 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         plugin.jetBootModule.playerJoin(event);
+        plugin.chatChannelsModule.playerJoin(event);
 
         event.getPlayer().setDisplayName(ChatColorLib.getRandomColor() + event.getPlayer().getDisplayName() + ChatColor.WHITE);
 
@@ -67,12 +68,12 @@ public class SkcraftEventHandler implements Listener {
                 plugin.getPlayerItemsList().set(event.getPlayer().getUniqueId().toString(), item);
         }
 
-        plugin.teleportAuth.put(event.getPlayer().getUniqueId().toString(), new ArrayList<String>());
+        plugin.enderPearlTeleportModule.teleportAuth.put(event.getPlayer().getUniqueId().toString(), new ArrayList<String>());
     }
 
     @EventHandler
     public void onPlayerDisconnect(PlayerQuitEvent event) {
-        plugin.teleportAuth.remove(event.getPlayer().getUniqueId().toString());
+        plugin.enderPearlTeleportModule.teleportAuth.remove(event.getPlayer().getUniqueId().toString());
         plugin.jetBootModule.playerDisconnect(event);
     }
 
@@ -103,6 +104,7 @@ public class SkcraftEventHandler implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         plugin.stargateModule.blockBreak(event);
         plugin.jetBootModule.onBlockBreak(event);
+        plugin.goldToolModule.playerBreakBlock(event);
     }
 
     @EventHandler
@@ -174,5 +176,30 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         plugin.jetBootModule.playerDeath(event);
+    }
+
+    @EventHandler
+    public void onProjectHit(ProjectileHitEvent event) {
+        plugin.captureBallModule.onProjectileHit(event);
+    }
+
+    @EventHandler
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        plugin.captureBallModule.onCreatureSpawn(event);
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageByEntityEvent event) {
+        plugin.captureBallModule.onEntityDamage(event);
+    }
+
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        plugin.chatChannelsModule.playerChat(event);
+    }
+
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        plugin.goldToolModule.playerKillEntity(event);
     }
 }

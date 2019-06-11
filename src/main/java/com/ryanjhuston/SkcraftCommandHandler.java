@@ -1,8 +1,6 @@
 package com.ryanjhuston;
 
-import com.ryanjhuston.Commands.AcceptCommand;
-import com.ryanjhuston.Commands.InviteCommand;
-import com.ryanjhuston.Commands.SetSpawnCommand;
+import com.ryanjhuston.Commands.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -23,11 +21,31 @@ public class SkcraftCommandHandler implements CommandExecutor {
         }
 
         if(command.equalsIgnoreCase("accept") && commandSender instanceof Player) {
-            AcceptCommand.command((Player)commandSender, args, plugin.teleportAuth);
+            AcceptCommand.command((Player)commandSender, args, plugin.enderPearlTeleportModule.teleportAuth);
         }
 
         if(command.equalsIgnoreCase("setspawn") && commandSender instanceof Player) {
             SetSpawnCommand.command(commandSender, plugin);
+        }
+
+        if(command.equalsIgnoreCase("nethercoords") && commandSender instanceof Player) {
+            NetherCoordsCommand.command((Player)commandSender);
+        }
+
+        if(command.equalsIgnoreCase("here") && commandSender instanceof  Player) {
+            HereCommand.command((Player)commandSender, args, plugin);
+        }
+
+        if(command.equalsIgnoreCase("join") && commandSender instanceof Player) {
+            JoinCommand.command((Player)commandSender, args, plugin);
+        }
+
+        if(command.equalsIgnoreCase("leave") && commandSender instanceof Player) {
+            LeaveCommand.command((Player)commandSender, args, plugin);
+        }
+
+        if(command.equalsIgnoreCase("g") && commandSender instanceof Player) {
+            GlobalChatCommand.command((Player)commandSender, args, plugin);
         }
         return false;
     }

@@ -17,12 +17,16 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 public class StargateModule {
 
     private SkcraftBasics plugin;
+
+    public HashMap<String, Stargate> stargateList = new HashMap<>();
+    public HashMap<String, List<String>> networkList = new HashMap<>();
 
     public StargateModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -163,22 +167,22 @@ public class StargateModule {
 
             portalName = sign.getLine(1);
 
-            if(plugin.stargateList.containsKey(portalName)) {
+            if(stargateList.containsKey(portalName)) {
                 player.sendMessage(ChatColor.RED + "A portal with this name already exists.");
                 return false;
             }
 
             if(sign.getLine(2).isEmpty()) {
                 network = "public";
-                plugin.networkList.get(network).add(portalName);
+                networkList.get(network).add(portalName);
             } else {
                 network = sign.getLine(2);
-                if(!plugin.networkList.containsKey(network)) {
+                if(!networkList.containsKey(network)) {
                     List<String> stargates = new ArrayList<>();
                     stargates.add(portalName);
-                    plugin.networkList.put(network, stargates);
+                    networkList.put(network, stargates);
                 } else {
-                    plugin.networkList.get(network).add(portalName);
+                    networkList.get(network).add(portalName);
                 }
             }
         }
@@ -197,16 +201,16 @@ public class StargateModule {
         signLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
         buttonLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
 
-        plugin.stargateList.put(portalName, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
+        stargateList.put(portalName, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
 
         player.sendMessage(ChatColor.GOLD + "New stargate has been successfully created.");
         return true;
     }
 
     public void removeStargate(String portalName) {
-        Stargate stargate = plugin.stargateList.get(portalName);
+        Stargate stargate = stargateList.get(portalName);
 
-        plugin.networkList.get(stargate.getNetwork()).remove(portalName);
+        networkList.get(stargate.getNetwork()).remove(portalName);
 
         Iterator it = stargate.getBlocks().iterator();
         while(it.hasNext()) {
@@ -228,7 +232,7 @@ public class StargateModule {
 
         stargate.getButtonLocation().getBlock().removeMetadata("Stargate", plugin);
 
-        plugin.stargateList.remove(portalName);
+        stargateList.remove(portalName);
     }
 
     public void playerInteract(PlayerInteractEvent event) {
@@ -277,7 +281,7 @@ public class StargateModule {
     public void blockBreak(BlockBreakEvent event) {
         if(event.getBlock().hasMetadata("Stargate")) {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
-            if(plugin.stargateList.containsKey(stargate)) {
+            if(stargateList.containsKey(stargate)) {
                 removeStargate(stargate);
             }
         }
@@ -292,17 +296,17 @@ public class StargateModule {
             return;
         }
 
-        Stargate stargate = plugin.stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
+        Stargate stargate = stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
         event.getPlayer().teleport(stargate.getTeleportLocation());
     }
 
     public void updateStargateSign(Block clicked) {
         Sign sign = (Sign)clicked.getState();
-        Stargate stargate = plugin.stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
+        Stargate stargate = stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
         List<String> networkList = new ArrayList<>();
 
-        for(int i = 0; i < plugin.networkList.get(stargate.getNetwork()).size(); i++) {
-            networkList.add(plugin.networkList.get(stargate.getNetwork()).get(i));
+        for(int i = 0; i < this.networkList.get(stargate.getNetwork()).size(); i++) {
+            networkList.add(this.networkList.get(stargate.getNetwork()).get(i));
         }
 
         networkList.remove(clicked.getMetadata("Stargate").get(0).asString());
@@ -379,7 +383,7 @@ public class StargateModule {
     }
 
     public void openPortal(Block clicked, Player player) {
-        Stargate stargate = plugin.stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
+        Stargate stargate = stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
         Sign sign = (Sign)stargate.getSignLocation().getBlock().getState();
 
         if(sign.getLine(0).equals("-" + clicked.getMetadata("Stargate").get(0).asString() + "-")) {

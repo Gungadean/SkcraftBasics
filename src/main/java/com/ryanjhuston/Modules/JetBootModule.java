@@ -26,6 +26,10 @@ public class JetBootModule {
 
     private SkcraftBasics plugin;
 
+    public List<Location> activeBeacons = new ArrayList<>();
+    public List<String> jetboots = new ArrayList<>();
+    public List<String> flyingPlayers = new ArrayList<>();
+
     public JetBootModule(SkcraftBasics plugin) {
         this.plugin = plugin;
     }
@@ -49,7 +53,7 @@ public class JetBootModule {
                     return;
                 }
 
-                plugin.activeBeacons.add(beacon.getLocation());
+                activeBeacons.add(beacon.getLocation());
             }
         }, 100);
     }
@@ -78,8 +82,8 @@ public class JetBootModule {
                                     continue;
                                 }
 
-                                if(!plugin.activeBeacons.contains(state.getLocation())) {
-                                    plugin.activeBeacons.add(state.getLocation());
+                                if(!activeBeacons.contains(state.getLocation())) {
+                                    activeBeacons.add(state.getLocation());
                                 }
                             }
                         }
@@ -98,18 +102,18 @@ public class JetBootModule {
             return;
         }
 
-        if(!plugin.activeBeacons.contains(event.getBlock().getLocation())) {
+        if(!activeBeacons.contains(event.getBlock().getLocation())) {
             return;
         }
 
-        plugin.activeBeacons.remove(event.getBlock().getLocation());
+        activeBeacons.remove(event.getBlock().getLocation());
     }
 
     public void registerJetbootDurabilityCheck() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
-                for(String uuid : plugin.jetboots) {
+                for(String uuid : jetboots) {
                     Player player = Bukkit.getPlayer(UUID.fromString(uuid));
                     if(player != null) {
                         if(player.getGameMode() != GameMode.CREATIVE) {
@@ -133,7 +137,7 @@ public class JetBootModule {
                     String uuid = player.getUniqueId().toString();
 
                     if(!checkBeaconList(uuid)) {
-                        if(plugin.jetboots.contains(uuid)) {
+                        if(jetboots.contains(uuid)) {
                             playerRemoval.add(uuid);
                         }
                     } else {
@@ -204,29 +208,29 @@ public class JetBootModule {
     }
 
     public void playerDisconnect(PlayerQuitEvent event) {
-        if(plugin.jetboots.contains(event.getPlayer().getUniqueId().toString())) {
+        if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
             if(event.getPlayer().getGameMode() != GameMode.CREATIVE) {
                 if(event.getPlayer().isFlying()) {
-                    plugin.flyingPlayers.add(event.getPlayer().getUniqueId().toString());
+                    flyingPlayers.add(event.getPlayer().getUniqueId().toString());
                 }
             }
         }
     }
 
     public void playerJoin(PlayerJoinEvent event) {
-        if(plugin.flyingPlayers.contains(event.getPlayer().getUniqueId().toString())) {
+        if(flyingPlayers.contains(event.getPlayer().getUniqueId().toString())) {
             event.getPlayer().setAllowFlight(true);
             event.getPlayer().setFlying(true);
-            plugin.flyingPlayers.remove(event.getPlayer().getUniqueId().toString());
+            flyingPlayers.remove(event.getPlayer().getUniqueId().toString());
         }
 
-        if(plugin.jetboots.contains(event.getPlayer().getUniqueId().toString())) {
+        if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
             event.getPlayer().setAllowFlight(true);
         }
     }
 
     public void playerDeath(PlayerDeathEvent event) {
-        if(plugin.jetboots.contains(event.getEntity().getUniqueId().toString())) {
+        if(jetboots.contains(event.getEntity().getUniqueId().toString())) {
             event.getEntity().setAllowFlight(false);
             event.getEntity().setFlying(false);
         }
@@ -270,7 +274,7 @@ public class JetBootModule {
     public boolean checkBeaconList(String uuid) {
         List<Location> forRemoval = new ArrayList<>();
 
-        for(Location location : plugin.activeBeacons) {
+        for(Location location : activeBeacons) {
             Beacon beacon = (Beacon)location.getBlock().getState();
 
             if(beacon.getTier() == 0) {
@@ -291,15 +295,15 @@ public class JetBootModule {
     }
 
     public void activateJetboots(Player player) {
-        if(!plugin.jetboots.contains(player.getUniqueId().toString())) {
-            plugin.jetboots.add(player.getUniqueId().toString());
+        if(!jetboots.contains(player.getUniqueId().toString())) {
+            jetboots.add(player.getUniqueId().toString());
         }
         player.setAllowFlight(true);
     }
 
     public void deactivateJetboots(Player player) {
-        if(plugin.jetboots.contains(player.getUniqueId().toString())) {
-            plugin.jetboots.remove(player.getUniqueId().toString());
+        if(jetboots.contains(player.getUniqueId().toString())) {
+            jetboots.remove(player.getUniqueId().toString());
         }
 
         if(player.getGameMode() != GameMode.CREATIVE) {

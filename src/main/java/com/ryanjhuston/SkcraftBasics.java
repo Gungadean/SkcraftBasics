@@ -1,10 +1,7 @@
 package com.ryanjhuston;
 
 import com.ryanjhuston.Database.SqlHandler;
-import com.ryanjhuston.Modules.CraftingModule;
-import com.ryanjhuston.Modules.EnderPearlTeleportModule;
-import com.ryanjhuston.Modules.JetBootModule;
-import com.ryanjhuston.Modules.StargateModule;
+import com.ryanjhuston.Modules.*;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -26,6 +23,7 @@ public class SkcraftBasics extends JavaPlugin {
 
     public Logger logger = Logger.getLogger("Minecraft");
     public PluginManager pm = Bukkit.getPluginManager();
+    public SkcraftCommandHandler skcraftCommandHandler;
 
     public SqlHandler sql;
 
@@ -40,14 +38,9 @@ public class SkcraftBasics extends JavaPlugin {
     public CraftingModule craftingModule;
     public StargateModule stargateModule;
     public JetBootModule jetBootModule;
-
-    public HashMap<String, ArrayList<String>> teleportAuth = new HashMap<>();
-    public List<Location> activeBeacons = new ArrayList<>();
-    public List<String> jetboots = new ArrayList<>();
-    public List<String> flyingPlayers = new ArrayList<>();
-
-    public HashMap<String, Stargate> stargateList = new HashMap<>();
-    public HashMap<String, List<String>> networkList = new HashMap<>();
+    public CaptureBallModule captureBallModule;
+    public ChatChannelsModule chatChannelsModule;
+    public GoldToolModule goldToolModule;
 
     private File playerItemsFile = new File(getDataFolder(), "playerItems.yml");
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
@@ -70,6 +63,9 @@ public class SkcraftBasics extends JavaPlugin {
         craftingModule = new CraftingModule(this);
         stargateModule = new StargateModule(this);
         jetBootModule = new JetBootModule(this);
+        captureBallModule = new CaptureBallModule(this);
+        chatChannelsModule = new ChatChannelsModule(this);
+        goldToolModule = new GoldToolModule(this);
 
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
@@ -79,29 +75,43 @@ public class SkcraftBasics extends JavaPlugin {
 
         pm.registerEvents(new SkcraftEventHandler(this), this);
 
-        this.getCommand("invite").setExecutor(new SkcraftCommandHandler(this));
-        this.getCommand("accept").setExecutor(new SkcraftCommandHandler(this));
-        this.getCommand("setspawn").setExecutor(new SkcraftCommandHandler(this));
-
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
             Location loc = Bukkit.getWorlds().get(0).getSpawnLocation();
             getConfig().set("Spawn-Location", loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + loc.getYaw() + "," + loc.getPitch());
         }
 
+        logger.info("[SkcraftBasics] Loading data from configs.");
         loadStargatesFromFile();
         loadFlyersFromFile();
         loadBeaconsFromFile();
+        loadChatChannelsFromFile();
+        logger.info("[SkcraftBasics] Finished loading data from configs.");
 
         jetBootModule.registerJetbootDurabilityCheck();
         jetBootModule.registerBeaconCheck();
+
+        skcraftCommandHandler = new SkcraftCommandHandler(this);
+
+        this.getCommand("invite").setExecutor(skcraftCommandHandler);
+        this.getCommand("accept").setExecutor(skcraftCommandHandler);
+        this.getCommand("setspawn").setExecutor(skcraftCommandHandler);
+        this.getCommand("nethercoords").setExecutor(skcraftCommandHandler);
+        this.getCommand("here").setExecutor(skcraftCommandHandler);
+        this.getCommand("join").setExecutor(skcraftCommandHandler);
+        this.getCommand("leave").setExecutor(skcraftCommandHandler);
+        this.getCommand("g").setExecutor(skcraftCommandHandler);
 
         logger.info("has started.");
     }
 
     public void onDisable() {
+
+        logger.info("[SkcraftBasics] Saving data to configs.");
         saveStargatesToFile();
         saveFlyersToFile();
         saveBeaconsToFile();
+        saveChatChannelsToFile();
+        logger.info("[SkcraftBasics] Finished saving data to configs.");
 
         saveConfig();
         saveConfigs();
@@ -177,19 +187,39 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
+    public void loadChatChannelsFromFile() {
+        List<String> channels = getConfig().getStringList("Chat-Channels-List");
+
+        for(String channel : channels) {
+            chatChannelsModule.chatChannels.put(channel, getConfig().getStringList("Chat-Channels." + channel));
+        }
+    }
+
+    public void saveChatChannelsToFile() {
+        getConfig().set("Chat-Channels", null);
+
+        List<String> channels = new ArrayList<>();
+
+        for(Map.Entry<String, List<String>> entry : chatChannelsModule.chatChannels.entrySet()) {
+            channels.add(entry.getKey());
+            getConfig().set("Chat-Channels." + entry.getKey(), entry.getValue());
+        }
+        getConfig().set("Chat-Channels-List", channels);
+    }
+
     public void loadBeaconsFromFile() {
         List<String> beacons = getConfig().getStringList("Active-Beacons");
 
         for(String locationString : beacons) {
             String[] args = locationString.split(",");
             Location location = new Location(Bukkit.getWorld(args[0]), Double.valueOf(args[1]), Double.valueOf(args[2]), Double.valueOf(args[3]));
-            activeBeacons.add(location);
+            jetBootModule.activeBeacons.add(location);
         }
     }
 
     public void saveBeaconsToFile() {
         List<String> beaconLocations = new ArrayList<>();
-        for(Location location : activeBeacons) {
+        for(Location location : jetBootModule.activeBeacons) {
             beaconLocations.add(location.getWorld().getName() + "," + location.getX() + "," + location.getY() + "," + location.getZ());
         }
 
@@ -202,7 +232,7 @@ public class SkcraftBasics extends JavaPlugin {
 
         while(it.hasNext()) {
             String player = (String)it.next();
-            jetboots.add(player);
+            jetBootModule.jetboots.add(player);
         }
 
         stringData = getConfig().getStringList("Flying-Players");
@@ -210,12 +240,12 @@ public class SkcraftBasics extends JavaPlugin {
 
         while(it.hasNext()) {
             String player = (String)it.next();
-            flyingPlayers.add(player);
+            jetBootModule.flyingPlayers.add(player);
         }
     }
 
     public void saveFlyersToFile() {
-        Iterator it = jetboots.iterator();
+        Iterator it = jetBootModule.jetboots.iterator();
         List<String> stringData = new ArrayList<>();
 
         while(it.hasNext()) {
@@ -225,7 +255,7 @@ public class SkcraftBasics extends JavaPlugin {
 
         getConfig().set("Jetboot-Players", stringData);
 
-        it = flyingPlayers.iterator();
+        it = jetBootModule.flyingPlayers.iterator();
         stringData = new ArrayList<>();
 
         while(it.hasNext()) {
@@ -237,8 +267,6 @@ public class SkcraftBasics extends JavaPlugin {
     }
 
     public void loadStargatesFromFile() {
-        logger.info("[SkcraftBasics] Loading stargates from config.");
-
         List<String> networksList = (List<String>)networksConfig.getList("Networks-List");
         Iterator networkIt = networksList.iterator();
 
@@ -246,7 +274,7 @@ public class SkcraftBasics extends JavaPlugin {
             String network = (String)networkIt.next();
             List<String> stargatesList = (List<String>)networksConfig.getList("Networks." + network);
 
-            networkList.put(network, stargatesList);
+            stargateModule.networkList.put(network, stargatesList);
 
             Iterator stargateIt = stargatesList.iterator();
             while(stargateIt.hasNext()) {
@@ -297,26 +325,22 @@ public class SkcraftBasics extends JavaPlugin {
 
                 buttonLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(this, stargate));
 
-                stargateList.put(stargate, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
+                stargateModule.stargateList.put(stargate, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
             }
         }
-
-        logger.info("[SkcraftBasics] Finished loading stargates from config.");
     }
 
     public void saveStargatesToFile() {
-        logger.info("[SkcraftBasics] Saving stargates to config.");
-
         List<String> networks = new ArrayList<>();
 
-        for(HashMap.Entry<String, List<String>> entryNetwork : networkList.entrySet()) {
+        for(HashMap.Entry<String, List<String>> entryNetwork : stargateModule.networkList.entrySet()) {
             networksConfig.set("Networks." + entryNetwork.getKey(), entryNetwork.getValue());
             networks.add(entryNetwork.getKey());
         }
 
         networksConfig.set("Networks-List", networks);
 
-        for(HashMap.Entry<String, Stargate> entryStargate : stargateList.entrySet()) {
+        for(HashMap.Entry<String, Stargate> entryStargate : stargateModule.stargateList.entrySet()) {
             stargatesConfig.set(entryStargate.getKey() + ".Owner", entryStargate.getValue().getOwner());
             stargatesConfig.set(entryStargate.getKey() + ".Network", entryStargate.getValue().getNetwork());
             stargatesConfig.set(entryStargate.getKey() + ".Teleport-Location", entryStargate.getValue().getTeleportLocation().getWorld().getName() + ","
@@ -361,8 +385,6 @@ public class SkcraftBasics extends JavaPlugin {
             stargatesConfig.set(entryStargate.getKey() + ".Blocks", blocks);
             stargatesConfig.set(entryStargate.getKey() + ".Portal-Blocks", portalBlocks);
         }
-
-        logger.info("[SkcraftBasics] Finished saving stargates to config.");
     }
 
     public boolean checkOnline(String uuid) {
