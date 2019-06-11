@@ -12,10 +12,10 @@ import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +42,9 @@ public class SkcraftBasics extends JavaPlugin {
     public JetBootModule jetBootModule;
 
     public HashMap<String, ArrayList<String>> teleportAuth = new HashMap<>();
-    public HashMap<String, PotionEffectType> jetboots = new HashMap<>();
+    public List<Location> activeBeacons = new ArrayList<>();
+    public List<String> jetboots = new ArrayList<>();
+    public List<String> flyingPlayers = new ArrayList<>();
 
     public HashMap<String, Stargate> stargateList = new HashMap<>();
     public HashMap<String, List<String>> networkList = new HashMap<>();
@@ -88,6 +90,10 @@ public class SkcraftBasics extends JavaPlugin {
 
         loadStargatesFromFile();
         loadFlyersFromFile();
+        loadBeaconsFromFile();
+
+        jetBootModule.registerJetbootDurabilityCheck();
+        jetBootModule.registerBeaconCheck();
 
         logger.info("has started.");
     }
@@ -95,6 +101,7 @@ public class SkcraftBasics extends JavaPlugin {
     public void onDisable() {
         saveStargatesToFile();
         saveFlyersToFile();
+        saveBeaconsToFile();
 
         saveConfig();
         saveConfigs();
@@ -170,26 +177,63 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
+    public void loadBeaconsFromFile() {
+        List<String> beacons = getConfig().getStringList("Active-Beacons");
+
+        for(String locationString : beacons) {
+            String[] args = locationString.split(",");
+            Location location = new Location(Bukkit.getWorld(args[0]), Double.valueOf(args[1]), Double.valueOf(args[2]), Double.valueOf(args[3]));
+            activeBeacons.add(location);
+        }
+    }
+
+    public void saveBeaconsToFile() {
+        List<String> beaconLocations = new ArrayList<>();
+        for(Location location : activeBeacons) {
+            beaconLocations.add(location.getWorld().getName() + "," + location.getX() + "," + location.getY() + "," + location.getZ());
+        }
+
+        getConfig().set("Active-Beacons", beaconLocations);
+    }
+
     public void loadFlyersFromFile() {
         List<String> stringData = getConfig().getStringList("Jetboot-Players");
         Iterator it = stringData.iterator();
 
         while(it.hasNext()) {
-            String[] data = ((String) it.next()).split(":");
-            jetboots.put(data[0], PotionEffectType.getByName(data[1]));
+            String player = (String)it.next();
+            jetboots.add(player);
+        }
+
+        stringData = getConfig().getStringList("Flying-Players");
+        it = stringData.iterator();
+
+        while(it.hasNext()) {
+            String player = (String)it.next();
+            flyingPlayers.add(player);
         }
     }
 
     public void saveFlyersToFile() {
-        Iterator it = jetboots.entrySet().iterator();
+        Iterator it = jetboots.iterator();
         List<String> stringData = new ArrayList<>();
 
         while(it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
-            stringData.add(pair.getKey() + ":" + ((PotionEffectType)pair.getValue()).toString());
+            String player = (String)it.next();
+            stringData.add(player);
         }
 
         getConfig().set("Jetboot-Players", stringData);
+
+        it = flyingPlayers.iterator();
+        stringData = new ArrayList<>();
+
+        while(it.hasNext()) {
+            String player = (String)it.next();
+            stringData.add(player);
+        }
+
+        getConfig().set("Flying-Players", stringData);
     }
 
     public void loadStargatesFromFile() {
@@ -319,5 +363,14 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         logger.info("[SkcraftBasics] Finished saving stargates to config.");
+    }
+
+    public boolean checkOnline(String uuid) {
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            if(player.getUniqueId().toString().equals(uuid)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

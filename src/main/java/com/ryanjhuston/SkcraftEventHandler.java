@@ -8,7 +8,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
-import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.NotePlayEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
@@ -73,6 +74,7 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onPlayerDisconnect(PlayerQuitEvent event) {
         plugin.teleportAuth.remove(event.getPlayer().getUniqueId().toString());
+        plugin.jetBootModule.playerDisconnect(event);
     }
 
     @EventHandler
@@ -93,8 +95,15 @@ public class SkcraftEventHandler implements Listener {
     }
 
     @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        plugin.jetBootModule.onBeaconPlace(event);
+        plugin.jetBootModule.onDiamondBlockPlace(event);
+    }
+
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         plugin.stargateModule.blockBreak(event);
+        plugin.jetBootModule.onBlockBreak(event);
     }
 
     @EventHandler
@@ -161,11 +170,6 @@ public class SkcraftEventHandler implements Listener {
                 }
             }, 1);
         }
-    }
-
-    @EventHandler
-    public void onPlayerPotion(EntityPotionEffectEvent event) {
-        plugin.jetBootModule.onPotionEffect(event);
     }
 
     @EventHandler
