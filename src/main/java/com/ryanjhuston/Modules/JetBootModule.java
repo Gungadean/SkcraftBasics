@@ -14,7 +14,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -55,12 +54,15 @@ public class JetBootModule {
         }, 100);
     }
 
-    public void onDiamondBlockPlace(BlockPlaceEvent event) {
+    public void onBaseBlockPlace(BlockPlaceEvent event) {
         if(!event.canBuild()) {
             return;
         }
 
-        if(event.getBlockPlaced().getType() != Material.DIAMOND_BLOCK) {
+        if(event.getBlockPlaced().getType() != Material.IRON_BLOCK &&
+                event.getBlockPlaced().getType() != Material.GOLD_BLOCK &&
+                event.getBlockPlaced().getType() != Material.DIAMOND_BLOCK &&
+                event.getBlockPlaced().getType() != Material.EMERALD_BLOCK) {
             return;
         }
 
@@ -118,7 +120,7 @@ public class JetBootModule {
                     }
                 }
             }
-        }, 0, 160);
+        }, 0, 200);
     }
 
     public void registerBeaconCheck() {
@@ -178,6 +180,7 @@ public class JetBootModule {
         }
 
         if(item.getType() == Material.IRON_BOOTS ||
+                item.getType() == Material.CHAINMAIL_BOOTS ||
                 item.getType() == Material.GOLDEN_BOOTS ||
                 item.getType() == Material.DIAMOND_BOOTS) {
 
@@ -243,8 +246,9 @@ public class JetBootModule {
         }
 
         if(event.getCurrentItem().getType() != Material.IRON_BOOTS &&
-            event.getCurrentItem().getType() != Material.GOLDEN_BOOTS &&
-            event.getCurrentItem().getType() != Material.DIAMOND_BOOTS) {
+                event.getCurrentItem().getType() != Material.CHAINMAIL_BOOTS &&
+                event.getCurrentItem().getType() != Material.GOLDEN_BOOTS &&
+                event.getCurrentItem().getType() != Material.DIAMOND_BOOTS) {
             return;
         }
 

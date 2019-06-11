@@ -9,7 +9,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.NotePlayEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
@@ -97,7 +96,7 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         plugin.jetBootModule.onBeaconPlace(event);
-        plugin.jetBootModule.onDiamondBlockPlace(event);
+        plugin.jetBootModule.onBaseBlockPlace(event);
     }
 
     @EventHandler

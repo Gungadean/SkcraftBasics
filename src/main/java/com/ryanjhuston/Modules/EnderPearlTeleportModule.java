@@ -106,15 +106,6 @@ public class EnderPearlTeleportModule {
         }
 
         if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround()) {
-
-            if(player.getInventory().getItemInOffHand().getType() == Material.WATER_BUCKET) {
-                PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent(player, null, false);
-                Bukkit.getPluginManager().callEvent(teleportEvent);
-                String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-                player.teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
-                return;
-            }
-
             if(player.getBedSpawnLocation() == null) {
                 player.sendMessage(ChatColor.RED + "You do not have a home set yet.");
                 player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL, 1));
@@ -130,7 +121,14 @@ public class EnderPearlTeleportModule {
             }
         } else {
             String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-            player.teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+
+            //Fix for "Removing ticking entity" bug when teleporting between dimensions.
+            plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    player.teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+                }
+            }, 1L);
         }
 
         PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent(player, null, false);
