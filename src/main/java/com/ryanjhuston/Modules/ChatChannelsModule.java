@@ -4,12 +4,14 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.*;
 
-public class ChatChannelsModule {
+public class ChatChannelsModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -45,6 +47,7 @@ public class ChatChannelsModule {
         inChannelPlayers.remove(player);
     }
 
+    @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
         if(inChannelPlayers.containsKey(event.getPlayer().getUniqueId().toString())) {
             return;
@@ -58,6 +61,7 @@ public class ChatChannelsModule {
         }
     }
 
+    @EventHandler
     public void playerChat(AsyncPlayerChatEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
         if(inChannelPlayers.containsKey(uuid)) {

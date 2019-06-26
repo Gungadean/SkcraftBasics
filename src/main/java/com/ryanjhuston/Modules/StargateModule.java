@@ -1,5 +1,6 @@
 package com.ryanjhuston.Modules;
 
+import com.ryanjhuston.Events.PlayerEnterStargateEvent;
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.*;
@@ -7,6 +8,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -21,7 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class StargateModule {
+public class StargateModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -235,6 +238,7 @@ public class StargateModule {
         stargateList.remove(portalName);
     }
 
+    @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
@@ -250,7 +254,7 @@ public class StargateModule {
 
         if(event.getClickedBlock().getType().toString().contains("_SIGN")) {
             if(event.getClickedBlock().hasMetadata("Stargate")) {
-                updateStargateSign(event.getClickedBlock());
+                updateStargateSign(event.getClickedBlock(), event.getPlayer());
             }
         }
 
@@ -278,6 +282,7 @@ public class StargateModule {
         event.setCancelled(true);
     }
 
+    @EventHandler
     public void blockBreak(BlockBreakEvent event) {
         if(event.getBlock().hasMetadata("Stargate")) {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
@@ -287,20 +292,13 @@ public class StargateModule {
         }
     }
 
-    public void playerMove(PlayerMoveEvent event) {
-        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL) {
-            return;
-        }
-
-        if(!event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
-            return;
-        }
-
+    @EventHandler
+    public void onEnterStargate(PlayerEnterStargateEvent event) {
         Stargate stargate = stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
         event.getPlayer().teleport(stargate.getTeleportLocation());
     }
 
-    public void updateStargateSign(Block clicked) {
+    public void updateStargateSign(Block clicked, Player clicker) {
         Sign sign = (Sign)clicked.getState();
         Stargate stargate = stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
         List<String> networkList = new ArrayList<>();
@@ -310,6 +308,14 @@ public class StargateModule {
         }
 
         networkList.remove(clicked.getMetadata("Stargate").get(0).asString());
+
+        if(sign.getBlock().hasMetadata("Who-Clicked")) {
+            if(!sign.getBlock().getMetadata("Who-Clicked").get(0).asString().equals(clicker.getUniqueId().toString())) {
+                return;
+            }
+        } else {
+            sign.getBlock().setMetadata("Who-Clicked", new FixedMetadataValue(plugin, clicker.getUniqueId().toString()));
+        }
 
         if(stargate.getSignTask() != null) {
             stargate.getSignTask().cancel();
@@ -329,6 +335,7 @@ public class StargateModule {
                 sign.update();
 
                 stargate.setSignTask(null);
+                sign.getBlock().removeMetadata("Who-Clicked", plugin);
             }
         }.runTaskLater(plugin, 200);
 
@@ -422,9 +429,16 @@ public class StargateModule {
         }.runTaskLater(plugin, 80);
     }
 
+    @EventHandler
     public void playerTeleport(PlayerPortalEvent event) {
-        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL || event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
-            event.setCancelled(true);
+        for(int x = -1; x < 2; x++) {
+            for(int z = -1; z < 2; z++) {
+                Block block = event.getPlayer().getLocation().getBlock().getRelative(x, 0, z);
+
+                if(block.getType() == Material.NETHER_PORTAL && block.hasMetadata("Stargate")) {
+                    event.setCancelled(true);
+                }
+            }
         }
     }
 }

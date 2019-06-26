@@ -3,6 +3,8 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Material;
 import org.bukkit.entity.*;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -11,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CaptureBallModule {
+public class CaptureBallModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -31,6 +33,7 @@ public class CaptureBallModule {
         this.plugin = plugin;
     }
 
+    @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
         if(event.getHitEntity() == null) {
             return;
@@ -51,12 +54,14 @@ public class CaptureBallModule {
         hitEntity.add(event.getHitEntity());
     }
 
+    @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if(event.getDamager().getType() == EntityType.EGG) {
             event.setCancelled(true);
         }
     }
 
+    @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if(event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.EGG) {
             return;

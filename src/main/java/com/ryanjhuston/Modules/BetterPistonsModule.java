@@ -1,0 +1,89 @@
+package com.ryanjhuston.Modules;
+
+import com.ryanjhuston.SkcraftBasics;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Sign;
+import org.bukkit.block.data.Directional;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class BetterPistonsModule implements Listener {
+
+    private SkcraftBasics plugin;
+    private List<BlockFace> blockFaces = new ArrayList<>();
+
+    public BetterPistonsModule(SkcraftBasics plugin) {
+        addFaces();
+        this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        boolean hasSign = false;
+        Sign sign;
+
+        for(BlockFace blockFace : blockFaces) {
+            if(event.getBlock().getRelative(blockFace).getType() == Material.OAK_WALL_SIGN) {
+                sign = (Sign)event.getBlock().getRelative(blockFace).getState();
+                Directional directional = (Directional)sign.getBlockData();
+
+                if(sign.getBlock().getRelative(directional.getFacing().getOppositeFace()).equals(event.getBlock())) {
+                    if(sign.getLine(1).equals("[Grind]")) {
+                        hasSign = true;
+                    }
+                }
+            }
+        }
+
+        if(!hasSign) {
+            return;
+        }
+
+        if(event.getBlocks().isEmpty()) {
+            return;
+        }
+
+        if(event.getBlocks().get(0).getType() == Material.COBBLESTONE) {
+            event.getBlocks().get(0).setType(Material.AIR);
+            event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.GRAVEL));
+            event.setCancelled(true);
+        } else if(event.getBlocks().get(0).getType() == Material.GRAVEL) {
+            event.getBlocks().get(0).setType(Material.AIR);
+            event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.SAND));
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onSignPlace(SignChangeEvent event) {
+        if(event.getBlock().getType() != Material.OAK_WALL_SIGN) {
+            return;
+        }
+
+        if(event.getBlock().getRelative(((Directional)event.getBlock().getBlockData()).getFacing().getOppositeFace()).getType() != Material.PISTON) {
+            return;
+        }
+
+        if(event.getLine(1).equalsIgnoreCase("[Grind]")) {
+            event.setLine(1, "[Grind]");
+            event.getPlayer().sendMessage(ChatColor.GOLD + "Piston Grind Mechanic Created!");
+        }
+    }
+
+    private void addFaces() {
+        blockFaces.add(BlockFace.NORTH);
+        blockFaces.add(BlockFace.EAST);
+        blockFaces.add(BlockFace.SOUTH);
+        blockFaces.add(BlockFace.WEST);
+        blockFaces.add(BlockFace.UP);
+        blockFaces.add(BlockFace.DOWN);
+    }
+}

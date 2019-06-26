@@ -7,6 +7,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -20,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class EnderPearlTeleportModule {
+public class EnderPearlTeleportModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -30,6 +32,7 @@ public class EnderPearlTeleportModule {
         this.plugin = plugin;
     }
 
+    @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
         if(event.getClickedInventory() == null) {
             return;
@@ -61,6 +64,7 @@ public class EnderPearlTeleportModule {
         }
     }
 
+    @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
         if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_PEARL && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             if(!event.getPlayer().isSneaking()) {
@@ -88,6 +92,7 @@ public class EnderPearlTeleportModule {
         }
     }
 
+    @EventHandler
     public void playerTeleportEnderPearl(PlayerEnderPearlTeleportEvent event) {
         if(event.isCancelled()) {
             return;
@@ -99,6 +104,7 @@ public class EnderPearlTeleportModule {
         }
     }
 
+    @EventHandler
     public void playerTeleport(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
         if(event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {

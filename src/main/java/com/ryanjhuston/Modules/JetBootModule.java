@@ -6,6 +6,8 @@ import org.bukkit.block.Beacon;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -22,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class JetBootModule {
+public class JetBootModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -34,6 +36,7 @@ public class JetBootModule {
         this.plugin = plugin;
     }
 
+    @EventHandler
     public void onBeaconPlace(BlockPlaceEvent event) {
         if(!event.canBuild()) {
             return;
@@ -58,6 +61,7 @@ public class JetBootModule {
         }, 100);
     }
 
+    @EventHandler
     public void onBaseBlockPlace(BlockPlaceEvent event) {
         if(!event.canBuild()) {
             return;
@@ -93,6 +97,7 @@ public class JetBootModule {
         }, 100);
     }
 
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if(event.isCancelled()) {
             return;
@@ -155,6 +160,11 @@ public class JetBootModule {
                             continue;
                         }
 
+                        if (!player.getInventory().getBoots().getItemMeta().hasLore()) {
+                            deactivateJetboots(player);
+                            continue;
+                        }
+
                         if (!player.getInventory().getBoots().getItemMeta().getLore().contains("Jetboots")) {
                             deactivateJetboots(player);
                             continue;
@@ -171,6 +181,7 @@ public class JetBootModule {
         }, 0, 20);
     }
 
+    @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
@@ -207,6 +218,7 @@ public class JetBootModule {
         }
     }
 
+    @EventHandler
     public void playerDisconnect(PlayerQuitEvent event) {
         if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
             if(event.getPlayer().getGameMode() != GameMode.CREATIVE) {
@@ -217,6 +229,7 @@ public class JetBootModule {
         }
     }
 
+    @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
         if(flyingPlayers.contains(event.getPlayer().getUniqueId().toString())) {
             event.getPlayer().setAllowFlight(true);
@@ -229,6 +242,7 @@ public class JetBootModule {
         }
     }
 
+    @EventHandler
     public void playerDeath(PlayerDeathEvent event) {
         if(jetboots.contains(event.getEntity().getUniqueId().toString())) {
             event.getEntity().setAllowFlight(false);
@@ -236,6 +250,7 @@ public class JetBootModule {
         }
     }
 
+    @EventHandler
     public void removeJetboots(InventoryClickEvent event) {
         if(!(event.getWhoClicked() instanceof Player)) {
             return;

@@ -4,6 +4,8 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
@@ -11,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GoldToolModule {
+public class GoldToolModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -29,6 +31,7 @@ public class GoldToolModule {
         this.plugin = plugin;
     }
 
+    @EventHandler
     public void playerBreakBlock(BlockBreakEvent event) {
 
         Location location = event.getBlock().getLocation();
@@ -68,6 +71,7 @@ public class GoldToolModule {
         }
     }
 
+    @EventHandler
     public void playerKillEntity(EntityDeathEvent event) {
         if(!(event.getEntity().getKiller() instanceof Player)) {
             return;

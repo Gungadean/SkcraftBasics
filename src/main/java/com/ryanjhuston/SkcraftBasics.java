@@ -5,6 +5,7 @@ import com.ryanjhuston.Modules.*;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -24,6 +25,7 @@ public class SkcraftBasics extends JavaPlugin {
     public Logger logger = Logger.getLogger("Minecraft");
     public PluginManager pm = Bukkit.getPluginManager();
     public SkcraftCommandHandler skcraftCommandHandler;
+    public NamespacedKey namespacedKey;
 
     public SqlHandler sql;
 
@@ -41,6 +43,9 @@ public class SkcraftBasics extends JavaPlugin {
     public CaptureBallModule captureBallModule;
     public ChatChannelsModule chatChannelsModule;
     public GoldToolModule goldToolModule;
+    public RailModule railModule;
+    public RotaterModule rotaterModule;
+    public BetterPistonsModule betterPistonsModule;
 
     private File playerItemsFile = new File(getDataFolder(), "playerItems.yml");
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
@@ -59,6 +64,8 @@ public class SkcraftBasics extends JavaPlugin {
         createCustomConfigs();
         saveConfigs();
 
+        namespacedKey = new NamespacedKey(this, "SkcraftBasics");
+
         enderPearlTeleportModule = new EnderPearlTeleportModule(this);
         craftingModule = new CraftingModule(this);
         stargateModule = new StargateModule(this);
@@ -66,6 +73,9 @@ public class SkcraftBasics extends JavaPlugin {
         captureBallModule = new CaptureBallModule(this);
         chatChannelsModule = new ChatChannelsModule(this);
         goldToolModule = new GoldToolModule(this);
+        railModule = new RailModule(this);
+        rotaterModule = new RotaterModule(this);
+        betterPistonsModule = new BetterPistonsModule(this);
 
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
@@ -74,6 +84,16 @@ public class SkcraftBasics extends JavaPlugin {
         }*/
 
         pm.registerEvents(new SkcraftEventHandler(this), this);
+        pm.registerEvents(enderPearlTeleportModule, this);
+        pm.registerEvents(craftingModule, this);
+        pm.registerEvents(stargateModule, this);
+        pm.registerEvents(jetBootModule, this);
+        pm.registerEvents(captureBallModule, this);
+        pm.registerEvents(chatChannelsModule, this);
+        pm.registerEvents(goldToolModule, this);
+        pm.registerEvents(railModule, this);
+        pm.registerEvents(rotaterModule, this);
+        pm.registerEvents(betterPistonsModule, this);
 
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
             Location loc = Bukkit.getWorlds().get(0).getSpawnLocation();
