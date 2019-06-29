@@ -1,16 +1,19 @@
 package com.ryanjhuston;
 
 import com.ryanjhuston.Database.SqlHandler;
+import com.ryanjhuston.Events.PlayerEnterStargateEvent;
 import com.ryanjhuston.Modules.*;
+import com.ryanjhuston.Types.EnderTurret;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -46,13 +49,17 @@ public class SkcraftBasics extends JavaPlugin {
     public RailModule railModule;
     public RotaterModule rotaterModule;
     public BetterPistonsModule betterPistonsModule;
+    public AfkModule afkModule;
+    public MobTurretModule mobTurretModule;
 
     private File playerItemsFile = new File(getDataFolder(), "playerItems.yml");
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
     private File networksFile = new File(getDataFolder(), "stargateNetworks.yml");
+    private File turretsFile = new File(getDataFolder(), "enderTurrets.yml");
     private FileConfiguration playerItems;
     private FileConfiguration stargatesConfig;
     private FileConfiguration networksConfig;
+    private FileConfiguration turretsConfig;
 
     public boolean debug = true;
 
@@ -76,6 +83,9 @@ public class SkcraftBasics extends JavaPlugin {
         railModule = new RailModule(this);
         rotaterModule = new RotaterModule(this);
         betterPistonsModule = new BetterPistonsModule(this);
+        afkModule = new AfkModule(this);
+        mobTurretModule = new MobTurretModule(this);
+
 
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
@@ -84,6 +94,7 @@ public class SkcraftBasics extends JavaPlugin {
         }*/
 
         pm.registerEvents(new SkcraftEventHandler(this), this);
+
         pm.registerEvents(enderPearlTeleportModule, this);
         pm.registerEvents(craftingModule, this);
         pm.registerEvents(stargateModule, this);
@@ -94,6 +105,8 @@ public class SkcraftBasics extends JavaPlugin {
         pm.registerEvents(railModule, this);
         pm.registerEvents(rotaterModule, this);
         pm.registerEvents(betterPistonsModule, this);
+        pm.registerEvents(afkModule, this);
+        pm.registerEvents(mobTurretModule, this);
 
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
             Location loc = Bukkit.getWorlds().get(0).getSpawnLocation();
@@ -105,6 +118,7 @@ public class SkcraftBasics extends JavaPlugin {
         loadFlyersFromFile();
         loadBeaconsFromFile();
         loadChatChannelsFromFile();
+        loadTurretsFromFile();
         logger.info("[SkcraftBasics] Finished loading data from configs.");
 
         jetBootModule.registerJetbootDurabilityCheck();
@@ -131,6 +145,7 @@ public class SkcraftBasics extends JavaPlugin {
         saveFlyersToFile();
         saveBeaconsToFile();
         saveChatChannelsToFile();
+        saveTurretsToFile();
         logger.info("[SkcraftBasics] Finished saving data to configs.");
 
         saveConfig();
@@ -179,14 +194,21 @@ public class SkcraftBasics extends JavaPlugin {
             saveResource("stargateNetworks.yml", false);
         }
 
+        if(!turretsFile.exists()) {
+            turretsFile.getParentFile().mkdirs();
+            saveResource("enderTurrets.yml", false);
+        }
+
         playerItems = new YamlConfiguration();
         stargatesConfig = new YamlConfiguration();
         networksConfig = new YamlConfiguration();
+        turretsConfig = new YamlConfiguration();
 
         try {
             playerItems.load(playerItemsFile);
             stargatesConfig.load(stargatesFile);
             networksConfig.load(networksFile);
+            turretsConfig.load(turretsFile);
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }
@@ -202,6 +224,7 @@ public class SkcraftBasics extends JavaPlugin {
             playerItems.save(playerItemsFile);
             stargatesConfig.save(stargatesFile);
             networksConfig.save(networksFile);
+            turretsConfig.save(turretsFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -231,16 +254,14 @@ public class SkcraftBasics extends JavaPlugin {
         List<String> beacons = getConfig().getStringList("Active-Beacons");
 
         for(String locationString : beacons) {
-            String[] args = locationString.split(",");
-            Location location = new Location(Bukkit.getWorld(args[0]), Double.valueOf(args[1]), Double.valueOf(args[2]), Double.valueOf(args[3]));
-            jetBootModule.activeBeacons.add(location);
+            jetBootModule.activeBeacons.add(stringToLocation(locationString));
         }
     }
 
     public void saveBeaconsToFile() {
         List<String> beaconLocations = new ArrayList<>();
         for(Location location : jetBootModule.activeBeacons) {
-            beaconLocations.add(location.getWorld().getName() + "," + location.getX() + "," + location.getY() + "," + location.getZ());
+            beaconLocations.add(locationToString(location));
         }
 
         getConfig().set("Active-Beacons", beaconLocations);
@@ -301,25 +322,21 @@ public class SkcraftBasics extends JavaPlugin {
                 String stargate = (String)stargateIt.next();
                 String owner = stargatesConfig.getString(stargate  + ".Owner");
                 network = stargatesConfig.getString(stargate + ".Network");
-                String[] teleportLocationString = stargatesConfig.getString(stargate + ".Teleport-Location").split(",");
-                String[] signLocationString = stargatesConfig.getString(stargate + ".Sign-Location").split(",");
-                String[] buttonLocationString = stargatesConfig.getString(stargate + ".Button-Location").split(",");
                 String direction = stargatesConfig.getString(stargate + ".Direction");
 
                 List<String> blocksString = (List<String>)stargatesConfig.getList(stargate + ".Blocks");
                 List<String> portalBlocksString = (List<String>)stargatesConfig.getList(stargate + ".Portal-Blocks");
 
-                Location teleportLocation = new Location(Bukkit.getWorld(teleportLocationString[0]), Double.valueOf(teleportLocationString[1]), Double.valueOf(teleportLocationString[2]), Double.valueOf(teleportLocationString[3]), Float.valueOf(teleportLocationString[4]), -0);
-                Location signLocation = new Location(Bukkit.getWorld(signLocationString[0]), Double.valueOf(signLocationString[1]), Double.valueOf(signLocationString[2]), Double.valueOf(signLocationString[3]));
-                Location buttonLocation = new Location(Bukkit.getWorld(buttonLocationString[0]), Double.valueOf(buttonLocationString[1]), Double.valueOf(buttonLocationString[2]), Double.valueOf(buttonLocationString[3]));
+                Location teleportLocation = stringToLocation(stargatesConfig.getString(stargate + ".Teleport-Location"));
+                Location signLocation = stringToLocation(stargatesConfig.getString(stargate + ".Sign-Location"));
+                Location buttonLocation = stringToLocation(stargatesConfig.getString(stargate + ".Button-Location"));
 
                 List<Location> blocks = new ArrayList<>();
                 List<Location> portalBlocks = new ArrayList<>();
 
                 Iterator it = blocksString.iterator();
                 while(it.hasNext()) {
-                    String[] blockLocation = ((String)it.next()).split(",");
-                    Location block = new Location(Bukkit.getWorld(blockLocation[0]), Double.valueOf(blockLocation[1]), Double.valueOf(blockLocation[2]), Double.valueOf(blockLocation[3]));
+                    Location block = stringToLocation((String)it.next());
 
                     block.getBlock().setMetadata("Stargate", new FixedMetadataValue(this, stargate));
 
@@ -328,10 +345,7 @@ public class SkcraftBasics extends JavaPlugin {
 
                 it = portalBlocksString.iterator();
                 while(it.hasNext()) {
-                    String[] blockLocation = ((String)it.next()).split(",");
-                    Location block = new Location(Bukkit.getWorld(blockLocation[0]), Double.valueOf(blockLocation[1]), Double.valueOf(blockLocation[2]), Double.valueOf(blockLocation[3]));
-
-                    portalBlocks.add(block);
+                    portalBlocks.add(stringToLocation((String)it.next()));
                 }
 
                 signLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(this, stargate));
@@ -363,47 +377,70 @@ public class SkcraftBasics extends JavaPlugin {
         for(HashMap.Entry<String, Stargate> entryStargate : stargateModule.stargateList.entrySet()) {
             stargatesConfig.set(entryStargate.getKey() + ".Owner", entryStargate.getValue().getOwner());
             stargatesConfig.set(entryStargate.getKey() + ".Network", entryStargate.getValue().getNetwork());
-            stargatesConfig.set(entryStargate.getKey() + ".Teleport-Location", entryStargate.getValue().getTeleportLocation().getWorld().getName() + ","
-                    + entryStargate.getValue().getTeleportLocation().getX() + ","
-                    + entryStargate.getValue().getTeleportLocation().getY() + ","
-                    + entryStargate.getValue().getTeleportLocation().getZ() + ","
+            stargatesConfig.set(entryStargate.getKey() + ".Teleport-Location", locationToString(entryStargate.getValue().getTeleportLocation()) + ","
                     + entryStargate.getValue().getTeleportLocation().getYaw());
-            stargatesConfig.set(entryStargate.getKey() + ".Sign-Location", entryStargate.getValue().getSignLocation().getWorld().getName() + ","
-                    + entryStargate.getValue().getSignLocation().getX() + ","
-                    + entryStargate.getValue().getSignLocation().getY() + ","
-                    + entryStargate.getValue().getSignLocation().getZ());
-            stargatesConfig.set(entryStargate.getKey() + ".Button-Location", entryStargate.getValue().getButtonLocation().getWorld().getName() + ","
-                    + entryStargate.getValue().getButtonLocation().getX() + ","
-                    + entryStargate.getValue().getButtonLocation().getY() + ","
-                    + entryStargate.getValue().getButtonLocation().getZ());
+            stargatesConfig.set(entryStargate.getKey() + ".Sign-Location", locationToString(entryStargate.getValue().getSignLocation()));
+            stargatesConfig.set(entryStargate.getKey() + ".Button-Location", locationToString(entryStargate.getValue().getButtonLocation()));
             stargatesConfig.set(entryStargate.getKey() + ".Direction", entryStargate.getValue().getDirection());
 
             List<String> blocks = new ArrayList<>();
 
             Iterator it = entryStargate.getValue().getBlocks().iterator();
             while(it.hasNext()) {
-                Location blockLocation = (Location)it.next();
-
-                blocks.add(blockLocation.getWorld().getName() + ","
-                        + blockLocation.getX() + ","
-                        + blockLocation.getY() + ","
-                        + blockLocation.getZ());
+                blocks.add(locationToString((Location)it.next()));
             }
 
             List<String> portalBlocks = new ArrayList<>();
 
             it = entryStargate.getValue().getPortalBlocks().iterator();
             while(it.hasNext()) {
-                Location blockLocation = (Location)it.next();
-
-                portalBlocks.add(blockLocation.getWorld().getName() + ","
-                        + blockLocation.getX() + ","
-                        + blockLocation.getY() + ","
-                        + blockLocation.getZ());
+                portalBlocks.add(locationToString((Location)it.next()));
             }
 
             stargatesConfig.set(entryStargate.getKey() + ".Blocks", blocks);
             stargatesConfig.set(entryStargate.getKey() + ".Portal-Blocks", portalBlocks);
+        }
+    }
+
+    public void loadTurretsFromFile() {
+        List<String> turretLocations = turretsConfig.getStringList("Turrets");
+
+        for(String locationString : turretLocations) {
+            Location location = stringToLocation(locationString);
+
+            FallingBlock dummy = location.getWorld().spawnFallingBlock(location, location.getBlock().getBlockData());
+            dummy.setHurtEntities(false);
+
+            for(Entity entity : dummy.getNearbyEntities(1, 1, 1)) {
+                if(entity.getType() == EntityType.ENDER_CRYSTAL) {
+                    mobTurretModule.getTurretList().add(new EnderTurret((EnderCrystal)entity));
+                }
+            }
+
+            dummy.remove();
+        }
+    }
+
+    public void saveTurretsToFile() {
+        List<String> locationList = new ArrayList<>();
+
+        for(EnderTurret turret : mobTurretModule.getTurretList()) {
+            locationList.add(locationToString(turret.getTurretLocation()));
+        }
+
+        turretsConfig.set("Turrets", locationList);
+    }
+
+    public String locationToString(Location location) {
+        return (location.getWorld().getName() + "," + location.getX() + "," + location.getY() + "," + location.getZ());
+    }
+
+    public Location stringToLocation(String location) {
+        String[] args = location.split(",");
+        if(args.length == 4) {
+            return new Location(Bukkit.getWorld(args[0]), Double.valueOf(args[1]), Double.valueOf(args[2]), Double.valueOf(args[3]));
+        } else {
+            return new Location(Bukkit.getWorld(args[0]), Double.valueOf(args[1]), Double.valueOf(args[2]), Double.valueOf(args[3]), Float.valueOf(args[4]), -0);
         }
     }
 

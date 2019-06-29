@@ -27,7 +27,6 @@ public class CaptureBallModule implements Listener {
         entityList.add(EntityType.SHULKER);
         entityList.add(EntityType.WANDERING_TRADER);
         entityList.add(EntityType.TRADER_LLAMA);
-        entityList.add(EntityType.VILLAGER);
         entityList.add(EntityType.WITHER);
 
         this.plugin = plugin;

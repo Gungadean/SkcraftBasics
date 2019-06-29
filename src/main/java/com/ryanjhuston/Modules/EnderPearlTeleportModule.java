@@ -115,7 +115,7 @@ public class EnderPearlTeleportModule implements Listener {
             return;
         }
 
-        if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround()) {
+        if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround() && player.getInventory().getItemInOffHand().getType() != Material.WATER_BUCKET) {
             if(player.getBedSpawnLocation() == null) {
                 player.sendMessage(ChatColor.RED + "You do not have a home set yet.");
                 player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL, 1));

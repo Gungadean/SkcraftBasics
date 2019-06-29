@@ -1,5 +1,6 @@
 package com.ryanjhuston;
 
+import com.ryanjhuston.Events.PlayerEnterStargateEvent;
 import com.ryanjhuston.Lib.ChatColorLib;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -64,7 +65,7 @@ public class SkcraftEventHandler implements Listener {
 
     @EventHandler
     public void onPlayerSleep(PlayerBedEnterEvent event) {
-        if(Bukkit.getWorlds().get(0).getTime() < 12545) {
+        if(Bukkit.getWorlds().get(0).getTime() < 12545 || !Bukkit.getWorlds().get(0).hasStorm()) {
             return;
         }
 
@@ -77,7 +78,7 @@ public class SkcraftEventHandler implements Listener {
                 while(it.hasNext())
                 {
                     Player player = (Player)it.next();
-                    if(player.isSleeping()) {
+                    if(player.isSleeping() || plugin.afkModule.getAfkPlayers().contains(player.getUniqueId().toString()) || player.isSleepingIgnored() || !player.getWorld().equals(Bukkit.getWorlds().get(0))) {
                         sleeping++;
                     }
                 }
@@ -97,6 +98,7 @@ public class SkcraftEventHandler implements Listener {
                             }
 
                             Bukkit.getWorlds().get(0).setTime(1000);
+                            Bukkit.getWorlds().get(0).setStorm(false);
                         }
                     }, 20);
                 }
@@ -116,5 +118,19 @@ public class SkcraftEventHandler implements Listener {
                 }
             }, 1);
         }
+    }
+
+    @EventHandler
+    public static void onPlayerMoveEvent(PlayerMoveEvent event) {
+        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL) {
+            return;
+        }
+
+        if(!event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
+            return;
+        }
+
+        PlayerEnterStargateEvent playerEnterStargateEvent = new PlayerEnterStargateEvent(event.getPlayer());
+        Bukkit.getPluginManager().callEvent(playerEnterStargateEvent);
     }
 }

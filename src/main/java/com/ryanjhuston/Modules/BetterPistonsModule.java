@@ -31,7 +31,7 @@ public class BetterPistonsModule implements Listener {
         Sign sign;
 
         for(BlockFace blockFace : blockFaces) {
-            if(event.getBlock().getRelative(blockFace).getType() == Material.OAK_WALL_SIGN) {
+            if(event.getBlock().getRelative(blockFace).getType().toString().contains("_WALL_SIGN")) {
                 sign = (Sign)event.getBlock().getRelative(blockFace).getState();
                 Directional directional = (Directional)sign.getBlockData();
 
