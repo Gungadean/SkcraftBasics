@@ -33,6 +33,9 @@ public class GoldToolModule implements Listener {
 
     @EventHandler
     public void playerBreakBlock(BlockBreakEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
 
         Location location = event.getBlock().getLocation();
 

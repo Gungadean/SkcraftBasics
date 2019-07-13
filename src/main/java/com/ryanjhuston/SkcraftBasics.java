@@ -1,14 +1,14 @@
 package com.ryanjhuston;
 
 import com.ryanjhuston.Database.SqlHandler;
-import com.ryanjhuston.Events.PlayerEnterStargateEvent;
 import com.ryanjhuston.Modules.*;
 import com.ryanjhuston.Types.EnderTurret;
+import com.ryanjhuston.Types.Shop;
+import com.ryanjhuston.Types.SkcraftPlayer;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -28,7 +28,6 @@ public class SkcraftBasics extends JavaPlugin {
     public Logger logger = Logger.getLogger("Minecraft");
     public PluginManager pm = Bukkit.getPluginManager();
     public SkcraftCommandHandler skcraftCommandHandler;
-    public NamespacedKey namespacedKey;
 
     public SqlHandler sql;
 
@@ -51,15 +50,19 @@ public class SkcraftBasics extends JavaPlugin {
     public BetterPistonsModule betterPistonsModule;
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
+    public ShopModule shopModule;
 
-    private File playerItemsFile = new File(getDataFolder(), "playerItems.yml");
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
     private File networksFile = new File(getDataFolder(), "stargateNetworks.yml");
     private File turretsFile = new File(getDataFolder(), "enderTurrets.yml");
-    private FileConfiguration playerItems;
+    private File shopsFile = new File(getDataFolder(), "shops.yml");
+    public File playersDir = new File(getDataFolder(), "Players");
     private FileConfiguration stargatesConfig;
     private FileConfiguration networksConfig;
     private FileConfiguration turretsConfig;
+    private FileConfiguration shopsConfig;
+
+    public HashMap<String, SkcraftPlayer> skcraftPlayerList = new HashMap<>();
 
     public boolean debug = true;
 
@@ -70,8 +73,6 @@ public class SkcraftBasics extends JavaPlugin {
 
         createCustomConfigs();
         saveConfigs();
-
-        namespacedKey = new NamespacedKey(this, "SkcraftBasics");
 
         enderPearlTeleportModule = new EnderPearlTeleportModule(this);
         craftingModule = new CraftingModule(this);
@@ -85,6 +86,7 @@ public class SkcraftBasics extends JavaPlugin {
         betterPistonsModule = new BetterPistonsModule(this);
         afkModule = new AfkModule(this);
         mobTurretModule = new MobTurretModule(this);
+        shopModule = new ShopModule(this);
 
 
         /*if(useMysql) {
@@ -107,6 +109,8 @@ public class SkcraftBasics extends JavaPlugin {
         pm.registerEvents(betterPistonsModule, this);
         pm.registerEvents(afkModule, this);
         pm.registerEvents(mobTurretModule, this);
+        pm.registerEvents(shopModule, this);
+
 
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
             Location loc = Bukkit.getWorlds().get(0).getSpawnLocation();
@@ -114,11 +118,12 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         logger.info("[SkcraftBasics] Loading data from configs.");
+        playersDir.mkdirs();
         loadStargatesFromFile();
-        loadFlyersFromFile();
         loadBeaconsFromFile();
         loadChatChannelsFromFile();
         loadTurretsFromFile();
+        loadShopsFromFile();
         logger.info("[SkcraftBasics] Finished loading data from configs.");
 
         jetBootModule.registerJetbootDurabilityCheck();
@@ -128,6 +133,7 @@ public class SkcraftBasics extends JavaPlugin {
 
         this.getCommand("invite").setExecutor(skcraftCommandHandler);
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
+        this.getCommand("paccept").setExecutor(skcraftCommandHandler);
         this.getCommand("setspawn").setExecutor(skcraftCommandHandler);
         this.getCommand("nethercoords").setExecutor(skcraftCommandHandler);
         this.getCommand("here").setExecutor(skcraftCommandHandler);
@@ -142,10 +148,10 @@ public class SkcraftBasics extends JavaPlugin {
 
         logger.info("[SkcraftBasics] Saving data to configs.");
         saveStargatesToFile();
-        saveFlyersToFile();
         saveBeaconsToFile();
         saveChatChannelsToFile();
         saveTurretsToFile();
+        saveShopsToFile();
         logger.info("[SkcraftBasics] Finished saving data to configs.");
 
         saveConfig();
@@ -179,11 +185,6 @@ public class SkcraftBasics extends JavaPlugin {
     }
 
     private void createCustomConfigs() {
-        if (!playerItemsFile.exists()) {
-            playerItemsFile.getParentFile().mkdirs();
-            saveResource("playerItems.yml", false);
-        }
-
         if(!stargatesFile.exists()) {
             stargatesFile.getParentFile().mkdirs();
             saveResource("stargates.yml", false);
@@ -199,32 +200,33 @@ public class SkcraftBasics extends JavaPlugin {
             saveResource("enderTurrets.yml", false);
         }
 
-        playerItems = new YamlConfiguration();
+        if(!shopsFile.exists()) {
+            shopsFile.getParentFile().mkdirs();
+            saveResource("shops.yml", false);
+        }
+
         stargatesConfig = new YamlConfiguration();
         networksConfig = new YamlConfiguration();
         turretsConfig = new YamlConfiguration();
+        shopsConfig = new YamlConfiguration();
 
         try {
-            playerItems.load(playerItemsFile);
             stargatesConfig.load(stargatesFile);
             networksConfig.load(networksFile);
             turretsConfig.load(turretsFile);
+            shopsConfig.load(shopsFile);
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }
     }
 
-    public FileConfiguration getPlayerItemsList() {
-        return playerItems;
-    }
-
     public void saveConfigs() {
         saveConfig();
         try {
-            playerItems.save(playerItemsFile);
             stargatesConfig.save(stargatesFile);
             networksConfig.save(networksFile);
             turretsConfig.save(turretsFile);
+            shopsConfig.save(shopsFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -250,11 +252,49 @@ public class SkcraftBasics extends JavaPlugin {
         getConfig().set("Chat-Channels-List", channels);
     }
 
+    public void loadShopsFromFile() {
+        List<String> shopLocations = shopsConfig.getStringList("Shops");
+
+        for(String stringLocation : shopLocations) {
+            String path = stringLocation.replace(".", "^");
+            shopModule.getShops().put(stringToLocation(stringLocation),
+                    new Shop(shopsConfig.getString(path + ".Owner"),
+                            Material.matchMaterial(shopsConfig.getString(path + ".ProductMaterial")),
+                            shopsConfig.getInt(path + ".ProductAmount"),
+                            Material.matchMaterial(shopsConfig.getString(path + ".PriceMaterial")),
+                            shopsConfig.getInt(path + ".PriceAmount"),
+                            stringToLocation(stringLocation).add(0, -1, 0)));
+        }
+    }
+
+    public void saveShopsToFile() {
+        List<String> shopLocations = new ArrayList<>();
+
+        Iterator it = shopModule.getShops().entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            String stringLocation = locationToString((Location)pair.getKey()).replace(".", "^");
+            Shop shop = (Shop)pair.getValue();
+
+            shopsConfig.set(stringLocation + ".Owner", shop.getOwner());
+            shopsConfig.set(stringLocation + ".ProductMaterial", shop.getProduct().toString());
+            shopsConfig.set(stringLocation + ".ProductAmount", shop.getProductAmount());
+            shopsConfig.set(stringLocation + ".PriceMaterial", shop.getPrice().toString());
+            shopsConfig.set(stringLocation + ".PriceAmount", shop.getPriceAmount());
+
+            shopLocations.add(locationToString((Location)pair.getKey()));
+        }
+
+        shopsConfig.set("Shops", shopLocations);
+    }
+
     public void loadBeaconsFromFile() {
         List<String> beacons = getConfig().getStringList("Active-Beacons");
 
         for(String locationString : beacons) {
-            jetBootModule.activeBeacons.add(stringToLocation(locationString));
+            if(stringToLocation(locationString).getBlock().getType() == Material.BEACON) {
+                jetBootModule.activeBeacons.add(stringToLocation(locationString));
+            }
         }
     }
 
@@ -265,46 +305,6 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         getConfig().set("Active-Beacons", beaconLocations);
-    }
-
-    public void loadFlyersFromFile() {
-        List<String> stringData = getConfig().getStringList("Jetboot-Players");
-        Iterator it = stringData.iterator();
-
-        while(it.hasNext()) {
-            String player = (String)it.next();
-            jetBootModule.jetboots.add(player);
-        }
-
-        stringData = getConfig().getStringList("Flying-Players");
-        it = stringData.iterator();
-
-        while(it.hasNext()) {
-            String player = (String)it.next();
-            jetBootModule.flyingPlayers.add(player);
-        }
-    }
-
-    public void saveFlyersToFile() {
-        Iterator it = jetBootModule.jetboots.iterator();
-        List<String> stringData = new ArrayList<>();
-
-        while(it.hasNext()) {
-            String player = (String)it.next();
-            stringData.add(player);
-        }
-
-        getConfig().set("Jetboot-Players", stringData);
-
-        it = jetBootModule.flyingPlayers.iterator();
-        stringData = new ArrayList<>();
-
-        while(it.hasNext()) {
-            String player = (String)it.next();
-            stringData.add(player);
-        }
-
-        getConfig().set("Flying-Players", stringData);
     }
 
     public void loadStargatesFromFile() {

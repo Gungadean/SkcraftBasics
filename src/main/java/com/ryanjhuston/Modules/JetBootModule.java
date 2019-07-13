@@ -3,6 +3,7 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.*;
 import org.bukkit.block.Beacon;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -30,7 +31,6 @@ public class JetBootModule implements Listener {
 
     public List<Location> activeBeacons = new ArrayList<>();
     public List<String> jetboots = new ArrayList<>();
-    public List<String> flyingPlayers = new ArrayList<>();
 
     public JetBootModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -38,6 +38,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void onBeaconPlace(BlockPlaceEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(!event.canBuild()) {
             return;
         }
@@ -63,6 +67,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void onBaseBlockPlace(BlockPlaceEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(!event.canBuild()) {
             return;
         }
@@ -219,24 +227,7 @@ public class JetBootModule implements Listener {
     }
 
     @EventHandler
-    public void playerDisconnect(PlayerQuitEvent event) {
-        if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
-            if(event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-                if(event.getPlayer().isFlying()) {
-                    flyingPlayers.add(event.getPlayer().getUniqueId().toString());
-                }
-            }
-        }
-    }
-
-    @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
-        if(flyingPlayers.contains(event.getPlayer().getUniqueId().toString())) {
-            event.getPlayer().setAllowFlight(true);
-            event.getPlayer().setFlying(true);
-            flyingPlayers.remove(event.getPlayer().getUniqueId().toString());
-        }
-
         if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
             event.getPlayer().setAllowFlight(true);
         }
@@ -252,6 +243,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void removeJetboots(InventoryClickEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(!(event.getWhoClicked() instanceof Player)) {
             return;
         }
@@ -290,6 +285,16 @@ public class JetBootModule implements Listener {
         List<Location> forRemoval = new ArrayList<>();
 
         for(Location location : activeBeacons) {
+            if(!(location.getBlock().getType() == Material.BEACON)) {
+                forRemoval.add(location);
+                continue;
+            }
+
+            if(!(location.getBlock().getState() instanceof Beacon)) {
+                forRemoval.add(location);
+                continue;
+            }
+
             Beacon beacon = (Beacon)location.getBlock().getState();
 
             if(beacon.getTier() == 0) {

@@ -3,8 +3,13 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.type.Piston;
+import org.bukkit.block.data.type.Slab;
+import org.bukkit.block.data.type.Stairs;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -32,8 +37,19 @@ public class RotaterModule implements Listener {
             return;
         }
 
-        if (!(event.getClickedBlock().getBlockData() instanceof Directional)) {
+        if(event.getClickedBlock().getType().toString().endsWith("_BED") ||
+                event.getClickedBlock().getType() == Material.CHEST ||
+                event.getClickedBlock().getType() == Material.LEVER ||
+                event.getClickedBlock().getType() == Material.PISTON_HEAD ||
+                event.getClickedBlock().getType().toString().endsWith("_TRAPDOOR")||
+                event.getClickedBlock().getType().toString().endsWith("_BUTTON")) {
             return;
+        }
+
+        if(event.getClickedBlock().getType() == Material.PISTON) {
+            if(((Piston)event.getClickedBlock().getBlockData()).isExtended()) {
+                return;
+            }
         }
 
         if(players.contains(event.getPlayer().getUniqueId().toString())) {
@@ -49,19 +65,33 @@ public class RotaterModule implements Listener {
             }
         }, 2);
 
-        Directional directional = (Directional) event.getClickedBlock().getBlockData();
-
-        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            directional = rotateClockwise(directional);
-        } else {
-            directional = rotateCounterClockwise(directional);
+        if(event.getPlayer().isSneaking()) {
+            if(event.getClickedBlock().getType().toString().endsWith("_STAIRS")) {
+                flipStairs(event.getClickedBlock());
+                event.setCancelled(true);
+                return;
+            } else if(event.getClickedBlock().getType().toString().endsWith("_SLAB")) {
+                flipSlab(event.getClickedBlock());
+                event.setCancelled(true);
+                return;
+            }
         }
 
-        event.getClickedBlock().setBlockData(directional);
+        if(!(event.getClickedBlock().getBlockData() instanceof Directional)) {
+            return;
+        }
+
+        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            rotateClockwise(event.getClickedBlock());
+        } else {
+            rotateCounterClockwise(event.getClickedBlock());
+        }
+
         event.setCancelled(true);
     }
 
-    public Directional rotateClockwise(Directional directional) {
+    public void rotateClockwise(Block block) {
+        Directional directional = (Directional)block.getBlockData();
         BlockFace blockFace = directional.getFacing();
 
         if (blockFace == BlockFace.NORTH) {
@@ -74,10 +104,17 @@ public class RotaterModule implements Listener {
             directional.setFacing(BlockFace.NORTH);
         }
 
-        return directional;
+        block.setBlockData(directional);
+
+        if(isWallBlock(block)) {
+            if (block.getRelative(directional.getFacing().getOppositeFace()).getType() == Material.AIR) {
+                rotateClockwise(block);
+            }
+        }
     }
 
-    public Directional rotateCounterClockwise(Directional directional) {
+    public void rotateCounterClockwise(Block block) {
+        Directional directional = (Directional)block.getBlockData();
         BlockFace blockFace = directional.getFacing();
 
         if (blockFace == BlockFace.NORTH) {
@@ -90,20 +127,48 @@ public class RotaterModule implements Listener {
             directional.setFacing(BlockFace.NORTH);
         }
 
-        return directional;
+        block.setBlockData(directional);
+
+        if(isWallBlock(block)) {
+            if (block.getRelative(directional.getFacing().getOppositeFace()).getType() == Material.AIR) {
+                rotateCounterClockwise(block);
+            }
+        }
     }
 
-    public Directional flip(Directional directional) {
-        BlockFace blockFace = directional.getFacing();
+    public boolean isWallBlock(Block block) {
+        if(block.getType() == Material.WALL_TORCH ||
+                block.getType() == Material.REDSTONE_WALL_TORCH ||
+                block.getType() == Material.LADDER ||
+                block.getType() == Material.TRIPWIRE_HOOK ||
+                block.getType().toString().endsWith("_WALL_SIGN")) {
+            return true;
+        }
+        return false;
+    }
 
-        directional.setFacing(BlockFace.UP);
 
-        if(blockFace == BlockFace.UP) {
-            directional.setFacing(BlockFace.DOWN);
-        } else if(blockFace == BlockFace.DOWN){
-            directional.setFacing(BlockFace.UP);
+    public void flipStairs(Block block) {
+        Stairs stairs = (Stairs)block.getBlockData();
+
+        if(stairs.getHalf() == Bisected.Half.BOTTOM) {
+            stairs.setHalf(Bisected.Half.TOP);
+        } else {
+            stairs.setHalf(Bisected.Half.BOTTOM);
         }
 
-        return directional;
+        block.setBlockData(stairs);
+    }
+
+    public void flipSlab(Block block) {
+        Slab slab = (Slab)block.getBlockData();
+
+        if(slab.getType() == Slab.Type.BOTTOM) {
+            slab.setType(Slab.Type.TOP);
+        } else {
+            slab.setType(Slab.Type.BOTTOM);
+        }
+
+        block.setBlockData(slab);
     }
 }

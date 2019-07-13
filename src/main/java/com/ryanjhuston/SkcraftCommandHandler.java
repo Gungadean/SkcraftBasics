@@ -1,6 +1,7 @@
 package com.ryanjhuston;
 
 import com.ryanjhuston.Commands.*;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,7 +22,11 @@ public class SkcraftCommandHandler implements CommandExecutor {
         }
 
         if(command.equalsIgnoreCase("accept") && commandSender instanceof Player) {
-            AcceptCommand.command((Player)commandSender, args, plugin.enderPearlTeleportModule.teleportAuth);
+            AcceptCommand.command((Player)commandSender, args, plugin.skcraftPlayerList.get(((Player) commandSender).getUniqueId().toString()));
+        }
+
+        if(command.equalsIgnoreCase("paccept") && commandSender instanceof  Player) {
+            PermanentAcceptCommand.command((Player)commandSender, args, plugin.skcraftPlayerList.get(((Player) commandSender).getUniqueId().toString()));
         }
 
         if(command.equalsIgnoreCase("setspawn") && commandSender instanceof Player) {

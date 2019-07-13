@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -170,6 +169,8 @@ public class StargateModule implements Listener {
 
             portalName = sign.getLine(1);
 
+            portalName = portalName.replaceAll("[^a-zA-Z0-9]", "");
+
             if(stargateList.containsKey(portalName)) {
                 player.sendMessage(ChatColor.RED + "A portal with this name already exists.");
                 return false;
@@ -180,6 +181,7 @@ public class StargateModule implements Listener {
                 networkList.get(network).add(portalName);
             } else {
                 network = sign.getLine(2);
+                network = network.replaceAll("[^a-zA-Z0-9]", "");
                 if(!networkList.containsKey(network)) {
                     List<String> stargates = new ArrayList<>();
                     stargates.add(portalName);
@@ -284,6 +286,10 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void blockBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(event.getBlock().hasMetadata("Stargate")) {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
             if(stargateList.containsKey(stargate)) {
@@ -294,6 +300,10 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void onEnterStargate(PlayerEnterStargateEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         Stargate stargate = stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
         event.getPlayer().teleport(stargate.getTeleportLocation());
     }
@@ -431,6 +441,10 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void playerTeleport(PlayerPortalEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         for(int x = -1; x < 2; x++) {
             for(int z = -1; z < 2; z++) {
                 Block block = event.getPlayer().getLocation().getBlock().getRelative(x, 0, z);

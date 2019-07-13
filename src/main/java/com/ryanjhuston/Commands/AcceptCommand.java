@@ -1,5 +1,6 @@
 package com.ryanjhuston.Commands;
 
+import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -10,7 +11,7 @@ import java.util.Iterator;
 
 public class AcceptCommand {
 
-    public static void command(Player player, String[] args, HashMap<String, ArrayList<String>> teleportList) {
+    public static void command(Player player, String[] args, SkcraftPlayer skcraftPlayer) {
         if(args.length != 1) {
             player.sendMessage(ChatColor.RED + "Correct Usage: /accept {player-name}");
             return;
@@ -26,7 +27,12 @@ public class AcceptCommand {
                     return;
                 }
 
-                teleportList.get(player.getUniqueId().toString()).add(target.getUniqueId().toString());
+                if(skcraftPlayer.getTeleAuthed().contains(target.getUniqueId().toString())) {
+                    player.sendMessage(ChatColor.RED + "This player is already accepted.");
+                    return;
+                }
+
+                skcraftPlayer.getTeleAuthed().add(target.getUniqueId().toString());
                 player.sendMessage(ChatColor.YELLOW + target.getName() + " has been accepted.");
                 return;
             }

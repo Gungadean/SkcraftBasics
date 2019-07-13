@@ -55,6 +55,10 @@ public class CaptureBallModule implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(event.getDamager().getType() == EntityType.EGG) {
             event.setCancelled(true);
         }
@@ -62,6 +66,10 @@ public class CaptureBallModule implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.EGG) {
             return;
         }

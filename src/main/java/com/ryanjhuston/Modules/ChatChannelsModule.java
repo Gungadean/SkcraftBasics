@@ -33,6 +33,9 @@ public class ChatChannelsModule implements Listener {
         } else {
             List<String> players = new ArrayList<>();
             players.add(player);
+
+            channel = channel.replaceAll("[^a-zA-z0-9]", "");
+
             chatChannels.put(channel, players);
         }
         inChannelPlayers.put(player, channel);

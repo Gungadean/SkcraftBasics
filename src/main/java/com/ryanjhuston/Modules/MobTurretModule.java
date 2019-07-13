@@ -13,6 +13,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,29 +42,37 @@ public class MobTurretModule implements Listener {
                             enderTurret.updateBeam();
 
                             if(damageable.getHealth() <= 0) {
+                                enderTurret.getTarget().removeMetadata("Turret", plugin);
                                 enderTurret.setTarget(null);
+                                damageable.remove();
                             }
                         } else {
+                            enderTurret.getTarget().removeMetadata("Turret", plugin);
                             enderTurret.setTarget(null);
                         }
-                        break;
+                        continue;
                     }
 
                     for(Entity entity : enderTurret.getTurret().getNearbyEntities(40, 40, 40)) {
                         if(targetableMob(entity)) {
-                            if(((LivingEntity)entity).hasLineOfSight(enderTurret.getTurret())) {
+                            if(((LivingEntity)entity).hasLineOfSight(enderTurret.getTurret()) && !entity.hasMetadata("Turret")) {
                                 enderTurret.setTarget(entity);
+                                entity.setMetadata("Turret", new FixedMetadataValue(plugin, "True"));
                                 break;
                             }
                         }
                     }
                 }
             }
-        }, 0, 20);
+        }, 0, 10);
     }
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(!(event.getEntity() instanceof EnderCrystal)) {
             return;
         }

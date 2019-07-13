@@ -27,6 +27,10 @@ public class BetterPistonsModule implements Listener {
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         boolean hasSign = false;
         Sign sign;
 
@@ -64,6 +68,10 @@ public class BetterPistonsModule implements Listener {
 
     @EventHandler
     public void onSignPlace(SignChangeEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(event.getBlock().getType() != Material.OAK_WALL_SIGN) {
             return;
         }

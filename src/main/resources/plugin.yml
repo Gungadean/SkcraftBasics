@@ -5,6 +5,8 @@ api-version: 1.14
 commands:
   accept:
     description: Accept teleport requests from player.
+  paccept:
+    description: Permanently accept teleport requests from player.
   invite:
     description: Invite players to server.
   setspawn:
