@@ -63,6 +63,10 @@ public class BetterPistonsModule implements Listener {
             event.getBlocks().get(0).setType(Material.AIR);
             event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.SAND));
             event.setCancelled(true);
+        } else if(event.getBlocks().get(0).getType() == Material.RED_SANDSTONE) {
+            event.getBlocks().get(0).setType(Material.AIR);
+            event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.RED_SAND));
+            event.setCancelled(true);
         }
     }
 

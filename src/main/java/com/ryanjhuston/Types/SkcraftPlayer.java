@@ -21,6 +21,12 @@ public class SkcraftPlayer {
         this.pTeleAuthed = pTeleAuthed;
         this.teleAuthed = teleAuthed;
         this.playerConfig = playerConfig;
+
+        for(String player : pTeleAuthed) {
+            if(!teleAuthed.contains(player)) {
+                teleAuthed.add(player);
+            }
+        }
     }
 
     public String getUuid() {

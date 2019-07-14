@@ -66,6 +66,8 @@ public class EnderPearlTeleportModule implements Listener {
             if(skcraftPlayer.getTeleAuthed().contains(event.getWhoClicked().getUniqueId().toString())) {
                 event.getWhoClicked().teleport(Bukkit.getPlayer(playerName));
 
+                event.getWhoClicked().getInventory().removeItem(new ItemStack(Material.ENDER_PEARL, 1));
+
                 PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent((Player)event.getWhoClicked(), Bukkit.getPlayer(playerName), true);
                 Bukkit.getPluginManager().callEvent(teleportEvent);
             } else {

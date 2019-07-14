@@ -52,6 +52,10 @@ public class SkcraftCommandHandler implements CommandExecutor {
         if(command.equalsIgnoreCase("g") && commandSender instanceof Player) {
             GlobalChatCommand.command((Player)commandSender, args, plugin);
         }
+
+        if(command.equalsIgnoreCase("help")) {
+            HelpCommand.command(commandSender);
+        }
         return false;
     }
 }

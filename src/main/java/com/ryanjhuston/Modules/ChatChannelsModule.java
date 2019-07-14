@@ -29,6 +29,7 @@ public class ChatChannelsModule implements Listener {
         }
 
         if(chatChannels.containsKey(channel)) {
+            sendJoinMessage(Bukkit.getPlayer(player).getName(), channel);
             chatChannels.get(channel).add(player);
         } else {
             List<String> players = new ArrayList<>();
@@ -36,6 +37,7 @@ public class ChatChannelsModule implements Listener {
 
             channel = channel.replaceAll("[^a-zA-z0-9]", "");
 
+            sendJoinMessage(Bukkit.getPlayer(player).getName(), channel);
             chatChannels.put(channel, players);
         }
         inChannelPlayers.put(player, channel);
@@ -43,6 +45,8 @@ public class ChatChannelsModule implements Listener {
 
     public void leaveChatChannel(String player) {
         chatChannels.get(inChannelPlayers.get(player)).remove(player);
+
+        sendLeaveMessage(Bukkit.getPlayer(player).getName(), inChannelPlayers.get(player));
 
         if(chatChannels.get(inChannelPlayers.get(player)).isEmpty()) {
             chatChannels.remove(inChannelPlayers.get(player));
@@ -70,6 +74,30 @@ public class ChatChannelsModule implements Listener {
         if(inChannelPlayers.containsKey(uuid)) {
             sendMessageToChannel(uuid, inChannelPlayers.get(uuid), event.getMessage());
             event.setCancelled(true);
+        }
+    }
+
+    public void sendJoinMessage(String name, String channel) {
+        List<String> players = chatChannels.get(channel);
+
+        for(String receiver : players) {
+            if(plugin.checkOnline(receiver)) {
+                Player player = Bukkit.getPlayer(UUID.fromString(receiver));
+
+                player.sendMessage(ChatColor.YELLOW + "[" + channel + "] User " + name + " has joined the channel.");
+            }
+        }
+    }
+
+    public void sendLeaveMessage(String name, String channel) {
+        List<String> players = chatChannels.get(channel);
+
+        for(String receiver : players) {
+            if(plugin.checkOnline(receiver)) {
+                Player player = Bukkit.getPlayer(UUID.fromString(receiver));
+
+                player.sendMessage(ChatColor.YELLOW + "[" + channel + "] User " + name + " has left the channel.");
+            }
         }
     }
 

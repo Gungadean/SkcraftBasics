@@ -46,7 +46,7 @@ public class SkcraftBasics extends JavaPlugin {
     public ChatChannelsModule chatChannelsModule;
     public GoldToolModule goldToolModule;
     public RailModule railModule;
-    public RotaterModule rotaterModule;
+    public RotatorModule rotatorModule;
     public BetterPistonsModule betterPistonsModule;
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
@@ -82,7 +82,7 @@ public class SkcraftBasics extends JavaPlugin {
         chatChannelsModule = new ChatChannelsModule(this);
         goldToolModule = new GoldToolModule(this);
         railModule = new RailModule(this);
-        rotaterModule = new RotaterModule(this);
+        rotatorModule = new RotatorModule(this);
         betterPistonsModule = new BetterPistonsModule(this);
         afkModule = new AfkModule(this);
         mobTurretModule = new MobTurretModule(this);
@@ -105,7 +105,7 @@ public class SkcraftBasics extends JavaPlugin {
         pm.registerEvents(chatChannelsModule, this);
         pm.registerEvents(goldToolModule, this);
         pm.registerEvents(railModule, this);
-        pm.registerEvents(rotaterModule, this);
+        pm.registerEvents(rotatorModule, this);
         pm.registerEvents(betterPistonsModule, this);
         pm.registerEvents(afkModule, this);
         pm.registerEvents(mobTurretModule, this);
@@ -140,11 +140,16 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("join").setExecutor(skcraftCommandHandler);
         this.getCommand("leave").setExecutor(skcraftCommandHandler);
         this.getCommand("g").setExecutor(skcraftCommandHandler);
+        this.getCommand("help").setExecutor(skcraftCommandHandler);
 
         logger.info("has started.");
     }
 
     public void onDisable() {
+
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            savePlayerToFile(player);
+        }
 
         logger.info("[SkcraftBasics] Saving data to configs.");
         saveStargatesToFile();
@@ -451,5 +456,25 @@ public class SkcraftBasics extends JavaPlugin {
             }
         }
         return false;
+    }
+
+    public void savePlayerToFile(Player player) {
+        String uuid = player.getUniqueId().toString();
+        SkcraftPlayer skcraftPlayer = skcraftPlayerList.get(uuid);
+
+        skcraftPlayer.getConfig().set("TeleportItem" , skcraftPlayer.getTeleportItem().toString());
+        skcraftPlayer.getConfig().set("WasFlying", player.isFlying());
+        skcraftPlayer.getConfig().set("PermanentTeleAuthed", skcraftPlayer.getPTeleAuthed());
+        skcraftPlayer.getConfig().set("TeleAuthed", skcraftPlayer.getTeleAuthed());
+
+        File playerFile = new File(playersDir, uuid + ".yml");
+
+        try {
+            skcraftPlayer.getConfig().save(playerFile);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
+        skcraftPlayerList.remove(uuid);
     }
 }

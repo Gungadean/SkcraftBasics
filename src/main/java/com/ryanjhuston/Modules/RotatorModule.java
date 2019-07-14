@@ -18,12 +18,12 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RotaterModule implements Listener {
+public class RotatorModule implements Listener {
 
     private SkcraftBasics plugin;
     private List<String> players = new ArrayList<>();
 
-    public RotaterModule(SkcraftBasics plugin) {
+    public RotatorModule(SkcraftBasics plugin) {
         this.plugin = plugin;
     }
 

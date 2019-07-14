@@ -21,3 +21,5 @@ commands:
     description: Leave chat channel.
   g:
     description: Message global chat when in a channel.
+  help:
+    description: A not very helpful help command.

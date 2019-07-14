@@ -17,7 +17,6 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
@@ -78,23 +77,7 @@ public class SkcraftEventHandler implements Listener {
 
     @EventHandler
     public void onPlayerDisconnect(PlayerQuitEvent event) {
-        String uuid = event.getPlayer().getUniqueId().toString();
-        SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(uuid);
-
-        skcraftPlayer.getConfig().set("TeleportItem" , skcraftPlayer.getTeleportItem().toString());
-        skcraftPlayer.getConfig().set("WasFlying", event.getPlayer().isFlying());
-        skcraftPlayer.getConfig().set("PermanentTeleAuthed", skcraftPlayer.getPTeleAuthed());
-        skcraftPlayer.getConfig().set("TeleAuthed", skcraftPlayer.getTeleAuthed());
-
-        File playerFile = new File(plugin.playersDir, uuid + ".yml");
-
-        try {
-            skcraftPlayer.getConfig().save(playerFile);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-
-        plugin.skcraftPlayerList.remove(uuid);
+        plugin.savePlayerToFile(event.getPlayer());
     }
 
     @EventHandler

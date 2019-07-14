@@ -6,8 +6,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.Iterator;
-
 public class PermanentAcceptCommand {
 
     public static void command(Player player, String[] args, SkcraftPlayer skcraftPlayer) {
@@ -42,6 +40,10 @@ public class PermanentAcceptCommand {
             return;
         }
 
+        if(!skcraftPlayer.getTeleAuthed().contains(target.getUniqueId().toString())) {
+            skcraftPlayer.getTeleAuthed().add(target.getUniqueId().toString());
+        }
+
         skcraftPlayer.getPTeleAuthed().add(target.getUniqueId().toString());
         player.sendMessage(ChatColor.YELLOW + target.getName() + " has been added to your accepted list.");
         return;
@@ -60,6 +62,10 @@ public class PermanentAcceptCommand {
         if(!skcraftPlayer.getPTeleAuthed().contains(target.getUniqueId().toString())) {
             player.sendMessage(ChatColor.RED + "This player is not currently accepted.");
             return;
+        }
+
+        if(skcraftPlayer.getTeleAuthed().contains(target.getUniqueId().toString())) {
+            skcraftPlayer.getTeleAuthed().remove(target.getUniqueId().toString());
         }
 
         skcraftPlayer.getPTeleAuthed().remove(target.getUniqueId().toString());

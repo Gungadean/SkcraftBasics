@@ -200,7 +200,12 @@ public class ShopModule implements Listener {
             return;
         }
 
+        if(event.getInventory().getLocation() == null) {
+            return;
+        }
+
         Block block = event.getInventory().getLocation().getBlock();
+
         Shop shop = getShopFromBlock(block);
 
         if(shop == null) {
