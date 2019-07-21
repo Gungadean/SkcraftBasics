@@ -23,3 +23,9 @@ commands:
     description: Message global chat when in a channel.
   help:
     description: A not very helpful help command.
+  worldmanager:
+    description: A world management addition.
+  wm:
+    description: Short form of /worldmanager.
+  admin:
+    description: Admin creation command

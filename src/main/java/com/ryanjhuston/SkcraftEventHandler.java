@@ -5,11 +5,17 @@ import com.ryanjhuston.Lib.ChatColorLib;
 import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ComplexEntityPart;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
@@ -36,8 +42,7 @@ public class SkcraftEventHandler implements Listener {
         }
 
         if(!event.getPlayer().hasPlayedBefore()) {
-            String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-            event.getPlayer().teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+            event.getPlayer().teleport(plugin.spawnLocation);
         }
 
         String uuid = event.getPlayer().getUniqueId().toString();
@@ -51,7 +56,18 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            plugin.skcraftPlayerList.put(uuid, new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), playerConfig));
+            Material teleportItem;
+
+            if(playerConfig.getString("TeleportItem") == null) {
+                Random random = new Random();
+                do {
+                    teleportItem = Material.values()[random.nextInt(Material.values().length - 1)];
+                } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR || !teleportItem.isItem());
+            } else {
+                teleportItem = Material.matchMaterial(playerConfig.getString("TeleportItem"));
+            }
+
+            plugin.skcraftPlayerList.put(uuid, new SkcraftPlayer(uuid, teleportItem, playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), playerConfig.getBoolean("IsAdmin"), playerConfig));
         } else {
             try {
                 playerFile.createNewFile();
@@ -64,9 +80,9 @@ public class SkcraftEventHandler implements Listener {
             Random random = new Random();
             do {
                 teleportItem = Material.values()[random.nextInt(Material.values().length - 1)];
-            } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR);
+            } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR || !teleportItem.isItem());
 
-            plugin.skcraftPlayerList.put(uuid, new SkcraftPlayer(uuid, teleportItem, false, new ArrayList<>(), new ArrayList<>(), playerConfig));
+            plugin.skcraftPlayerList.put(uuid, new SkcraftPlayer(uuid, teleportItem, false, new ArrayList<>(), new ArrayList<>(), false, playerConfig));
         }
 
         if(plugin.skcraftPlayerList.get(uuid).wasFlying()) {
@@ -87,10 +103,8 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
-        String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-        event.setRespawnLocation(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+        event.setRespawnLocation(plugin.spawnLocation);
     }
-
 
     @EventHandler
     public void onPlayerSleep(PlayerBedEnterEvent event) {
@@ -207,6 +221,7 @@ public class SkcraftEventHandler implements Listener {
         }
 
         if(!(event.getEntity() instanceof Player)) {
+            event.setCancelled(true);
             return;
         }
 
@@ -236,5 +251,61 @@ public class SkcraftEventHandler implements Listener {
                 return;
             }
         }
+    }
+
+    @EventHandler
+    public void onExplosion(EntityExplodeEvent event) {
+        if(event.getEntity().getWorld().getName().equals("Mining")) {
+            return;
+        }
+
+        event.blockList().clear();
+    }
+
+    @EventHandler
+    public void onMobGrief(EntityChangeBlockEvent event) {
+        if(event.isCancelled()) {
+            return;
+        }
+
+        if(event.getEntity().getWorld().getName().equals("Mining")) {
+            return;
+        }
+
+        if(event.getEntityType() == EntityType.ENDERMAN ||
+                event.getEntityType() == EntityType.RABBIT ||
+                event.getEntityType() == EntityType.ZOMBIE ||
+                event.getEntityType() == EntityType.ZOMBIE_VILLAGER) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if(event.getEntity() instanceof ComplexEntityPart) {
+            if(((ComplexEntityPart)event.getEntity()).getParent().getType() == EntityType.ENDER_DRAGON) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        String uuid = event.getPlayer().getUniqueId().toString();
+
+        if(plugin.interactCooldown.contains(uuid)) {
+            return;
+        }
+
+        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_EYE && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+            event.getPlayer().openInventory(event.getPlayer().getEnderChest());
+            event.setCancelled(true);
+        }
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                plugin.interactCooldown.remove(uuid);
+            }
+        }, 2);
     }
 }

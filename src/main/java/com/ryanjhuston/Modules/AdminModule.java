@@ -1,4 +1,15 @@
 package com.ryanjhuston.Modules;
 
-public class AdminModule {
+import com.ryanjhuston.SkcraftBasics;
+import org.bukkit.event.Listener;
+
+public class AdminModule implements Listener {
+
+    private SkcraftBasics plugin;
+
+    public AdminModule(SkcraftBasics plugin) {
+        this.plugin = plugin;
+    }
+
+
 }

@@ -28,13 +28,17 @@ public class CaptureBallModule implements Listener {
         entityList.add(EntityType.WANDERING_TRADER);
         entityList.add(EntityType.TRADER_LLAMA);
         entityList.add(EntityType.WITHER);
+        entityList.add(EntityType.VILLAGER);
+        entityList.add(EntityType.ZOMBIE_VILLAGER);
 
         this.plugin = plugin;
     }
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
-        if(event.getHitEntity() == null) {
+        Entity entity = event.getHitEntity();
+
+        if(entity == null) {
             return;
         }
 
@@ -42,15 +46,15 @@ public class CaptureBallModule implements Listener {
             return;
         }
 
-        if (entityList.contains(event.getHitEntity().getType())) {
+        if (entityList.contains(entity.getType())) {
             return;
         }
 
-        if (!(event.getHitEntity() instanceof LivingEntity)) {
+        if (!(entity instanceof LivingEntity)) {
             return;
         }
 
-        hitEntity.add(event.getHitEntity());
+        hitEntity.add(entity);
     }
 
     @EventHandler
@@ -92,11 +96,17 @@ public class CaptureBallModule implements Listener {
     }
 
     public ItemStack makeSpawnEgg(Entity entity) {
-        if(Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG") == null) {
+        Material material;
+
+        if(entity.getType() == EntityType.MUSHROOM_COW) {
+            material = Material.MOOSHROOM_SPAWN_EGG;
+        } else if(Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG") != null) {
+            material = Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG");
+        } else {
             return null;
         }
 
-        ItemStack spawnEgg = new ItemStack(Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG"));
+        ItemStack spawnEgg = new ItemStack(material);
         return spawnEgg;
     }
 }

@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -79,6 +80,10 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
         if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_PEARL && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             if(!event.getPlayer().isSneaking()) {
                 return;
@@ -92,12 +97,7 @@ public class EnderPearlTeleportModule implements Listener {
             event.setCancelled(true);
         }
 
-        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_EYE && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
-            event.getPlayer().openInventory(event.getPlayer().getEnderChest());
-            event.setCancelled(true);
-        }
-
-        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+        if(event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getPlayer().isSneaking()) {
             if(event.getClickedBlock().getType().toString().contains("_BED")) {
                 event.getPlayer().setBedSpawnLocation(event.getClickedBlock().getLocation());
                 event.getPlayer().sendMessage(ChatColor.GOLD + "Spawn point has been set!");
@@ -156,13 +156,11 @@ public class EnderPearlTeleportModule implements Listener {
                 }, 1L);
             }
         } else {
-            String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-
             //Fix for "Removing ticking entity" bug when teleporting between dimensions.
             plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
                 public void run() {
-                    player.teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+                    player.teleport(plugin.spawnLocation);
                 }
             }, 1L);
         }
@@ -185,6 +183,12 @@ public class EnderPearlTeleportModule implements Listener {
         for(Iterator iterator = Bukkit.getOnlinePlayers().iterator(); iterator.hasNext();) {
             Player player = (Player) iterator.next();
             SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(player.getUniqueId().toString());
+
+            if(player.hasMetadata("vanished")) {
+                if(player.getMetadata("vanished").get(0).asBoolean()) {
+                    continue;
+                }
+            }
 
             if(!target.getDisplayName().equals(player.getDisplayName())) {
                 ItemStack item = new ItemStack(skcraftPlayer.getTeleportItem(), 1);

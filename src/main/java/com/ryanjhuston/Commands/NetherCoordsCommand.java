@@ -2,15 +2,15 @@ package com.ryanjhuston.Commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.block.Biome;
+import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 
 public class NetherCoordsCommand {
 
-    public static void command(Player player) {
-        if(player.getWorld().getBiome(0, 0) == Biome.THE_END)
+    public static void command(Player player) throws CommandException {
+        if(player.getWorld().getBiome(0, 0) == Biome.THE_END || player.getWorld().getName().equals("Mining"))
         {
-            player.sendMessage(ChatColor.RED + "You cannot use this command in this world.");
-            return;
+            throw new CommandException("You cannot use this command in this world.");
         }
 
         if(player.getWorld().getBiome(0, 0) == Biome.NETHER) {

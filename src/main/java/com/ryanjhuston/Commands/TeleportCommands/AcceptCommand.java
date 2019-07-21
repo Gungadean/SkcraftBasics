@@ -1,8 +1,10 @@
-package com.ryanjhuston.Commands;
+package com.ryanjhuston.Commands.TeleportCommands;
 
 import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -11,10 +13,9 @@ import java.util.Iterator;
 
 public class AcceptCommand {
 
-    public static void command(Player player, String[] args, SkcraftPlayer skcraftPlayer) {
+    public static void command(Player player, String[] args, SkcraftPlayer skcraftPlayer) throws CommandException {
         if(args.length != 1) {
-            player.sendMessage(ChatColor.RED + "Correct Usage: /accept {player-name}");
-            return;
+            throw new CommandException("Correct Usage: /accept {player-name}");
         }
 
         String username = args[0];
@@ -23,13 +24,11 @@ public class AcceptCommand {
             Player target = (Player)iterator.next();
             if(target.getName().toLowerCase().startsWith(username.toLowerCase())) {
                 if(player.getName().equals(target.getName())) {
-                    player.sendMessage(ChatColor.RED + "You cannot accept yourself.");
-                    return;
+                    throw new CommandException("You cannot accept yourself.");
                 }
 
                 if(skcraftPlayer.getTeleAuthed().contains(target.getUniqueId().toString())) {
-                    player.sendMessage(ChatColor.RED + "This player is already accepted.");
-                    return;
+                    throw new CommandException("This player is already accepted.");
                 }
 
                 skcraftPlayer.getTeleAuthed().add(target.getUniqueId().toString());
@@ -38,6 +37,6 @@ public class AcceptCommand {
             }
         }
 
-        player.sendMessage(ChatColor.RED + "Error: This player is not online.");
+        throw new CommandException("Error: This player is not online.");
     }
 }

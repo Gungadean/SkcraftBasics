@@ -1,26 +1,24 @@
-package com.ryanjhuston.Commands;
+package com.ryanjhuston.Commands.ChatChannelCommands;
 
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.ChatColor;
+import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 
 public class JoinCommand {
 
-    public static void command(Player player, String[] args, SkcraftBasics plugin) {
+    public static void command(Player player, String[] args, SkcraftBasics plugin) throws CommandException {
         if(args.length == 0) {
-            player.sendMessage(ChatColor.RED + "Correct Usage: /join {channel}");
-            return;
+            throw new CommandException("Correct Usage: /join {channel}");
         }
 
         if(args.length > 1) {
-            player.sendMessage(ChatColor.RED + "Correct Usage: /join {channel}");
-            return;
+            throw new CommandException("Correct Usage: /join {channel}");
         }
 
         if(plugin.chatChannelsModule.inChannelPlayers.containsKey(player.getUniqueId().toString())) {
             if(plugin.chatChannelsModule.inChannelPlayers.get(player.getUniqueId().toString()).equals(args[0])) {
-                player.sendMessage(ChatColor.RED + "You are already a member of this channel.");
-                return;
+                throw new CommandException("You are already a member of this channel.");
             }
         }
 

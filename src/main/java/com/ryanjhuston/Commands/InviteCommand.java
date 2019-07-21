@@ -3,28 +3,26 @@ package com.ryanjhuston.Commands;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class InviteCommand {
 
-    public static void command(CommandSender commandSender, String[] args) {
+    public static void command(CommandSender commandSender, String[] args) throws CommandException{
 
         if(args.length != 1) {
-            commandSender.sendMessage(ChatColor.RED + "Correct Usage: /invite {player-name}");
-            return;
+            throw new CommandException("Correct Usage: /invite {player-name}");
         }
 
         if(commandSender instanceof Player && commandSender.getName().equals(args[0])) {
-            commandSender.sendMessage(ChatColor.RED + "You cannot invite yourself.");
-            return;
+            throw new CommandException("You cannot invite yourself.");
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
 
         if(target.isWhitelisted()) {
-            commandSender.sendMessage(ChatColor.RED + "This player is already invited.");
-            return;
+            throw new CommandException("This player is already invited.");
         }
 
         if(target != null) {
@@ -33,6 +31,6 @@ public class InviteCommand {
             return;
         }
 
-        commandSender.sendMessage(ChatColor.RED + "Player was not found. Please check the spelling and try again.");
+        throw new CommandException("Player was not found. Please check the spelling and try again.");
     }
 }

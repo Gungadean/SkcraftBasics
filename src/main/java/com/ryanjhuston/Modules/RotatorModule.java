@@ -1,7 +1,6 @@
 package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -15,13 +14,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class RotatorModule implements Listener {
 
     private SkcraftBasics plugin;
-    private List<String> players = new ArrayList<>();
 
     public RotatorModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -52,18 +47,9 @@ public class RotatorModule implements Listener {
             }
         }
 
-        if(players.contains(event.getPlayer().getUniqueId().toString())) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
-
-        players.add(event.getPlayer().getUniqueId().toString());
-
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                players.remove(event.getPlayer().getUniqueId().toString());
-            }
-        }, 2);
 
         if(event.getPlayer().isSneaking()) {
             if(event.getClickedBlock().getType().toString().endsWith("_STAIRS")) {

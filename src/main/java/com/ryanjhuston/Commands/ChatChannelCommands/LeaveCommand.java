@@ -1,20 +1,19 @@
-package com.ryanjhuston.Commands;
+package com.ryanjhuston.Commands.ChatChannelCommands;
 
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.ChatColor;
+import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 
 public class LeaveCommand {
 
-    public static void command(Player player, String[] args, SkcraftBasics plugin) {
+    public static void command(Player player, String[] args, SkcraftBasics plugin) throws CommandException {
         if(args.length != 0) {
-            player.sendMessage(ChatColor.RED + "Correct Usage: /leave");
-            return;
+            throw new CommandException("Correct Usage: /leave");
         }
 
         if(!plugin.chatChannelsModule.inChannelPlayers.containsKey(player.getUniqueId().toString())) {
-            player.sendMessage(ChatColor.RED + "You are not currently in a chat channel.");
-            return;
+            throw new CommandException("You are not currently in a chat channel.");
         }
 
         plugin.chatChannelsModule.leaveChatChannel(player.getUniqueId().toString());

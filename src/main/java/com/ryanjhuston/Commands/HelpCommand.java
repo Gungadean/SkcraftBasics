@@ -6,6 +6,6 @@ import org.bukkit.command.CommandSender;
 public class HelpCommand {
 
     public static void command(CommandSender commandSender) {
-        commandSender.sendMessage(ChatColor.RED + "Information about commands and mechanics can be found on our wiki at: https://Gungadean.com/");
+        commandSender.sendMessage(ChatColor.GREEN + "Information about commands and mechanics can be found on our wiki at: http://gungadean.com/");
     }
 }

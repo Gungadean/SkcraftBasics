@@ -9,7 +9,9 @@ import com.ryanjhuston.Types.Stargate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Sign;
+import org.bukkit.command.CommandException;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -26,17 +28,17 @@ import java.util.logging.Logger;
 public class SkcraftBasics extends JavaPlugin {
 
     public Logger logger = Logger.getLogger("Minecraft");
-    public PluginManager pm = Bukkit.getPluginManager();
-    public SkcraftCommandHandler skcraftCommandHandler;
+    private PluginManager pm = Bukkit.getPluginManager();
+    private SkcraftCommandHandler skcraftCommandHandler;
 
-    public SqlHandler sql;
+    private SqlHandler sql;
 
-    public boolean useMysql;
-    public String username;
-    public String password;
-    public String address;
-    public int port;
-    public String database;
+    private boolean useMysql;
+    private String username;
+    private String password;
+    private String address;
+    private int port;
+    private String database;
 
     public EnderPearlTeleportModule enderPearlTeleportModule;
     public CraftingModule craftingModule;
@@ -51,6 +53,10 @@ public class SkcraftBasics extends JavaPlugin {
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
     public ShopModule shopModule;
+    public GalapagosModule galapagosModule;
+    public InkSignModule inkSignModule;
+    public MiningWorldModule miningWorldModule;
+    public ChunkLoaderModule chunkLoaderModule;
 
     private File stargatesFile = new File(getDataFolder(), "stargates.yml");
     private File networksFile = new File(getDataFolder(), "stargateNetworks.yml");
@@ -63,6 +69,10 @@ public class SkcraftBasics extends JavaPlugin {
     private FileConfiguration shopsConfig;
 
     public HashMap<String, SkcraftPlayer> skcraftPlayerList = new HashMap<>();
+    public Location spawnLocation;
+    public SkcraftWorldManager worldManager;
+    public List<World> worlds = new ArrayList<>();
+    public List<String> interactCooldown = new ArrayList<>();
 
     public boolean debug = true;
 
@@ -87,6 +97,10 @@ public class SkcraftBasics extends JavaPlugin {
         afkModule = new AfkModule(this);
         mobTurretModule = new MobTurretModule(this);
         shopModule = new ShopModule(this);
+        galapagosModule = new GalapagosModule(this);
+        inkSignModule = new InkSignModule(this);
+        miningWorldModule = new MiningWorldModule(this);
+        chunkLoaderModule = new ChunkLoaderModule(this);
 
 
         /*if(useMysql) {
@@ -110,11 +124,16 @@ public class SkcraftBasics extends JavaPlugin {
         pm.registerEvents(afkModule, this);
         pm.registerEvents(mobTurretModule, this);
         pm.registerEvents(shopModule, this);
+        pm.registerEvents(galapagosModule, this);
+        pm.registerEvents(inkSignModule, this);
+        pm.registerEvents(miningWorldModule, this);
+        pm.registerEvents(chunkLoaderModule, this);
 
 
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
-            Location loc = Bukkit.getWorlds().get(0).getSpawnLocation();
-            getConfig().set("Spawn-Location", loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + "," + loc.getYaw() + "," + loc.getPitch());
+            spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
+        } else {
+            spawnLocation = stringToLocation(getConfig().getString("Spawn-Location"));
         }
 
         logger.info("[SkcraftBasics] Loading data from configs.");
@@ -130,6 +149,15 @@ public class SkcraftBasics extends JavaPlugin {
         jetBootModule.registerBeaconCheck();
 
         skcraftCommandHandler = new SkcraftCommandHandler(this);
+        worldManager = new SkcraftWorldManager(this);
+
+        for(String world : getConfig().getStringList("Loaded-Worlds")) {
+            try {
+                worldManager.loadWorld(world);
+            } catch (CommandException e) {
+                e.printStackTrace();
+            }
+        }
 
         this.getCommand("invite").setExecutor(skcraftCommandHandler);
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
@@ -141,6 +169,9 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("leave").setExecutor(skcraftCommandHandler);
         this.getCommand("g").setExecutor(skcraftCommandHandler);
         this.getCommand("help").setExecutor(skcraftCommandHandler);
+        this.getCommand("worldmanager").setExecutor(skcraftCommandHandler);
+        this.getCommand("wm").setExecutor(skcraftCommandHandler);
+        this.getCommand("admin").setExecutor(skcraftCommandHandler);
 
         logger.info("has started.");
     }
@@ -159,12 +190,22 @@ public class SkcraftBasics extends JavaPlugin {
         saveShopsToFile();
         logger.info("[SkcraftBasics] Finished saving data to configs.");
 
+        getConfig().set("Spawn-Location", locationToString(spawnLocation));
+
+        List<String> worldNames = new ArrayList<>();
+
+        for(World world : worlds) {
+            worldNames.add(world.getName());
+        }
+
+        getConfig().set("Loaded-Worlds", worldNames);
+
         saveConfig();
         saveConfigs();
         logger.info("has stopped.");
     }
 
-    public void loadConfig() {
+    private void loadConfig() {
         this.useMysql = getConfig().getBoolean("Use-Mysql");
         if(useMysql) {
             this.username = getConfig().getString("Mysql.Username");
@@ -175,7 +216,7 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
-    public void reloadPlugin() {
+    private void reloadPlugin() {
         boolean useMysqlOld = useMysql;
 
         loadConfig();
@@ -466,6 +507,7 @@ public class SkcraftBasics extends JavaPlugin {
         skcraftPlayer.getConfig().set("WasFlying", player.isFlying());
         skcraftPlayer.getConfig().set("PermanentTeleAuthed", skcraftPlayer.getPTeleAuthed());
         skcraftPlayer.getConfig().set("TeleAuthed", skcraftPlayer.getTeleAuthed());
+        skcraftPlayer.getConfig().set("IsAdmin", skcraftPlayer.isAdmin());
 
         File playerFile = new File(playersDir, uuid + ".yml");
 

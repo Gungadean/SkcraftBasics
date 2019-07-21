@@ -3,7 +3,6 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.*;
 import org.bukkit.block.Beacon;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -12,16 +11,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +31,8 @@ public class JetBootModule implements Listener {
 
     public List<Location> activeBeacons = new ArrayList<>();
     public List<String> jetboots = new ArrayList<>();
+    public HashMap<String, Integer> flyTime = new HashMap<>();
+    public List<String> fallGraceCheck = new ArrayList<>();
 
     public JetBootModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -126,18 +128,39 @@ public class JetBootModule implements Listener {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
+                List<Player> forRemoval = new ArrayList<>();
+
                 for(String uuid : jetboots) {
                     Player player = Bukkit.getPlayer(UUID.fromString(uuid));
                     if(player != null) {
                         if(player.getGameMode() != GameMode.CREATIVE) {
                             if (player.isFlying()) {
-                                updateDurability(player);
+                                if(!flyTime.containsKey(player.getUniqueId().toString())) {
+                                    flyTime.put(player.getUniqueId().toString(), 1);
+                                }
+
+                                int currentFlyTime = flyTime.get(player.getUniqueId().toString());
+
+                                if(currentFlyTime >= 10) {
+                                    boolean remove = updateDurability(player);
+                                    if(remove) {
+                                        forRemoval.add(player);
+                                    }
+
+                                    flyTime.replace(player.getUniqueId().toString(), 1);
+                                } else {
+                                    flyTime.replace(player.getUniqueId().toString(), (currentFlyTime + 1));
+                                }
                             }
                         }
                     }
                 }
+
+                for(Player player : forRemoval) {
+                    deactivateJetboots(player);
+                }
             }
-        }, 0, 200);
+        }, 0, 20);
     }
 
     public void registerBeaconCheck() {
@@ -178,6 +201,11 @@ public class JetBootModule implements Listener {
                             continue;
                         }
 
+                        if(((Damageable)player.getInventory().getBoots().getItemMeta()).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability()-1)) {
+                            deactivateJetboots(player);
+                            continue;
+                        }
+
                         activateJetboots(player);
                     }
                 }
@@ -191,6 +219,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
@@ -281,6 +313,26 @@ public class JetBootModule implements Listener {
         deactivateJetboots((Player)event.getWhoClicked());
     }
 
+    @EventHandler
+    public void fallDamage(EntityDamageEvent event) {
+        if(event.getCause() != EntityDamageEvent.DamageCause.FALL) {
+            return;
+        }
+
+        if(!(event.getEntity() instanceof Player)) {
+            return;
+        }
+
+        String uuid = event.getEntity().getUniqueId().toString();
+
+        if(!fallGraceCheck.contains(uuid)) {
+            return;
+        }
+
+        fallGraceCheck.remove(uuid);
+        event.setCancelled(true);
+    }
+
     public boolean checkBeaconList(String uuid) {
         List<Location> forRemoval = new ArrayList<>();
 
@@ -322,23 +374,37 @@ public class JetBootModule implements Listener {
     }
 
     public void deactivateJetboots(Player player) {
-        if(jetboots.contains(player.getUniqueId().toString())) {
-            jetboots.remove(player.getUniqueId().toString());
+        String uuid = player.getUniqueId().toString();
+
+        if(jetboots.contains(uuid)) {
+            jetboots.remove(uuid);
         }
 
         if(player.getGameMode() != GameMode.CREATIVE) {
             player.setFlying(false);
             player.setAllowFlight(false);
+
+            fallGraceCheck.add(uuid);
+
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    if(fallGraceCheck.contains(uuid)) {
+                        fallGraceCheck.remove(uuid);
+                    }
+                }
+            }, 200);
         }
     }
 
-    public void updateDurability(Player player) {
+    public boolean updateDurability(Player player) {
         ItemMeta meta = player.getInventory().getBoots().getItemMeta();
         ((Damageable)meta).setDamage(((Damageable)meta).getDamage()+1);
         player.getInventory().getBoots().setItemMeta(meta);
 
-        if(((Damageable)meta).getDamage() >= player.getInventory().getBoots().getType().getMaxDurability()) {
-            deactivateJetboots(player);
+        if(((Damageable)meta).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability()-1)) {
+            return true;
         }
+        return false;
     }
 }

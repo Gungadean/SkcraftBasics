@@ -2,6 +2,7 @@ package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Shop;
+import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -90,6 +91,7 @@ public class ShopModule implements Listener {
             return;
         }
 
+        event.setLine(0, "[Shop]");
         event.setLine(3, player.getName());
         shops.put(event.getBlock().getLocation(), new Shop(player.getUniqueId().toString(), productMat, productAmount, priceMat, priceAmount, event.getBlock().getRelative(0, -1, 0).getLocation()));
         player.sendMessage(ChatColor.GOLD + "You successfully created a shop.");
@@ -107,7 +109,9 @@ public class ShopModule implements Listener {
             return;
         }
 
-        if(!event.getPlayer().getUniqueId().toString().equals(shop.getOwner())) {
+        SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(event.getPlayer().getUniqueId().toString());
+
+        if(!skcraftPlayer.getUuid().equals(shop.getOwner()) && !skcraftPlayer.isAdmin()) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "You do not have permission to remove this shop.");
             return;
@@ -123,6 +127,10 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
         if(event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
@@ -183,7 +191,9 @@ public class ShopModule implements Listener {
             return;
         }
 
-        if(!event.getPlayer().getUniqueId().toString().equals(shop.getOwner())) {
+        SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(event.getPlayer().getUniqueId().toString());
+
+        if(!skcraftPlayer.getUuid().equals(shop.getOwner()) && !skcraftPlayer.isAdmin()) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "You cannot add a chest to this shop.");
             return;
@@ -212,7 +222,9 @@ public class ShopModule implements Listener {
             return;
         }
 
-        if(!event.getPlayer().getUniqueId().toString().equals(shop.getOwner())) {
+        SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(event.getPlayer().getUniqueId().toString());
+
+        if(!skcraftPlayer.getUuid().equals(shop.getOwner()) && !skcraftPlayer.isAdmin()) {
             event.getPlayer().sendMessage(ChatColor.RED + "You do not have permission to open this shop.");
             event.setCancelled(true);
             return;

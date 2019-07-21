@@ -242,6 +242,10 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
