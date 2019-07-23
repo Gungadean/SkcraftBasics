@@ -210,6 +210,7 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
+
         ItemStack sign = new ItemStack(Material.OAK_SIGN, 1);
         event.getPlayer().getInventory().setItem(slot, sign);
     }
