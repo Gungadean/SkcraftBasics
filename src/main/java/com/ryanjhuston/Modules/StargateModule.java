@@ -1,5 +1,6 @@
 package com.ryanjhuston.Modules;
 
+import com.ryanjhuston.Events.PlayerEnterStargateEvent;
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.*;
@@ -7,21 +8,27 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class StargateModule {
+public class StargateModule implements Listener {
 
     private SkcraftBasics plugin;
+
+    public HashMap<String, Stargate> stargateList = new HashMap<>();
+    public HashMap<String, List<String>> networkList = new HashMap<>();
 
     public StargateModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -162,22 +169,25 @@ public class StargateModule {
 
             portalName = sign.getLine(1);
 
-            if(plugin.stargateList.containsKey(portalName)) {
+            portalName = portalName.replaceAll("[^a-zA-Z0-9]", "");
+
+            if(stargateList.containsKey(portalName)) {
                 player.sendMessage(ChatColor.RED + "A portal with this name already exists.");
                 return false;
             }
 
             if(sign.getLine(2).isEmpty()) {
                 network = "public";
-                plugin.networkList.get(network).add(portalName);
+                networkList.get(network).add(portalName);
             } else {
                 network = sign.getLine(2);
-                if(!plugin.networkList.containsKey(network)) {
+                network = network.replaceAll("[^a-zA-Z0-9]", "");
+                if(!networkList.containsKey(network)) {
                     List<String> stargates = new ArrayList<>();
                     stargates.add(portalName);
-                    plugin.networkList.put(network, stargates);
+                    networkList.put(network, stargates);
                 } else {
-                    plugin.networkList.get(network).add(portalName);
+                    networkList.get(network).add(portalName);
                 }
             }
         }
@@ -196,24 +206,20 @@ public class StargateModule {
         signLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
         buttonLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
 
-        plugin.stargateList.put(portalName, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
+        stargateList.put(portalName, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
 
         player.sendMessage(ChatColor.GOLD + "New stargate has been successfully created.");
         return true;
     }
 
     public void removeStargate(String portalName) {
-        Stargate stargate = plugin.stargateList.get(portalName);
+        Stargate stargate = stargateList.get(portalName);
 
-        plugin.networkList.get(stargate.getNetwork()).remove(portalName);
+        networkList.get(stargate.getNetwork()).remove(portalName);
 
         Iterator it = stargate.getBlocks().iterator();
         while(it.hasNext()) {
             ((Location)it.next()).getBlock().removeMetadata("Stargate", plugin);
-        }
-
-        if(stargate.getNetwork().isEmpty()) {
-            plugin.networkList.remove(stargate.getNetwork());
         }
 
         stargate.getSignLocation().getBlock().removeMetadata("Stargate", plugin);
@@ -231,19 +237,30 @@ public class StargateModule {
 
         stargate.getButtonLocation().getBlock().removeMetadata("Stargate", plugin);
 
-        plugin.stargatesConfig.set(portalName, null);
-
-        plugin.stargateList.remove(portalName);
+        stargateList.remove(portalName);
     }
 
+    @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
+        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ARROW) {
+            if(event.getClickedBlock().hasMetadata("Stargate")) {
+                event.getPlayer().sendMessage(event.getClickedBlock().getMetadata("Stargate").get(0).asString());
+            } else {
+                event.getPlayer().sendMessage("No metadata present.");
+            }
+        }
+
         if(event.getClickedBlock().getType().toString().contains("_SIGN")) {
             if(event.getClickedBlock().hasMetadata("Stargate")) {
-                updateStargateSign(event.getClickedBlock());
+                updateStargateSign(event.getClickedBlock(), event.getPlayer());
             }
         }
 
@@ -271,38 +288,48 @@ public class StargateModule {
         event.setCancelled(true);
     }
 
+    @EventHandler
     public void blockBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(event.getBlock().hasMetadata("Stargate")) {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
-            if(plugin.stargateList.containsKey(stargate)) {
+            if(stargateList.containsKey(stargate)) {
                 removeStargate(stargate);
             }
         }
     }
 
-    public void playerMove(PlayerMoveEvent event) {
-        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL) {
+    @EventHandler
+    public void onEnterStargate(PlayerEnterStargateEvent event) {
+        if (event.isCancelled()) {
             return;
         }
 
-        if(!event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
-            return;
-        }
-
-        Stargate stargate = plugin.stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
+        Stargate stargate = stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
         event.getPlayer().teleport(stargate.getTeleportLocation());
     }
 
-    public void updateStargateSign(Block clicked) {
+    public void updateStargateSign(Block clicked, Player clicker) {
         Sign sign = (Sign)clicked.getState();
-        Stargate stargate = plugin.stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
+        Stargate stargate = stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
         List<String> networkList = new ArrayList<>();
 
-        for(int i = 0; i < plugin.networkList.get(stargate.getNetwork()).size(); i++) {
-            networkList.add(plugin.networkList.get(stargate.getNetwork()).get(i));
+        for(int i = 0; i < this.networkList.get(stargate.getNetwork()).size(); i++) {
+            networkList.add(this.networkList.get(stargate.getNetwork()).get(i));
         }
 
         networkList.remove(clicked.getMetadata("Stargate").get(0).asString());
+
+        if(sign.getBlock().hasMetadata("Who-Clicked")) {
+            if(!sign.getBlock().getMetadata("Who-Clicked").get(0).asString().equals(clicker.getUniqueId().toString())) {
+                return;
+            }
+        } else {
+            sign.getBlock().setMetadata("Who-Clicked", new FixedMetadataValue(plugin, clicker.getUniqueId().toString()));
+        }
 
         if(stargate.getSignTask() != null) {
             stargate.getSignTask().cancel();
@@ -311,6 +338,10 @@ public class StargateModule {
         BukkitTask bukrun = new BukkitRunnable() {
             @Override
             public void run() {
+                if(clicked.getMetadata("Stargate").get(0) == null) {
+                    return;
+                }
+
                 sign.setLine(0, "-" + clicked.getMetadata("Stargate").get(0).asString() + "-");
                 sign.setLine(1, "Right click");
                 sign.setLine(2, "to use gate");
@@ -318,6 +349,7 @@ public class StargateModule {
                 sign.update();
 
                 stargate.setSignTask(null);
+                sign.getBlock().removeMetadata("Who-Clicked", plugin);
             }
         }.runTaskLater(plugin, 200);
 
@@ -372,7 +404,7 @@ public class StargateModule {
     }
 
     public void openPortal(Block clicked, Player player) {
-        Stargate stargate = plugin.stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
+        Stargate stargate = stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
         Sign sign = (Sign)stargate.getSignLocation().getBlock().getState();
 
         if(sign.getLine(0).equals("-" + clicked.getMetadata("Stargate").get(0).asString() + "-")) {
@@ -409,5 +441,22 @@ public class StargateModule {
                 }
             }
         }.runTaskLater(plugin, 80);
+    }
+
+    @EventHandler
+    public void playerTeleport(PlayerPortalEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
+        for(int x = -1; x < 2; x++) {
+            for(int z = -1; z < 2; z++) {
+                Block block = event.getPlayer().getLocation().getBlock().getRelative(x, 0, z);
+
+                if(block.getType() == Material.NETHER_PORTAL && block.hasMetadata("Stargate")) {
+                    event.setCancelled(true);
+                }
+            }
+        }
     }
 }

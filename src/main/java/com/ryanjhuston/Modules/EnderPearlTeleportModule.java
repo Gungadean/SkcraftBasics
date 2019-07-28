@@ -2,11 +2,15 @@ package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.Events.PlayerEnderPearlTeleportEvent;
 import com.ryanjhuston.SkcraftBasics;
+import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -18,7 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Iterator;
 
-public class EnderPearlTeleportModule {
+public class EnderPearlTeleportModule implements Listener {
 
     private SkcraftBasics plugin;
 
@@ -26,7 +30,12 @@ public class EnderPearlTeleportModule {
         this.plugin = plugin;
     }
 
-    public void inventoryInteract(InventoryClickEvent event) {
+    @EventHandler
+    public void inventoryClick(InventoryClickEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         if(event.getClickedInventory() == null) {
             return;
         }
@@ -45,8 +54,20 @@ public class EnderPearlTeleportModule {
 
         if(event.getCurrentItem().getType() != Material.AIR) {
             String playerName = event.getCurrentItem().getItemMeta().getDisplayName();
-            if(plugin.teleportAuth.get(Bukkit.getPlayer(playerName).getUniqueId().toString()).contains(event.getWhoClicked().getUniqueId().toString())) {
+
+            if(Bukkit.getPlayer(playerName) == null) {
+                event.setCancelled(true);
+                event.getWhoClicked().closeInventory();
+                openTeleportMenu((Player)event.getWhoClicked());
+                return;
+            }
+
+            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(Bukkit.getPlayer(playerName).getUniqueId().toString());
+
+            if(skcraftPlayer.getTeleAuthed().contains(event.getWhoClicked().getUniqueId().toString())) {
                 event.getWhoClicked().teleport(Bukkit.getPlayer(playerName));
+
+                event.getWhoClicked().getInventory().removeItem(new ItemStack(Material.ENDER_PEARL, 1));
 
                 PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent((Player)event.getWhoClicked(), Bukkit.getPlayer(playerName), true);
                 Bukkit.getPluginManager().callEvent(teleportEvent);
@@ -57,7 +78,12 @@ public class EnderPearlTeleportModule {
         }
     }
 
+    @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
         if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_PEARL && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             if(!event.getPlayer().isSneaking()) {
                 return;
@@ -71,12 +97,7 @@ public class EnderPearlTeleportModule {
             event.setCancelled(true);
         }
 
-        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_EYE && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
-            event.getPlayer().openInventory(event.getPlayer().getEnderChest());
-            event.setCancelled(true);
-        }
-
-        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+        if(event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getPlayer().isSneaking()) {
             if(event.getClickedBlock().getType().toString().contains("_BED")) {
                 event.getPlayer().setBedSpawnLocation(event.getClickedBlock().getLocation());
                 event.getPlayer().sendMessage(ChatColor.GOLD + "Spawn point has been set!");
@@ -84,6 +105,7 @@ public class EnderPearlTeleportModule {
         }
     }
 
+    @EventHandler
     public void playerTeleportEnderPearl(PlayerEnderPearlTeleportEvent event) {
         if(event.isCancelled()) {
             return;
@@ -91,11 +113,21 @@ public class EnderPearlTeleportModule {
 
         if(event.isPlayerTeleport()) {
             event.getPlayer().closeInventory();
-            plugin.teleportAuth.get(event.getTarget().getUniqueId().toString()).remove(event.getPlayer().getUniqueId().toString());
+
+            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(event.getPlayer().getUniqueId().toString());
+
+            if(!skcraftPlayer.getPTeleAuthed().contains(event.getTarget().getUniqueId().toString())) {
+                skcraftPlayer.getTeleAuthed().remove(event.getTarget().getUniqueId().toString());
+            }
         }
     }
 
+    @EventHandler
     public void playerTeleport(PlayerTeleportEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
         Player player = event.getPlayer();
         if(event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
             return;
@@ -105,16 +137,11 @@ public class EnderPearlTeleportModule {
             return;
         }
 
-        if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround()) {
+        if(Math.abs(player.getLocation().getX()-event.getTo().getX()) >= 2 || Math.abs(player.getLocation().getY()-event.getTo().getY()) >= 2 || Math.abs(player.getLocation().getZ()-event.getTo().getZ()) >= 2) {
+            return;
+        }
 
-            if(player.getInventory().getItemInOffHand().getType() == Material.WATER_BUCKET) {
-                PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent(player, null, false);
-                Bukkit.getPluginManager().callEvent(teleportEvent);
-                String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-                player.teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
-                return;
-            }
-
+        if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround() && player.getInventory().getItemInOffHand().getType() != Material.WATER_BUCKET) {
             if(player.getBedSpawnLocation() == null) {
                 player.sendMessage(ChatColor.RED + "You do not have a home set yet.");
                 player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL, 1));
@@ -129,8 +156,13 @@ public class EnderPearlTeleportModule {
                 }, 1L);
             }
         } else {
-            String[] location = plugin.getConfig().getString("Spawn-Location").split(",");
-            player.teleport(new Location(Bukkit.getWorld(location[0]), Double.valueOf(location[1]), Double.valueOf(location[2]), Double.valueOf(location[3]), Float.valueOf(location[4]), Float.valueOf(location[5])));
+            //Fix for "Removing ticking entity" bug when teleporting between dimensions.
+            plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    player.teleport(plugin.spawnLocation);
+                }
+            }, 1L);
         }
 
         PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent(player, null, false);
@@ -140,7 +172,6 @@ public class EnderPearlTeleportModule {
     }
 
     public Inventory openTeleportMenu(Player target) {
-
         int inventorySize = 9;
 
         while((double)inventorySize/(double)(Bukkit.getOnlinePlayers().size()-1) < 1) {
@@ -151,9 +182,16 @@ public class EnderPearlTeleportModule {
 
         for(Iterator iterator = Bukkit.getOnlinePlayers().iterator(); iterator.hasNext();) {
             Player player = (Player) iterator.next();
+            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(player.getUniqueId().toString());
+
+            if(player.hasMetadata("vanished")) {
+                if(player.getMetadata("vanished").get(0).asBoolean()) {
+                    continue;
+                }
+            }
 
             if(!target.getDisplayName().equals(player.getDisplayName())) {
-                ItemStack item = new ItemStack(Material.getMaterial(plugin.getPlayerItemsList().getString(player.getUniqueId().toString())), 1);
+                ItemStack item = new ItemStack(skcraftPlayer.getTeleportItem(), 1);
                 ItemMeta meta = item.getItemMeta();
 
                 meta.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
