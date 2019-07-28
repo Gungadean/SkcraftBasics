@@ -122,7 +122,6 @@ public class WorldManagerCommand {
 
     private static void listCommand(SkcraftBasics plugin, CommandSender commandSender) throws CommandException {
         String worldList = "";
-        List<String> worlds = new ArrayList<>();
 
         for(int i = 0; i < plugin.worlds.size(); i++) {
             if(i == (plugin.worlds.size()-1)) {

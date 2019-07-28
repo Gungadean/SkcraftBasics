@@ -125,7 +125,7 @@ public class SkcraftEventHandler implements Listener {
                 while(it.hasNext())
                 {
                     Player player = (Player)it.next();
-                    if(player.isSleeping() || plugin.afkModule.getAfkPlayers().contains(player.getUniqueId().toString()) || player.isSleepingIgnored() || !player.getWorld().equals(Bukkit.getWorlds().get(0))) {
+                    if(player.isSleeping() || plugin.afkModule.getAfkPlayers().contains(player.getUniqueId().toString()) || player.isSleepingIgnored() || !player.getWorld().equals(Bukkit.getWorlds().get(0)) || player.getGameMode() == GameMode.CREATIVE) {
                         sleeping++;
                     }
                 }
@@ -205,7 +205,7 @@ public class SkcraftEventHandler implements Listener {
         if(player.getInventory().getItemInMainHand().getType() == Material.OAK_SIGN || player.getInventory().getItemInMainHand().getType() == Material.OAK_WALL_SIGN) {
             slot = player.getInventory().getHeldItemSlot();
         } else if(player.getInventory().getItemInOffHand().getType() == Material.OAK_SIGN || player.getInventory().getItemInOffHand().getType() == Material.OAK_WALL_SIGN) {
-            slot = -106;
+            slot = 40;
         } else {
             return;
         }
