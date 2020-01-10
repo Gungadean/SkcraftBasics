@@ -5,9 +5,7 @@ import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,12 +24,24 @@ public class EnderPearlTeleportModule implements Listener {
 
     private SkcraftBasics plugin;
 
+    private boolean moduleEnabled;
+
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- EnderPearlTeleportModule Enabled");
+        }
     }
 
     @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -80,6 +90,10 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -107,6 +121,10 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerTeleportEnderPearl(PlayerEnderPearlTeleportEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.isCancelled()) {
             return;
         }
@@ -124,6 +142,10 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerTeleport(PlayerTeleportEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -202,5 +224,14 @@ public class EnderPearlTeleportModule implements Listener {
         }
 
         return inv;
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- EnderPearlTeleportModule Enabled");
+        }
     }
 }

@@ -19,6 +19,8 @@ public class GoldToolModule implements Listener {
 
     private List<Material> foodstuff = new ArrayList<>();
 
+    private boolean moduleEnabled;
+
     public GoldToolModule(SkcraftBasics plugin) {
         foodstuff.add(Material.PORKCHOP);
         foodstuff.add(Material.BEEF);
@@ -29,10 +31,20 @@ public class GoldToolModule implements Listener {
         foodstuff.add(Material.SALMON);
 
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("GoldTools");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- GoldToolsModule Enabled");
+        }
     }
 
     @EventHandler
     public void playerBreakBlock(BlockBreakEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -76,6 +88,10 @@ public class GoldToolModule implements Listener {
 
     @EventHandler
     public void playerKillEntity(EntityDeathEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(!(event.getEntity().getKiller() instanceof Player)) {
             return;
         }
@@ -103,6 +119,15 @@ public class GoldToolModule implements Listener {
             for(ItemStack item : newDrops) {
                 event.getEntity().getWorld().dropItem(event.getEntity().getLocation(), item);
             }
+        }
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("GoldTools");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- GoldToolsModule Enabled");
         }
     }
 }

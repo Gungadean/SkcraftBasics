@@ -33,6 +33,10 @@ public class SkcraftEventHandler implements Listener {
 
     public SkcraftEventHandler(SkcraftBasics plugin) { this.plugin = plugin; }
 
+    public void reload(SkcraftBasics plugin) {
+        this.plugin = plugin;
+    }
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.getPlayer().setDisplayName(ChatColorLib.getRandomColor() + event.getPlayer().getDisplayName() + ChatColor.WHITE);
@@ -159,6 +163,10 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
+        if (!plugin.enabledModules.contains("InfiniteCarts")) {
+            return;
+        }
+
         if(event.getItem().getType() == Material.MINECART && event.getBlock().getType() == Material.DISPENSER) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 
@@ -195,6 +203,10 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
+        if (!plugin.enabledModules.contains("InfiniteSigns")) {
+            return;
+        }
+
         if(event.getBlock().getType() != Material.OAK_WALL_SIGN && event.getBlock().getType() != Material.OAK_SIGN) {
             return;
         }
@@ -218,6 +230,10 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent event) {
         if (event.isCancelled()) {
+            return;
+        }
+
+        if (!plugin.enabledModules.contains("InfiniteSigns")) {
             return;
         }
 
@@ -256,6 +272,10 @@ public class SkcraftEventHandler implements Listener {
 
     @EventHandler
     public void onExplosion(EntityExplodeEvent event) {
+        if (!plugin.enabledModules.contains("DisableExplosions")) {
+            return;
+        }
+
         if(event.getEntity().getWorld().getName().equals("Mining")) {
             return;
         }
@@ -266,6 +286,10 @@ public class SkcraftEventHandler implements Listener {
     @EventHandler
     public void onMobGrief(EntityChangeBlockEvent event) {
         if(event.isCancelled()) {
+            return;
+        }
+
+        if (!plugin.enabledModules.contains("DisableExplosions")) {
             return;
         }
 
@@ -291,6 +315,10 @@ public class SkcraftEventHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (!plugin.enabledModules.contains("EnderEyeChests")) {
+            return;
+        }
+
         String uuid = event.getPlayer().getUniqueId().toString();
 
         if(plugin.interactCooldown.contains(uuid)) {
@@ -298,6 +326,10 @@ public class SkcraftEventHandler implements Listener {
         }
 
         if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ENDER_EYE && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+            if(event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == Material.END_PORTAL_FRAME) {
+                return;
+            }
+
             event.getPlayer().openInventory(event.getPlayer().getEnderChest());
             event.setCancelled(true);
         }

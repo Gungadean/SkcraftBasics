@@ -17,12 +17,24 @@ public class InkSignModule implements Listener {
 
     private HashMap<String, String[]> savedSigns = new HashMap<>();
 
+    private boolean moduleEnabled;
+
     public InkSignModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("InkSign");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- InkSignModule Enabled");
+        }
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -66,6 +78,15 @@ public class InkSignModule implements Listener {
             }
 
             event.getPlayer().sendMessage(ChatColor.YELLOW + "This sign text has been saved to your clipboard.");
+        }
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("InkSign");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- InkSignModule Enabled");
         }
     }
 }

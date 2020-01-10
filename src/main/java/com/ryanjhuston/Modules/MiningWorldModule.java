@@ -14,16 +14,28 @@ public class MiningWorldModule implements Listener {
 
     private SkcraftBasics plugin;
 
+    private boolean moduleEnabled;
+
     public MiningWorldModule(SkcraftBasics plugin) {
         this.plugin = plugin;
 
         initializeWorldResetTimer();
+
+        moduleEnabled = plugin.enabledModules.contains("MiningWorld");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- MiningWorldModule Enabled");
+        }
     }
 
     public void initializeWorldResetTimer() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
+                if(!moduleEnabled) {
+                    return;
+                }
+
                 Date now = new Date();
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(now);
@@ -65,6 +77,10 @@ public class MiningWorldModule implements Listener {
 
     @EventHandler
     public void onPlayerPortal(PlayerPortalEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.getPlayer().getWorld().getName().equals("Mining")) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "You cannot use nether portals in this world.");
@@ -108,5 +124,14 @@ public class MiningWorldModule implements Listener {
                 event.getPlayer().sendMessage(ChatColor.RED + "This is the mining world, this world will be reset once a week so it is not advised to build here. Any items lost because of a reset will not be refunded.");
             }
         }, 1);
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("MiningWorld");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- MiningWorldModule Enabled");
+        }
     }
 }

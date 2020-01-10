@@ -34,12 +34,24 @@ public class JetBootModule implements Listener {
     public HashMap<String, Integer> flyTime = new HashMap<>();
     public List<String> fallGraceCheck = new ArrayList<>();
 
+    private boolean moduleEnabled;
+
     public JetBootModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("JetBoot");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- JetBootModule Enabled");
+        }
     }
 
     @EventHandler
     public void onBeaconPlace(BlockPlaceEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -69,6 +81,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void onBaseBlockPlace(BlockPlaceEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -130,6 +146,10 @@ public class JetBootModule implements Listener {
             public void run() {
                 List<Player> forRemoval = new ArrayList<>();
 
+                if(!moduleEnabled) {
+                    return;
+                }
+
                 for(String uuid : jetboots) {
                     Player player = Bukkit.getPlayer(UUID.fromString(uuid));
                     if(player != null) {
@@ -168,6 +188,10 @@ public class JetBootModule implements Listener {
             @Override
             public void run() {
                 List<String> playerRemoval = new ArrayList<>();
+
+                if(!moduleEnabled) {
+                    return;
+                }
 
                 for(Player player : Bukkit.getOnlinePlayers()) {
                     String uuid = player.getUniqueId().toString();
@@ -219,6 +243,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -260,6 +288,10 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
             event.getPlayer().setAllowFlight(true);
         }
@@ -406,5 +438,14 @@ public class JetBootModule implements Listener {
             return true;
         }
         return false;
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("JetBoot");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- JetBootModule Enabled");
+        }
     }
 }

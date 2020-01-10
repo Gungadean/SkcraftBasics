@@ -24,15 +24,27 @@ public class MobTurretModule implements Listener {
 
     private List<EnderTurret> turretList = new ArrayList<>();
 
+    private boolean moduleEnabled;
+
     public MobTurretModule(SkcraftBasics plugin) {
         this.plugin = plugin;
         scheduleTask();
+
+        moduleEnabled = plugin.enabledModules.contains("MobTurret");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- MobTurretModule Enabled");
+        }
     }
 
     public void scheduleTask() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
+                if(!moduleEnabled) {
+                    return;
+                }
+
                 for(EnderTurret enderTurret : turretList) {
                     if(enderTurret.getTarget() != null) {
                         if(((LivingEntity)enderTurret.getTarget()).hasLineOfSight(enderTurret.getTurret())) {
@@ -69,6 +81,10 @@ public class MobTurretModule implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -96,6 +112,10 @@ public class MobTurretModule implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -124,7 +144,7 @@ public class MobTurretModule implements Listener {
 
         turretList.add(new EnderTurret(enderCrystal));
 
-        event.getPlayer().getInventory().remove(event.getPlayer().getInventory().getItemInMainHand());
+        event.getPlayer().getInventory().removeItem(new ItemStack(event.getPlayer().getInventory().getItemInMainHand().getType(), 1));
         event.setCancelled(true);
 
         event.getPlayer().sendMessage(ChatColor.GOLD + "Ender Turret created.");
@@ -184,5 +204,14 @@ public class MobTurretModule implements Listener {
 
     public List<EnderTurret> getTurretList() {
         return turretList;
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("MobTurret");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- MobTurretModule Enabled");
+        }
     }
 }

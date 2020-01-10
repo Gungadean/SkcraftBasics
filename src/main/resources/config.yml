@@ -1,2 +1,26 @@
-Enabled-Modules: []
+Enabled-Modules:
+  - Admin
+  - BetterPistons
+  - CaptureBall
+  - ChatChannels
+  - ChunkLoader
+  - Crafting
+  - EnderPearlTeleport
+  - Galapagos
+  - GoldTool
+  - InkSign
+  - JetBoot
+  - MiningWorld
+  - MobTurret
+  - Rail
+  - Rotator
+  - Shop
+  - Stargate
+  - InfiniteCarts
+  - InfiniteSigns
+  - DisableExplosions
+  - EnderEyeChests
 Spawn-Location: ""
+Module-Settings:
+  Stargate-Module:
+    Portal-Reset-Time: 4

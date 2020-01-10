@@ -33,7 +33,7 @@ public class SkcraftBasics extends JavaPlugin {
 
     private SqlHandler sql;
 
-    private boolean useMysql;
+    public boolean useMysql;
     private String username;
     private String password;
     private String address;
@@ -73,8 +73,11 @@ public class SkcraftBasics extends JavaPlugin {
     public SkcraftWorldManager worldManager;
     public List<World> worlds = new ArrayList<>();
     public List<String> interactCooldown = new ArrayList<>();
+    public List<String> disabledCommands = new ArrayList<>();
 
-    public boolean debug = true;
+    public List<String> enabledModules = new ArrayList<>();
+
+    public String debug = "[SkcraftBasics Debug] ";
 
     public void onEnable() {
         saveDefaultConfig();
@@ -83,6 +86,8 @@ public class SkcraftBasics extends JavaPlugin {
 
         createCustomConfigs();
         saveConfigs();
+
+        enabledModules = getConfig().getStringList("Enabled-Modules");
 
         enderPearlTeleportModule = new EnderPearlTeleportModule(this);
         craftingModule = new CraftingModule(this);
@@ -129,7 +134,6 @@ public class SkcraftBasics extends JavaPlugin {
         pm.registerEvents(miningWorldModule, this);
         pm.registerEvents(chunkLoaderModule, this);
 
-
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
             spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
         } else {
@@ -162,7 +166,7 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("invite").setExecutor(skcraftCommandHandler);
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
         this.getCommand("paccept").setExecutor(skcraftCommandHandler);
-        this.getCommand("setspawn").setExecutor(skcraftCommandHandler);
+        this.getCommand("sb").setExecutor(skcraftCommandHandler);
         this.getCommand("nethercoords").setExecutor(skcraftCommandHandler);
         this.getCommand("here").setExecutor(skcraftCommandHandler);
         this.getCommand("join").setExecutor(skcraftCommandHandler);
@@ -171,7 +175,6 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("help").setExecutor(skcraftCommandHandler);
         this.getCommand("worldmanager").setExecutor(skcraftCommandHandler);
         this.getCommand("wm").setExecutor(skcraftCommandHandler);
-        this.getCommand("admin").setExecutor(skcraftCommandHandler);
 
         logger.info("has started.");
     }
@@ -202,7 +205,7 @@ public class SkcraftBasics extends JavaPlugin {
 
         saveConfig();
         saveConfigs();
-        logger.info("has stopped.");
+        logger.info("[SkcraftBasics] has stopped.");
     }
 
     private void loadConfig() {
@@ -214,20 +217,34 @@ public class SkcraftBasics extends JavaPlugin {
             this.port = getConfig().getInt("Mysql.Port");
             this.database = getConfig().getString("Database");
         }
+
+        this.disabledCommands = getConfig().getStringList("DisabledCommands");
+        this.enabledModules = getConfig().getStringList("Enabled-Modules");
     }
 
-    private void reloadPlugin() {
-        boolean useMysqlOld = useMysql;
-
+    public void reloadPlugin() {
+        logger.info("[SkcraftBasics] Reloading config...");
+        reloadConfig();
         loadConfig();
 
-        if(useMysqlOld != useMysql) {
-            if(useMysql) {
-                sql.reloadConnection(username, password, address, port, database);
-            } else {
-                sql.reloadConnection();
-            }
-        }
+        createCustomConfigs();
+
+        betterPistonsModule.updateConfig(this);
+        captureBallModule.updateConfig(this);
+        chatChannelsModule.updateConfig(this);
+        enderPearlTeleportModule.updateConfig(this);
+        galapagosModule.updateConfig(this);
+        goldToolModule.updateConfig(this);
+        inkSignModule.updateConfig(this);
+        jetBootModule.updateConfig(this);
+        miningWorldModule.updateConfig(this);
+        mobTurretModule.updateConfig(this);
+        railModule.updateConfig(this);
+        rotatorModule.updateConfig(this);
+        shopModule.updateConfig(this);
+        stargateModule.updateConfig(this);
+
+        logger.info("[SkcraftBasics] Config reloaded.");
     }
 
     private void createCustomConfigs() {

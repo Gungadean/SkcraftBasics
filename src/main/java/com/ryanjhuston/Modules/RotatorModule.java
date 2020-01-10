@@ -18,12 +18,24 @@ public class RotatorModule implements Listener {
 
     private SkcraftBasics plugin;
 
+    private boolean moduleEnabled;
+
     public RotatorModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("Rotator");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- RotatorModule Enabled");
+        }
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.BLAZE_ROD) {
             return;
         }
@@ -156,5 +168,14 @@ public class RotatorModule implements Listener {
         }
 
         block.setBlockData(slab);
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("Rotator");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- RotatorModule Enabled");
+        }
     }
 }

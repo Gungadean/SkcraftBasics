@@ -18,8 +18,16 @@ public class ChatChannelsModule implements Listener {
     public HashMap<String, List<String>> chatChannels = new HashMap<>();
     public HashMap<String, String> inChannelPlayers = new HashMap<>();
 
+    private boolean moduleEnabled;
+
     public ChatChannelsModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("ChatChannels");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- ChatChannelsModule Enabled");
+        }
     }
 
     public void joinChatChannel(String player, String channel) {
@@ -70,6 +78,10 @@ public class ChatChannelsModule implements Listener {
 
     @EventHandler
     public void playerChat(AsyncPlayerChatEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         String uuid = event.getPlayer().getUniqueId().toString();
         if(inChannelPlayers.containsKey(uuid)) {
             sendMessageToChannel(uuid, inChannelPlayers.get(uuid), event.getMessage());
@@ -114,6 +126,15 @@ public class ChatChannelsModule implements Listener {
 
                 player.sendMessage(ChatColor.GREEN + "[" + channel + "] " + Bukkit.getPlayer(UUID.fromString(name)).getName() + ": " + message);
             }
+        }
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("ChatChannels");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- ChatChannelModule Enabled");
         }
     }
 }

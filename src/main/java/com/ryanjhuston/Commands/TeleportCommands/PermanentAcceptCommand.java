@@ -9,12 +9,11 @@ import org.bukkit.craftbukkit.libs.org.apache.commons.io.IOUtils;
 import org.bukkit.entity.Player;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.regex.Pattern;
-
-import org.json.simple.parser.ParseException;
 
 public class PermanentAcceptCommand {
 

@@ -9,8 +9,6 @@ commands:
     description: Permanently accept teleport requests from player.
   invite:
     description: Invite players to server.
-  setspawn:
-    description: Change spawn location.
   nethercoords:
     description: Get needed portal location in other world.
   here:
@@ -27,5 +25,7 @@ commands:
     description: A world management addition.
   wm:
     description: Short form of /worldmanager.
-  admin:
-    description: Admin creation command
+  sb:
+    description: SkcraftBasics command
+  cprc:
+    description: I'm testing

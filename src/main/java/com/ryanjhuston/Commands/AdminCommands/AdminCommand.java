@@ -21,7 +21,7 @@ public class AdminCommand {
             throw new CommandException("You must specify a name.");
         }
 
-        if(args.length > 1) {
+        if(args.length > 2) {
             throw new CommandException("Too many args.");
         }
 

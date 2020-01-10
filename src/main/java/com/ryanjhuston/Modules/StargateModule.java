@@ -30,8 +30,18 @@ public class StargateModule implements Listener {
     public HashMap<String, Stargate> stargateList = new HashMap<>();
     public HashMap<String, List<String>> networkList = new HashMap<>();
 
+    private int resetDelay;
+
+    private boolean moduleEnabled;
+
     public StargateModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+        resetDelay = plugin.getConfig().getInt("Module-Settings.Stargate-Module.Portal-Reset-Time");
+        moduleEnabled = plugin.enabledModules.contains("Stargate");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- StargateModule Enabled");
+        }
     }
 
     public boolean createStargate(Block clicked, Player player) {
@@ -169,7 +179,9 @@ public class StargateModule implements Listener {
 
             portalName = sign.getLine(1);
 
-            portalName = portalName.replaceAll("[^a-zA-Z0-9]", "");
+            portalName = portalName.replaceAll("^[^\\w+( [\\w]+)*]$", "");
+
+            System.out.println(portalName);
 
             if(stargateList.containsKey(portalName)) {
                 player.sendMessage(ChatColor.RED + "A portal with this name already exists.");
@@ -181,7 +193,7 @@ public class StargateModule implements Listener {
                 networkList.get(network).add(portalName);
             } else {
                 network = sign.getLine(2);
-                network = network.replaceAll("[^a-zA-Z0-9]", "");
+                network = network.replaceAll("^[^\\w+( [\\w]+)*]$", "");
                 if(!networkList.containsKey(network)) {
                     List<String> stargates = new ArrayList<>();
                     stargates.add(portalName);
@@ -242,6 +254,10 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -290,6 +306,10 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void blockBreak(BlockBreakEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -298,12 +318,17 @@ public class StargateModule implements Listener {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
             if(stargateList.containsKey(stargate)) {
                 removeStargate(stargate);
+                event.getPlayer().sendMessage(ChatColor.GOLD + "Stargate successfully removed.");
             }
         }
     }
 
     @EventHandler
     public void onEnterStargate(PlayerEnterStargateEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -374,7 +399,20 @@ public class StargateModule implements Listener {
                 }
             }
         } else {
-            if (sign.getLine(1).isEmpty()) {
+            int place = 0;
+
+            String first = sign.getLine(0).substring(1, sign.getLine(0).length()-1);
+
+            for(String portal : networkList) {
+                if(first.equals(portal)) {
+                    place++;
+                    break;
+                }
+
+                place++;
+            }
+
+            if(place == networkList.size()) {
                 sign.setLine(0, ">" + networkList.get(0) + "<");
                 for(int i = 1; i < 4; i++) {
                     if(i >= networkList.size()) {
@@ -384,19 +422,18 @@ public class StargateModule implements Listener {
                     }
                 }
             } else {
-                String start = sign.getLine(0).substring(1, sign.getLine(0).length()-1);
-
-                sign.setLine(1, "");
-                sign.setLine(2, "");
-                sign.setLine(3, "");
-
-                sign.setLine(0, ">" + networkList.get(networkList.indexOf(start)+1) + "<");
-                for(int i = networkList.indexOf(start) + 2; i < networkList.indexOf(start)+4; i++) {
-                    if(i >= networkList.size()) {
+                for (int i = 0; i < 4; i++) {
+                    if (place >= networkList.size()) {
                         sign.setLine(i, "");
-                    } else {
-                        sign.setLine(i, networkList.get(i));
+                        continue;
                     }
+
+                    if (i == 0) {
+                        sign.setLine(0, ">" + networkList.get(place) + "<");
+                    } else {
+                        sign.setLine(i, networkList.get(place));
+                    }
+                    place++;
                 }
             }
         }
@@ -440,11 +477,15 @@ public class StargateModule implements Listener {
                     block.setType(Material.AIR);
                 }
             }
-        }.runTaskLater(plugin, 80);
+        }.runTaskLater(plugin, (resetDelay*20));
     }
 
     @EventHandler
     public void playerTeleport(PlayerPortalEvent event) {
+        if(!moduleEnabled) {
+
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -457,6 +498,16 @@ public class StargateModule implements Listener {
                     event.setCancelled(true);
                 }
             }
+        }
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        resetDelay = plugin.getConfig().getInt("Module-Settings.Stargate-Module.Portal-Reset-Time");
+        moduleEnabled = plugin.enabledModules.contains("Stargate");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- StargateModule Enabled");
         }
     }
 }

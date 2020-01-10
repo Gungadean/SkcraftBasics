@@ -57,15 +57,11 @@ public class SqlHandler {
             }
         } catch (SQLException e) {
             main.logger.severe(ChatColor.RED + "Failed to initialize connection.");
-            if(main.debug) {
-                e.printStackTrace();
-            }
         }
         return con;
     }
 
     public void reloadConnection(String username, String password, String address, int port, String database) {
-
         closeConnection();
 
         con = null;
@@ -107,9 +103,6 @@ public class SqlHandler {
             main.logger.info("Database connection successfully closed.");
         } catch (SQLException e) {
             main.logger.severe(ChatColor.RED + "Failed to close database connection.");
-            if (main.debug) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -118,14 +111,11 @@ public class SqlHandler {
             Class.forName(driver);
         } catch (Exception e) {
             main.logger.severe(ChatColor.RED + "Failed to initialize " + driver.split(".")[1] + " driver.");
-            if (main.debug) {
-                e.printStackTrace();
-            }
         }
     }
 
     public void initializeDatabase() {
-        String sql = "CREATE TABLE IF NOT EXISTS 'whitelist';";
+        String sql = "CREATE TABLE IF NOT EXISTS 'Stats';";
 
         try {
             PreparedStatement stmt = con.prepareStatement(sql);
@@ -134,9 +124,6 @@ public class SqlHandler {
             main.logger.info("Database successfully initialized.");
         } catch (SQLException e) {
             main.logger.severe(ChatColor.RED + "Failed to initialize database.");
-            if(main.debug) {
-                e.printStackTrace();
-            }
         }
     }
 

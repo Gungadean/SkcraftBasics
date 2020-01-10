@@ -2,7 +2,10 @@ package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Stargate;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,8 +13,6 @@ import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
@@ -25,26 +26,63 @@ public class RailModule implements Listener {
 
     private List<String> players = new ArrayList<>();
 
+    private boolean moduleEnabled;
+
     public RailModule(SkcraftBasics plugin) {
         this.plugin = plugin;
-    }
 
-    @EventHandler
-    public void onItemDispense(BlockDispenseEvent event) {
-        if(event.getItem().getType() == Material.MINECART && event.getBlock().getType() == Material.DISPENSER) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+        moduleEnabled = plugin.enabledModules.contains("Rail");
 
-                @Override
-                public void run() {
-                    InventoryHolder dispenser = (InventoryHolder)event.getBlock().getState();
-                    dispenser.getInventory().addItem(new ItemStack(Material.MINECART));
-                }
-            }, 1);
+        if(moduleEnabled) {
+            plugin.logger.info("- RailModule Enabled");
         }
     }
 
     @EventHandler
+    public void onItemDispense(BlockDispenseEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
+        if(event.getItem().getType() != Material.MINECART || event.getBlock().getType() != Material.DISPENSER) {
+            return;
+        }
+
+        Dispenser dispenser = (Dispenser) event.getBlock().getBlockData();
+        Minecart minecart;
+        Vector direction;
+
+        if(isRail(event.getBlock().getRelative(0, 2, 0).getType())) {
+            if(!isRail(event.getBlock().getRelative(0, 2, 0).getRelative(dispenser.getFacing()).getType())) {
+                return;
+            }
+
+            minecart = (Minecart)event.getBlock().getWorld().spawnEntity(event.getBlock().getRelative(0, 2, 0).getLocation().add(0.5, 0.5, 0.5), EntityType.MINECART);
+
+            direction = event.getBlock().getRelative(0, 2, 0).getRelative(dispenser.getFacing()).getLocation().toVector().subtract(event.getBlock().getRelative(0, 2, 0).getLocation().toVector());
+        } else {
+            if(!isRail(event.getBlock().getRelative(dispenser.getFacing()).getType())) {
+                return;
+            }
+
+            minecart = (Minecart)event.getBlock().getWorld().spawnEntity(event.getBlock().getRelative(dispenser.getFacing()).getLocation().add(0.5, 0.5, 0.5), EntityType.MINECART);
+
+            direction = event.getBlock().getRelative(dispenser.getFacing()).getLocation().toVector().subtract(event.getBlock().getLocation().toVector());
+        }
+
+        Vector velocity = direction.multiply(0.4);
+
+        minecart.setVelocity(velocity);
+
+        event.setCancelled(true);
+    }
+
+    @EventHandler
     public void onVehicleDamage(VehicleDamageEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         Vehicle vehicle = event.getVehicle();
         Entity attacker = event.getAttacker();
 
@@ -55,6 +93,10 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void portalTeleport(VehicleMoveEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.getTo().getBlock().getType() != Material.NETHER_PORTAL) {
             return;
         }
@@ -64,6 +106,7 @@ public class RailModule implements Listener {
         }
 
         if(event.getVehicle().getPassengers().isEmpty()) {
+            event.getVehicle().remove();
             return;
         }
 
@@ -99,19 +142,22 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onEntityTeleport(EntityPortalEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(!event.getEntity().hasMetadata("PortalCheck")) {
             return;
         }
 
         Entity passenger = Bukkit.getEntity(UUID.fromString(event.getEntity().getMetadata("PortalCheck").get(0).asString()));
+        event.getEntity().remove();
 
         if(passenger != null) {
             if(passenger.isInsideVehicle()) {
                 teleportThroughPortal((Vehicle)passenger.getVehicle(), event.getTo());
             }
         }
-
-        event.getEntity().remove();
     }
 
     public Location findAdjacentRail(Vehicle vehicle, Location base, Material match) {
@@ -137,10 +183,10 @@ public class RailModule implements Listener {
 
         first.add(0, -1, 0);
 
-        if(vehicle.getVelocity().getZ() > 0) {
-            first.add((z*-1), 0, (x*-1));
-        } else if(vehicle.getVelocity().getZ() < 0) {
-            first.add(z, 0, x);
+        if(vehicle.getVelocity().getZ() != 0) {
+            first.add(0, 0, (vehicle.getVelocity().getZ()/Math.abs(vehicle.getVelocity().getZ())));
+        } else if(vehicle.getVelocity().getX() != 0) {
+            first.add((vehicle.getVelocity().getX()/Math.abs(vehicle.getVelocity().getX())), 0, 0);
         }
 
         int portalBlocks;
@@ -151,9 +197,10 @@ public class RailModule implements Listener {
             portalBlocks = last.getBlockZ()-first.getBlockZ();
         }
 
-        for(int i = 0; i < portalBlocks; i++) {
+        for(int i = 0; i <= portalBlocks; i++) {
             if(match != null) {
                 if(first.getBlock().getType() != match) {
+                    first.add((x*-1), 0, (z*-1));
                     continue;
                 }
             }
@@ -163,6 +210,10 @@ public class RailModule implements Listener {
             } else {
                 first.add((x*-1), 0, (z*-1));
             }
+        }
+
+        if(match != null) {
+            return findAdjacentRail(vehicle, base, null);
         }
 
         return null;
@@ -178,9 +229,9 @@ public class RailModule implements Listener {
         double zVel = vehicle.getVelocity().getZ();
 
         if(xVel != 0) {
-            underRailLocation.add((xVel/Math.abs(xVel)), 0, 0);
+            underRailLocation.add((-1*(xVel/Math.abs(xVel))), -1, 0);
         } else {
-            underRailLocation.add((zVel/Math.abs(zVel)), 0, 0);
+            underRailLocation.add(0, -1, (-1*(zVel/Math.abs(zVel))));
         }
 
         if(isConcrete(underRailLocation.getBlock().getType())) {
@@ -193,7 +244,7 @@ public class RailModule implements Listener {
             Location portal = getOffsetPortal(railLocation);
 
             Vector direction = railLocation.toVector().subtract(portal.toVector());
-            Vector velocity = direction.multiply(0.5);
+            Vector velocity = direction.multiply(0.3);
             vehicle.eject();
             vehicle.remove();
 
@@ -204,7 +255,13 @@ public class RailModule implements Listener {
                     Minecart minecart = to.getWorld().spawn(railLocation.add(0.5, 0.5, 0.5), Minecart.class);
                     minecart.addPassenger(passenger);
                     minecart.setVelocity(velocity);
-                    railLocation.getWorld().playSound(minecart.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 1, 1);
+                }
+            }, 2);
+        } else {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    passenger.teleport(to);
                 }
             }, 2);
         }
@@ -229,6 +286,15 @@ public class RailModule implements Listener {
             return location.getBlock().getRelative(0, 0, -1).getLocation();
         } else {
             return null;
+        }
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("Rail");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- RailModule Enabled");
         }
     }
 }

@@ -20,13 +20,24 @@ public class BetterPistonsModule implements Listener {
     private SkcraftBasics plugin;
     private List<BlockFace> blockFaces = new ArrayList<>();
 
+    private boolean moduleEnabled;
+
     public BetterPistonsModule(SkcraftBasics plugin) {
         addFaces();
         this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("BetterPistons");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- BetterPistonsModule Enabled");
+        }
     }
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -72,6 +83,10 @@ public class BetterPistonsModule implements Listener {
 
     @EventHandler
     public void onSignPlace(SignChangeEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -97,5 +112,14 @@ public class BetterPistonsModule implements Listener {
         blockFaces.add(BlockFace.WEST);
         blockFaces.add(BlockFace.UP);
         blockFaces.add(BlockFace.DOWN);
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("BetterPistons");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- BetterPistonsModule Enabled");
+        }
     }
 }

@@ -10,6 +10,4 @@ public class AdminModule implements Listener {
     public AdminModule(SkcraftBasics plugin) {
         this.plugin = plugin;
     }
-
-
 }

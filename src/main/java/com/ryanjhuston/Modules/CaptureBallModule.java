@@ -20,6 +20,8 @@ public class CaptureBallModule implements Listener {
     private List<EntityType> entityList = new ArrayList<>();
     private List<Entity> hitEntity = new ArrayList<>();
 
+    private boolean moduleEnabled;
+
     public CaptureBallModule(SkcraftBasics plugin) {
         entityList.add(EntityType.ARMOR_STAND);
         entityList.add(EntityType.ENDER_DRAGON);
@@ -32,10 +34,20 @@ public class CaptureBallModule implements Listener {
         entityList.add(EntityType.ZOMBIE_VILLAGER);
 
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("CaptureBall");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- CaptureBallModule Enabled");
+        }
     }
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         Entity entity = event.getHitEntity();
 
         if(entity == null) {
@@ -59,6 +71,10 @@ public class CaptureBallModule implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -70,6 +86,10 @@ public class CaptureBallModule implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -108,5 +128,14 @@ public class CaptureBallModule implements Listener {
 
         ItemStack spawnEgg = new ItemStack(material);
         return spawnEgg;
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("CaptureBall");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- CaptureBallModule Enabled");
+        }
     }
 }

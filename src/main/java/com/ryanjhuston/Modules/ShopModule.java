@@ -35,12 +35,24 @@ public class ShopModule implements Listener {
 
     private HashMap<Location, Shop> shops = new HashMap<>();
 
+    private boolean moduleEnabled;
+
     public ShopModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("Shop");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- ShopModule Enabled");
+        }
     }
 
     @EventHandler
     public void onSignChange(SignChangeEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -141,6 +153,10 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -205,6 +221,10 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -226,6 +246,10 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -317,6 +341,10 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onItemMoveInventory(InventoryMoveItemEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if (event.isCancelled()) {
             return;
         }
@@ -557,5 +585,14 @@ public class ShopModule implements Listener {
         }
 
         return material;
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("Shop");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- ShopModule Enabled");
+        }
     }
 }

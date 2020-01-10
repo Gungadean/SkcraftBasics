@@ -22,12 +22,24 @@ public class GalapagosModule implements Listener {
 
     private SkcraftBasics plugin;
 
+    private boolean moduleEnabled;
+
     public GalapagosModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("Galapagos");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- GalapagosModule Enabled");
+        }
     }
 
     @EventHandler
     public void onEntitySpawn(EntitySpawnEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.getEntityType() != EntityType.TURTLE) {
             return;
         }
@@ -43,6 +55,10 @@ public class GalapagosModule implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.getEntityType() != EntityType.TURTLE) {
             return;
         }
@@ -64,6 +80,10 @@ public class GalapagosModule implements Listener {
 
     @EventHandler
     public void onEntityKill(EntityDeathEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.getEntityType() != EntityType.TURTLE) {
             return;
         }
@@ -97,6 +117,10 @@ public class GalapagosModule implements Listener {
 
     @EventHandler
     public void onPlayerEat(PlayerItemConsumeEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         if(event.getItem().getType() != Material.DRIED_KELP) {
             return;
         }
@@ -117,5 +141,14 @@ public class GalapagosModule implements Listener {
 
         event.getPlayer().setFoodLevel(20);
         event.getPlayer().setSaturation(20);
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+        moduleEnabled = plugin.enabledModules.contains("Galapagos");
+
+        if(moduleEnabled) {
+            plugin.logger.info("- GalapagosModule Enabled");
+        }
     }
 }
