@@ -17,7 +17,7 @@ public class AdminCommand {
             }
         }
 
-        if(args.length == 0) {
+        if(args.length == 1) {
             throw new CommandException("You must specify a name.");
         }
 

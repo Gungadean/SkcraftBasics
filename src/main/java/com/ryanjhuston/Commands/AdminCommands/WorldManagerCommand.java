@@ -9,9 +9,6 @@ import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class WorldManagerCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender commandSender, String[] args) throws CommandException{
@@ -21,7 +18,26 @@ public class WorldManagerCommand {
             }
         }
 
+        if(args.length == 0) {
+            commandSender.sendMessage(ChatColor.GREEN + "WorldManager Commands:");
+            commandSender.sendMessage(ChatColor.GREEN + "worldmanager create - Create new world.");
+            commandSender.sendMessage(ChatColor.GREEN + "worldmanager delete - Delete a world.");
+            commandSender.sendMessage(ChatColor.GREEN + "worldmanager load - Load existing world.");
+            commandSender.sendMessage(ChatColor.GREEN + "worldmanager unload - Unload world.");
+            commandSender.sendMessage(ChatColor.GREEN + "worldmanager tp - Teleport to world.");
+            return;
+        }
+
         if(args.length == 1) {
+            if(args[0].equalsIgnoreCase("help")) {
+                commandSender.sendMessage(ChatColor.GREEN + "WorldManager Commands:");
+                commandSender.sendMessage(ChatColor.GREEN + "worldmanager create - Create new world.");
+                commandSender.sendMessage(ChatColor.GREEN + "worldmanager delete - Delete a world.");
+                commandSender.sendMessage(ChatColor.GREEN + "worldmanager load - Load existing world.");
+                commandSender.sendMessage(ChatColor.GREEN + "worldmanager unload - Unload world.");
+                commandSender.sendMessage(ChatColor.GREEN + "worldmanager tp - Teleport to world.");
+                return;
+            }
             if(args[0].equalsIgnoreCase("list")) {
                 listCommand(plugin, commandSender);
                 return;

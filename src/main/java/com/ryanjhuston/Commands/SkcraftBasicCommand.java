@@ -34,10 +34,12 @@ public class SkcraftBasicCommand {
 
         if(args[0].equalsIgnoreCase("reload")) {
             ReloadCommand.command(plugin, sender);
+            return;
         }
 
         if(args[0].equalsIgnoreCase("setspawn")) {
             SetSpawnCommand.command(plugin, sender);
+            return;
         }
     }
 }

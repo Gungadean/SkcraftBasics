@@ -6,10 +6,7 @@ import com.ryanjhuston.Types.EnderTurret;
 import com.ryanjhuston.Types.Shop;
 import com.ryanjhuston.Types.SkcraftPlayer;
 import com.ryanjhuston.Types.Stargate;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Sign;
 import org.bukkit.command.CommandException;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -535,5 +532,43 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         skcraftPlayerList.remove(uuid);
+    }
+
+    public void checkSleep() {
+        SkcraftBasics plugin = this;
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                int sleeping = 0;
+                Iterator it = Bukkit.getOnlinePlayers().iterator();
+
+                while(it.hasNext())
+                {
+                    Player player = (Player)it.next();
+                    if(player.isSleeping() || afkModule.getAfkPlayers().contains(player.getUniqueId().toString()) || player.isSleepingIgnored() || !player.getWorld().equals(Bukkit.getWorlds().get(0)) || (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE)) {
+                        sleeping++;
+                    }
+                }
+
+                int percent = (sleeping*100)/Bukkit.getOnlinePlayers().size();
+
+                if(percent >= 50) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                        @Override
+                        public void run() {
+                            Iterator it = Bukkit.getOnlinePlayers().iterator();
+
+                            while(it.hasNext()) {
+                                Player player = (Player)it.next();
+                                player.setStatistic(Statistic.TIME_SINCE_REST, 0);
+                            }
+
+                            Bukkit.getWorlds().get(0).setTime(1000);
+                            Bukkit.getWorlds().get(0).setStorm(false);
+                        }
+                    }, 20);
+                }
+            }
+        }, 1);
     }
 }
