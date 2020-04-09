@@ -160,6 +160,19 @@ public class SkcraftBasics extends JavaPlugin {
             }
         }
 
+        boolean containsMining = false;
+        for(World world : worlds) {
+                if(world.getName().equals("Mining")) {
+                    containsMining = true;
+                    break;
+                }
+        }
+
+        if(containsMining == false && enabledModules.contains("MiningWorld")) {
+            logger.info("[SkcraftBasics] Mining World Module enabled but Mining world not found. Creating world:");
+            worldManager.createWorld("Mining", WorldType.NORMAL, World.Environment.NORMAL, null, null);
+        }
+
         this.getCommand("invite").setExecutor(skcraftCommandHandler);
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
         this.getCommand("paccept").setExecutor(skcraftCommandHandler);
@@ -548,6 +561,10 @@ public class SkcraftBasics extends JavaPlugin {
                     if(player.isSleeping() || afkModule.getAfkPlayers().contains(player.getUniqueId().toString()) || player.isSleepingIgnored() || !player.getWorld().equals(Bukkit.getWorlds().get(0)) || (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE)) {
                         sleeping++;
                     }
+                }
+
+                if(Bukkit.getOnlinePlayers().size() == 0) {
+                    return;
                 }
 
                 int percent = (sleeping*100)/Bukkit.getOnlinePlayers().size();

@@ -32,15 +32,15 @@ public class SkcraftWorldManager {
 
         WorldCreator worldCreator = WorldCreator.name(worldName);
 
-        Bukkit.broadcastMessage(ChatColor.RED + "A world is being mounted, standby.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "A world is being mounted, standby.");
         world = Bukkit.createWorld(worldCreator);
         plugin.worlds.add(world);
-        Bukkit.broadcastMessage(ChatColor.RED + "The world has finished being mounted.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being mounted.");
 
         return world;
     }
 
-    public World createWorld(String worldName, WorldType worldType, World.Environment environment) throws CommandException {
+    public World createWorld(String worldName, WorldType worldType, World.Environment environment, Long seed, String generator) throws CommandException {
         worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
         World world = Bukkit.getWorld(worldName);
 
@@ -54,15 +54,30 @@ public class SkcraftWorldManager {
 
         WorldCreator worldCreator = WorldCreator.name(worldName);
 
-        worldCreator.type(worldType);
-        worldCreator.environment(environment);
+        if(seed != null) {
+            worldCreator.seed(seed);
+        }
 
-        Bukkit.broadcastMessage(ChatColor.RED + "A world is being created, standby.");
+        if(generator != null) {
+            worldCreator.generatorSettings(generator);
+        }
+
+        if(worldType != null) {
+            worldCreator.type(worldType);
+        } else {
+            worldCreator.type(WorldType.NORMAL);
+        }
+
+        if(environment != null) {
+            worldCreator.environment(environment);
+        }
+
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "A world is being created, standby.");
 
         world = Bukkit.createWorld(worldCreator);
         plugin.worlds.add(world);
 
-        Bukkit.broadcastMessage(ChatColor.RED + "The world has finished being created.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being created.");
         return world;
     }
 
@@ -74,6 +89,10 @@ public class SkcraftWorldManager {
             throw new CommandException("The world '" + worldName + "' is not loaded.");
         }
 
+        if(isDefaultWorld(worldName)) {
+            throw new CommandException("You cannot unload a default world.");
+        }
+
         if(!plugin.worlds.contains(world)) {
             throw new CommandException("You cannot unload '" + worldName + "'.");
         }
@@ -82,23 +101,27 @@ public class SkcraftWorldManager {
             player.teleport(plugin.spawnLocation);
         }
 
-        Bukkit.broadcastMessage(ChatColor.RED + "World '" + worldName + "' is being unloaded.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "World '" + worldName + "' is being unloaded.");
 
         plugin.worlds.remove(world);
         Bukkit.unloadWorld(world, true);
 
-        Bukkit.broadcastMessage(ChatColor.RED + "The world has finished being unloaded.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being unloaded.");
     }
 
     public void deleteWorld(String worldName) throws CommandException {
         worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
         World world = Bukkit.getWorld(worldName);
 
+        if(isDefaultWorld(worldName)) {
+            throw new CommandException("You cannot delete a default world.");
+        }
+
         if(!new File(worldName, "level.dat").exists()) {
             throw new CommandException("The world '" + worldName + "' does not exist.");
         }
 
-        Bukkit.broadcastMessage(ChatColor.RED + "A world is being deleted, standby.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "A world is being deleted, standby.");
 
         if(world != null) {
             throw new CommandException("You must unload the world before deleting.");
@@ -109,7 +132,7 @@ public class SkcraftWorldManager {
         plugin.worlds.remove(world);
 
         Bukkit.unloadWorld(world, true);
-        Bukkit.broadcastMessage(ChatColor.RED + "The world has finished being deleted.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being deleted.");
 
         deleteDirectory(worldFolder);
     }
@@ -122,6 +145,10 @@ public class SkcraftWorldManager {
             throw new CommandException("The world '" + worldName + "' is not loaded.");
         }
 
+        if(isDefaultWorld(worldName)) {
+            throw new CommandException("You cannot reset a default world.");
+        }
+
         if(!plugin.worlds.contains(world)) {
             throw new CommandException("You cannot unload '" + worldName + "'.");
         }
@@ -131,11 +158,12 @@ public class SkcraftWorldManager {
         }
 
         resetting.add(worldName);
+        plugin.worlds.remove(world);
 
         WorldType worldType = world.getWorldType();
         World.Environment environment = world.getEnvironment();
 
-        Bukkit.broadcastMessage(ChatColor.RED + "World '" + worldName + "' is being reset.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "World '" + worldName + "' is being reset.");
         File worldFolder = world.getWorldFolder();
 
         Bukkit.unloadWorld(world, false);
@@ -148,10 +176,17 @@ public class SkcraftWorldManager {
         world = Bukkit.createWorld(worldCreator);
         plugin.worlds.add(world);
 
-        Bukkit.broadcastMessage(ChatColor.RED + "The world has finished being reset.");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being reset.");
         resetting.remove(worldName);
 
         return world;
+    }
+
+    private boolean isDefaultWorld(String worldName) {
+        if(Bukkit.getWorlds().get(0).getName().equals(worldName) || Bukkit.getWorlds().get(1).getName().equals(worldName) || Bukkit.getWorlds().get(2).getName().equals(worldName)) {
+            return true;
+        }
+        return false;
     }
 
     private boolean deleteDirectory(File file) {

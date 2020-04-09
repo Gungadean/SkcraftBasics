@@ -12,7 +12,7 @@ public class AdminCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender commandSender, String[] args) {
         if(commandSender instanceof Player) {
-            if(!commandSender.isOp()) {
+            if(!plugin.skcraftPlayerList.get(((Player) commandSender).getUniqueId().toString()).isAdmin()) {
                 throw new CommandException("You do not have permission for this command.");
             }
         }
@@ -25,7 +25,7 @@ public class AdminCommand {
             throw new CommandException("Too many args.");
         }
 
-        Player target = Bukkit.getPlayer(args[0]);
+        Player target = Bukkit.getPlayer(args[1]);
 
         if(target == null) {
             throw new CommandException("The player must be online to make them an admin.");
@@ -34,12 +34,18 @@ public class AdminCommand {
         SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(target.getUniqueId().toString());
         if(!skcraftPlayer.isAdmin()) {
             skcraftPlayer.setIsAdmin(true);
-            commandSender.sendMessage(ChatColor.GOLD + target.getName() + " has been made an admin.");
-            target.sendMessage(ChatColor.GOLD + "You are now an admin.");
+            commandSender.sendMessage(ChatColor.YELLOW + target.getName() + " has been made an admin.");
+            target.sendMessage(ChatColor.YELLOW + "You are now an admin.");
         } else {
+            if(commandSender instanceof Player) {
+                if(((Player)commandSender).getUniqueId().toString().equals(target.getUniqueId().toString())) {
+                    throw new CommandException("You cannot remove yourself as an admin.");
+                }
+            }
+
             skcraftPlayer.setIsAdmin(false);
-            commandSender.sendMessage(ChatColor.GOLD + target.getName() + " has been removed as an admin.");
-            target.sendMessage(ChatColor.GOLD + "You are no longer an admin.");
+            commandSender.sendMessage(ChatColor.RED + target.getName() + " has been removed as an admin.");
+            target.sendMessage(ChatColor.RED + "You are no longer an admin.");
         }
     }
 }

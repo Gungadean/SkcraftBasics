@@ -19,23 +19,13 @@ public class WorldManagerCommand {
         }
 
         if(args.length == 0) {
-            commandSender.sendMessage(ChatColor.GREEN + "WorldManager Commands:");
-            commandSender.sendMessage(ChatColor.GREEN + "worldmanager create - Create new world.");
-            commandSender.sendMessage(ChatColor.GREEN + "worldmanager delete - Delete a world.");
-            commandSender.sendMessage(ChatColor.GREEN + "worldmanager load - Load existing world.");
-            commandSender.sendMessage(ChatColor.GREEN + "worldmanager unload - Unload world.");
-            commandSender.sendMessage(ChatColor.GREEN + "worldmanager tp - Teleport to world.");
+            helpMenu(commandSender);
             return;
         }
 
         if(args.length == 1) {
             if(args[0].equalsIgnoreCase("help")) {
-                commandSender.sendMessage(ChatColor.GREEN + "WorldManager Commands:");
-                commandSender.sendMessage(ChatColor.GREEN + "worldmanager create - Create new world.");
-                commandSender.sendMessage(ChatColor.GREEN + "worldmanager delete - Delete a world.");
-                commandSender.sendMessage(ChatColor.GREEN + "worldmanager load - Load existing world.");
-                commandSender.sendMessage(ChatColor.GREEN + "worldmanager unload - Unload world.");
-                commandSender.sendMessage(ChatColor.GREEN + "worldmanager tp - Teleport to world.");
+                helpMenu(commandSender);
                 return;
             }
             if(args[0].equalsIgnoreCase("list")) {
@@ -56,19 +46,23 @@ public class WorldManagerCommand {
         switch(args[0].toLowerCase()) {
             case "create":
                 createCommand(plugin, args);
-                commandSender.sendMessage(ChatColor.GOLD + "World successfully created.");
+                commandSender.sendMessage(ChatColor.YELLOW + "World successfully created.");
                 break;
             case "delete":
                 deleteCommand(plugin, args);
-                commandSender.sendMessage(ChatColor.GOLD + "World successfully deleted.");
+                commandSender.sendMessage(ChatColor.YELLOW + "World successfully deleted.");
                 break;
             case "load":
                 loadCommand(plugin, args);
-                commandSender.sendMessage(ChatColor.GOLD + "World successfully loaded.");
+                commandSender.sendMessage(ChatColor.YELLOW + "World successfully loaded.");
                 break;
             case "unload":
                 unloadCommand(plugin, args);
-                commandSender.sendMessage(ChatColor.GOLD + "World successfully unloaded.");
+                commandSender.sendMessage(ChatColor.YELLOW + "World successfully unloaded.");
+                break;
+            case "reset":
+                resetCommand(plugin, args);
+                commandSender.sendMessage(ChatColor.YELLOW  + "World successfully reset.");
                 break;
             default:
                 throw new CommandException("Correct Usage: /worldmanager {create/delete/load/unload} {world}");
@@ -90,38 +84,53 @@ public class WorldManagerCommand {
     }
 
     private static void createCommand(SkcraftBasics plugin, String[] args) throws CommandException {
-        WorldType worldType = WorldType.NORMAL;
-        World.Environment environment = World.Environment.NORMAL;
+        WorldType worldType = null;
+        World.Environment environment = null;
+        Long seed = null;
+        String generator = null;
 
-        if(args.length > 4) {
-            throw new CommandException("Too many arguments.");
+        if(args.length < 2 || args.length == 3) {
+            throw new CommandException("Invalid arguments. Correct usage: /worldmanager create {name} [-t worldType] [-e environment] [-s seed] [-g generator]");
         }
 
-        if(args.length >= 3) {
-            if(WorldType.getByName(args[2]) != null) {
-                worldType = WorldType.getByName(args[2]);
-            } else {
-                throw new CommandException(args[2] + " is not a valid world type.");
+        if(args.length > 3 && args.length < 11 && args.length % 2 == 0) {
+            for(int i = 2; i < args.length; i += 2) {
+                switch(args[i].toLowerCase()) {
+                    case "-e":
+                        switch(args[i+1].toLowerCase()) {
+                            case "normal":
+                                environment = World.Environment.NORMAL;
+                                break;
+                            case "nether":
+                                environment = World.Environment.NETHER;
+                                break;
+                            case "the_end":
+                                environment = World.Environment.THE_END;
+                                break;
+                            default:
+                                throw new CommandException(args[3] + " is not a valid world environment.");
+                        }
+                        break;
+                    case "-s":
+                        seed = Long.parseLong(args[i+1]);
+                        break;
+                    case "-g":
+                        generator = args[i+1];
+                        break;
+                    case "-t":
+                        if(WorldType.getByName(args[i+1]) != null) {
+                            worldType = WorldType.getByName(args[i+1]);
+                        } else {
+                            throw new CommandException(args[i+1] + " is not a valid world type.");
+                        }
+                        break;
+                    default:
+                        throw new CommandException("Invalid arguments. Correct usage: /worldmanager create {name} [-t worldType] [-e environment] [-s seed] [-g generator]");
+                }
             }
         }
 
-        if(args.length == 4) {
-            switch(args[3].toLowerCase()) {
-                case "normal":
-                    environment = World.Environment.NORMAL;
-                    break;
-                case "nether":
-                    environment = World.Environment.NETHER;
-                    break;
-                case "the_end":
-                    environment = World.Environment.THE_END;
-                    break;
-                default:
-                    throw new CommandException(args[3] + " is not a valid world environment.");
-            }
-        }
-
-        plugin.worldManager.createWorld(args[1], worldType, environment);
+        plugin.worldManager.createWorld(args[1], worldType, environment, seed, generator);
     }
 
     private static void deleteCommand(SkcraftBasics plugin, String[] args) throws CommandException {
@@ -134,6 +143,10 @@ public class WorldManagerCommand {
 
     private static void unloadCommand(SkcraftBasics plugin, String[] args) throws CommandException {
         plugin.worldManager.unloadWorld(args[1]);
+    }
+
+    private static void resetCommand(SkcraftBasics plugin, String[] args) throws CommandException {
+        plugin.worldManager.resetWorld(args[1]);
     }
 
     private static void listCommand(SkcraftBasics plugin, CommandSender commandSender) throws CommandException {
@@ -150,7 +163,18 @@ public class WorldManagerCommand {
         if(worldList.equals("")) {
             commandSender.sendMessage(ChatColor.YELLOW + "There are currently no extra worlds loaded.");
         } else {
-            commandSender.sendMessage(ChatColor.YELLOW + "Worlds: " + worldList);
+            commandSender.sendMessage(ChatColor.YELLOW + "Worlds: " + ChatColor.GRAY + worldList);
         }
+    }
+
+    private static void helpMenu(CommandSender commandSender) {
+        commandSender.sendMessage(ChatColor.YELLOW + "WorldManager Commands:");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager create {name} [-t worldType] [-e environment] [-s seed] [-g generator] - " + ChatColor.GRAY + "Create new world.");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager delete - " + ChatColor.GRAY + "Delete a world.");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager load - " + ChatColor.GRAY + "Load existing world.");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager unload - " + ChatColor.GRAY + "Unload world.");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager reset - " + ChatColor.GRAY + "Resets loaded world.");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager tp - " + ChatColor.GRAY + "Teleport to world.");
+        commandSender.sendMessage(ChatColor.GREEN + "/worldmanager list - " + ChatColor.GRAY + "Lists loaded worlds.");
     }
 }

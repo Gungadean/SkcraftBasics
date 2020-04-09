@@ -16,6 +16,8 @@ public class MiningWorldModule implements Listener {
 
     private boolean moduleEnabled;
 
+    private int resetTimer;
+
     public MiningWorldModule(SkcraftBasics plugin) {
         this.plugin = plugin;
 
@@ -29,7 +31,7 @@ public class MiningWorldModule implements Listener {
     }
 
     public void initializeWorldResetTimer() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+        resetTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
                 if(!moduleEnabled) {
@@ -50,7 +52,7 @@ public class MiningWorldModule implements Listener {
 
                 if(hour == 6) {
                     if(minute == 0 && second == 0) {
-                        Bukkit.broadcastMessage(ChatColor.RED + "The mining world is now resetting.");
+                        resetWorld();
                     }
                 } else if(hour == 5) {
                     if(minute == 0 && second == 0) {
@@ -73,6 +75,10 @@ public class MiningWorldModule implements Listener {
                 }
             }
         }, 0, 20);
+    }
+
+    public void resetWorld() {
+        plugin.worldManager.resetWorld("Mining");
     }
 
     @EventHandler
@@ -99,7 +105,7 @@ public class MiningWorldModule implements Listener {
 
         if(world == null && !plugin.worldManager.resetting.contains("Mining")) {
             event.getPlayer().sendMessage(ChatColor.GOLD + "Mining world is currently not loaded. Please standby.");
-            plugin.worldManager.createWorld("Mining", WorldType.NORMAL, World.Environment.NORMAL);
+            plugin.worldManager.createWorld("Mining", WorldType.NORMAL, World.Environment.NORMAL, null, null);
             event.getPlayer().sendMessage(ChatColor.GOLD + "Mining world successfully created.");
         }
 

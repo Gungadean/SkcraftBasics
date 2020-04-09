@@ -23,7 +23,36 @@ public class SkcraftBasicCommand {
             sender.sendMessage(ChatColor.GREEN + "/sb admin {name} " + ChatColor.GRAY + "- Make or remove a player as an admin.");
             sender.sendMessage(ChatColor.GREEN + "/sb reload " + ChatColor.GRAY + "- Reloads config file.");
             sender.sendMessage(ChatColor.GREEN + "/sb setspawn " + ChatColor.GRAY + "- Set spawn for the server.");
+            sender.sendMessage(ChatColor.GREEN + "/sb miningreset " + ChatColor.GRAY + "- Forces Mining world reset.");
+            sender.sendMessage(ChatColor.GREEN + "/sb spawn" + ChatColor.GRAY + "- Teleports you to spawn.");
+            sender.sendMessage(ChatColor.GREEN + "/sb home" + ChatColor.GRAY + "- Teleports you home.");
             sender.sendMessage(ChatColor.GREEN + "/worldmanager" + ChatColor.GRAY + "- WorldManager basic command.");
+            return;
+        }
+
+
+
+        if(args[0].equalsIgnoreCase("spawn")) {
+            if(!(sender instanceof Player)) {
+                throw new CommandException("You must be a player to execute this command.");
+            }
+
+            Player player = (Player)sender;
+
+            player.teleport(plugin.spawnLocation);
+            player.sendMessage(ChatColor.YELLOW + "Teleported to spawn.");
+            return;
+        }
+
+        if(args[0].equalsIgnoreCase("home")) {
+            if(!(sender instanceof Player)) {
+                throw new CommandException("You must be a player to execute this command.");
+            }
+
+            Player player = (Player)sender;
+
+            player.teleport(player.getBedSpawnLocation());
+            player.sendMessage(ChatColor.YELLOW + "Teleported to your bed.");
             return;
         }
 
@@ -39,6 +68,11 @@ public class SkcraftBasicCommand {
 
         if(args[0].equalsIgnoreCase("setspawn")) {
             SetSpawnCommand.command(plugin, sender);
+            return;
+        }
+
+        if(args[0].equalsIgnoreCase("miningreset")) {
+            plugin.miningWorldModule.resetWorld();
             return;
         }
     }
