@@ -220,7 +220,7 @@ public class StargateModule implements Listener {
 
         stargateList.put(portalName, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
 
-        player.sendMessage(ChatColor.GOLD + "New stargate has been successfully created.");
+        player.sendMessage(ChatColor.YELLOW + "New stargate has been successfully created.");
         return true;
     }
 
@@ -274,16 +274,22 @@ public class StargateModule implements Listener {
             }
         }
 
+        if(!event.getClickedBlock().hasMetadata("Stargate")) {
+            return;
+        }
+
+        Stargate stargate = stargateList.get(event.getClickedBlock().getMetadata("Stargate").get(0).asString());
+
+        if(stargate.isLocked()) {
+            return;
+        }
+
         if(event.getClickedBlock().getType().toString().contains("_SIGN")) {
-            if(event.getClickedBlock().hasMetadata("Stargate")) {
-                updateStargateSign(event.getClickedBlock(), event.getPlayer());
-            }
+            updateStargateSign(event.getClickedBlock(), event.getPlayer());
         }
 
         if(event.getClickedBlock().getType().toString().contains("_BUTTON")) {
-            if(event.getClickedBlock().hasMetadata("Stargate")) {
-                openPortal(event.getClickedBlock(), event.getPlayer());
-            }
+            openPortal(event.getClickedBlock(), event.getPlayer());
         }
 
         if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.FLINT_AND_STEEL) {
@@ -318,7 +324,7 @@ public class StargateModule implements Listener {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
             if(stargateList.containsKey(stargate)) {
                 removeStargate(stargate);
-                event.getPlayer().sendMessage(ChatColor.GOLD + "Stargate successfully removed.");
+                event.getPlayer().sendMessage(ChatColor.YELLOW + "Stargate successfully removed.");
             }
         }
     }
@@ -480,10 +486,71 @@ public class StargateModule implements Listener {
         }.runTaskLater(plugin, (resetDelay*20));
     }
 
+    public void openPortalNamed(Block portalBlock, String destination) {
+        Stargate stargate = stargateList.get(portalBlock.getMetadata("Stargate").get(0).asString());
+        Sign sign = (Sign)stargate.getSignLocation().getBlock().getState();
+
+        if(portalBlock.getMetadata("Stargate").get(0).asString().equals(destination)) {
+            return;
+        }
+
+        if(!networkList.get(stargate.getNetwork()).contains(destination)) {
+            return;
+        }
+
+        sign.setLine(0,"Rail Destination:");
+        sign.setLine(1, destination);
+        sign.setLine(2, "");
+        sign.setLine(3, "");
+        sign.update();
+
+        List<Location> portalBlocks = stargate.getPortalBlocks();
+
+        for(int i = 0; i < portalBlocks.size(); i++) {
+            Block block = portalBlocks.get(i).getBlock();
+            block.setType(Material.NETHER_PORTAL);
+
+            block.setMetadata("Stargate", new FixedMetadataValue(plugin, destination));
+
+            if(stargate.getDirection().equals("EW")) {
+                Orientable portal = (Orientable)block.getBlockData();
+                portal.setAxis(Axis.Z);
+                block.setBlockData(portal);
+            }
+        }
+
+        stargate.setLocked(true);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for(int i = 0; i < portalBlocks.size(); i++) {
+                    Block block = portalBlocks.get(i).getBlock();
+                    block.setType(Material.AIR);
+                }
+
+                if(portalBlock.getMetadata("Stargate").get(0) == null) {
+                    return;
+                }
+
+                sign.setLine(0, "-" + portalBlock.getMetadata("Stargate").get(0).asString() + "-");
+                sign.setLine(1, "Right click");
+                sign.setLine(2, "to use gate");
+                sign.setLine(3, "(" + stargate.getNetwork() + ")");
+                sign.update();
+
+                stargate.setSignTask(null);
+                sign.getBlock().removeMetadata("Who-Clicked", plugin);
+
+                stargate.setLocked(false);
+            }
+        }.runTaskLater(plugin, (resetDelay*20));
+    }
+
     @EventHandler
     public void playerTeleport(PlayerPortalEvent event) {
         if(!moduleEnabled) {
-
+            return;
         }
 
         if (event.isCancelled()) {

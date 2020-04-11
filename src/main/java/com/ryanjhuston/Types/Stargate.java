@@ -16,6 +16,8 @@ public class Stargate {
     private List<Location> blocks;
     private List<Location> portalBlocks;
 
+    private boolean isLocked;
+
     private String direction;
 
     private BukkitTask signTask;
@@ -30,6 +32,7 @@ public class Stargate {
         this.portalBlocks = portalBlocks;
         this.signTask = null;
         this.direction = direction;
+        this.isLocked = false;
     }
 
     public void setNetwork(String network) {
@@ -68,6 +71,10 @@ public class Stargate {
         this.direction = direction;
     }
 
+    public void setLocked(boolean isSignLocked) {
+        this.isLocked = isSignLocked;
+    }
+
     public String getNetwork() {
         return network;
     }
@@ -102,5 +109,9 @@ public class Stargate {
 
     public Location getTeleportLocation() {
         return teleportLocation;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
     }
 }

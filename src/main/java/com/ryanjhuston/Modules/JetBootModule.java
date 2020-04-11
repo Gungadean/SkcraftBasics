@@ -69,6 +69,10 @@ public class JetBootModule implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
+                if(!(location.getBlock().getState() instanceof Beacon)) {
+                    return;
+                }
+
                 Beacon beacon = (Beacon)location.getBlock().getState();
                 if(beacon.getTier() == 0) {
                     return;
