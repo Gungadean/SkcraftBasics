@@ -275,6 +275,8 @@ public class SkcraftBasics extends JavaPlugin {
         betterPistonsModule.updateConfig(this);
         captureBallModule.updateConfig(this);
         chatChannelsModule.updateConfig(this);
+        chunkLoaderModule.updateConfig(this);
+        craftingModule.updateConfig(this);
         enderPearlTeleportModule.updateConfig(this);
         galapagosModule.updateConfig(this);
         goldToolModule.updateConfig(this);
