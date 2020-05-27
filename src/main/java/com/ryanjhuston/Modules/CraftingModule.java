@@ -15,6 +15,7 @@ public class CraftingModule implements Listener {
 
     public CraftingModule(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         addRecipes();
     }
 

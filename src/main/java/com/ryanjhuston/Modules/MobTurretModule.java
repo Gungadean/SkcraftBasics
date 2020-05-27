@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 
@@ -24,17 +25,14 @@ public class MobTurretModule implements Listener {
 
     private List<EnderTurret> turretList = new ArrayList<>();
 
+    private double turretRadius;
+
     private boolean moduleEnabled;
 
     public MobTurretModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
+
         scheduleTask();
-
-        moduleEnabled = plugin.enabledModules.contains("MobTurret");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- MobTurretModule Enabled");
-        }
     }
 
     public void scheduleTask() {
@@ -65,7 +63,7 @@ public class MobTurretModule implements Listener {
                         continue;
                     }
 
-                    for(Entity entity : enderTurret.getTurret().getNearbyEntities(40, 40, 40)) {
+                    for(Entity entity : enderTurret.getTurret().getNearbyEntities(turretRadius, turretRadius, turretRadius)) {
                         if(targetableMob(entity)) {
                             if(((LivingEntity)entity).hasLineOfSight(enderTurret.getTurret()) && !entity.hasMetadata("Turret")) {
                                 enderTurret.setTarget(entity);
@@ -116,6 +114,10 @@ public class MobTurretModule implements Listener {
             return;
         }
 
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -136,6 +138,7 @@ public class MobTurretModule implements Listener {
             return;
         }
 
+        plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
         Location location = event.getClickedBlock().getRelative(0, 1, 0).getLocation();
         EnderCrystal enderCrystal = (EnderCrystal)event.getClickedBlock().getWorld().spawnEntity(new Location(location.getWorld(), (location.getX() + 0.5), location.getY(), (location.getZ() + 0.5)), EntityType.ENDER_CRYSTAL);
@@ -208,6 +211,9 @@ public class MobTurretModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        turretRadius = plugin.getConfig().getDouble("Module-Settings.MobTurret-Module.Turret-Radius");
+
         moduleEnabled = plugin.enabledModules.contains("MobTurret");
 
         if(moduleEnabled) {

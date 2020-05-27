@@ -14,6 +14,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -27,13 +28,7 @@ public class EnderPearlTeleportModule implements Listener {
     private boolean moduleEnabled;
 
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- EnderPearlTeleportModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -94,6 +89,10 @@ public class EnderPearlTeleportModule implements Listener {
             return;
         }
 
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -102,6 +101,8 @@ public class EnderPearlTeleportModule implements Listener {
             if(!event.getPlayer().isSneaking()) {
                 return;
             }
+
+            plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
             if(Bukkit.getOnlinePlayers().size() != 1) {
                 event.getPlayer().openInventory(openTeleportMenu(event.getPlayer()));
@@ -228,6 +229,7 @@ public class EnderPearlTeleportModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
 
         if(moduleEnabled) {

@@ -14,6 +14,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -35,13 +36,7 @@ public class StargateModule implements Listener {
     private boolean moduleEnabled;
 
     public StargateModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-        resetDelay = plugin.getConfig().getInt("Module-Settings.Stargate-Module.Portal-Reset-Time");
-        moduleEnabled = plugin.enabledModules.contains("Stargate");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- StargateModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     public boolean createStargate(Block clicked, Player player) {
@@ -181,8 +176,6 @@ public class StargateModule implements Listener {
 
             portalName = portalName.replaceAll("^[^\\w+( [\\w]+)*]$", "");
 
-            System.out.println(portalName);
-
             if(stargateList.containsKey(portalName)) {
                 player.sendMessage(ChatColor.RED + "A portal with this name already exists.");
                 return false;
@@ -258,6 +251,10 @@ public class StargateModule implements Listener {
             return;
         }
 
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -267,29 +264,41 @@ public class StargateModule implements Listener {
         }
 
         if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.ARROW) {
+            plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
+
             if(event.getClickedBlock().hasMetadata("Stargate")) {
                 event.getPlayer().sendMessage(event.getClickedBlock().getMetadata("Stargate").get(0).asString());
             } else {
                 event.getPlayer().sendMessage("No metadata present.");
             }
-        }
-
-        if(!event.getClickedBlock().hasMetadata("Stargate")) {
             return;
         }
 
-        Stargate stargate = stargateList.get(event.getClickedBlock().getMetadata("Stargate").get(0).asString());
+        if(event.getClickedBlock().hasMetadata("Stargate")) {
+            plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
-        if(stargate.isLocked()) {
-            return;
+            Stargate stargate = stargateList.get(event.getClickedBlock().getMetadata("Stargate").get(0).asString());
+            if(stargate.isLocked()) {
+                return;
+            }
         }
 
         if(event.getClickedBlock().getType().toString().contains("_SIGN")) {
-            updateStargateSign(event.getClickedBlock(), event.getPlayer());
+            if(event.getClickedBlock().hasMetadata("Stargate")) {
+                plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
+
+                updateStargateSign(event.getClickedBlock(), event.getPlayer());
+                return;
+            }
         }
 
         if(event.getClickedBlock().getType().toString().contains("_BUTTON")) {
-            openPortal(event.getClickedBlock(), event.getPlayer());
+            if(event.getClickedBlock().hasMetadata("Stargate")) {
+                plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
+
+                openPortal(event.getClickedBlock(), event.getPlayer());
+                return;
+            }
         }
 
         if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.FLINT_AND_STEEL) {
@@ -299,6 +308,8 @@ public class StargateModule implements Listener {
         if (event.getClickedBlock().getType() != Material.DIAMOND_BLOCK) {
             return;
         }
+
+        plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
         if (event.getClickedBlock().hasMetadata("Stargate")) {
             event.getPlayer().sendMessage(ChatColor.RED + "This is already an active stargate.");
@@ -570,7 +581,9 @@ public class StargateModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         resetDelay = plugin.getConfig().getInt("Module-Settings.Stargate-Module.Portal-Reset-Time");
+
         moduleEnabled = plugin.enabledModules.contains("Stargate");
 
         if(moduleEnabled) {

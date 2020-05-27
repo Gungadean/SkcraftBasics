@@ -24,3 +24,35 @@ Spawn-Location: ""
 Module-Settings:
   Stargate-Module:
     Portal-Reset-Time: 4
+  JetBoot-Module:
+    JetBoot-Damage: 1
+    Durability-Update-Freq: 10
+    Tier-One-Radius: 20
+    Tier-Two-Radius: 30
+    Tier-Three-Radius: 40
+    Tier-Four-Radius: 50
+  Rotator-Module:
+    Tool-Material: 'BLAZE_ROD'
+  InkSign-Module:
+    Tool-Material: 'INK_SAC'
+  Galapagos-Module:
+    #Percent chance of spawning
+    Spawn-Chance: 5
+  ChatChannels-Module:
+    Chat-Format: '&a[%channel%] %player%: %message%'
+    Global-Chat-Format: '<%playerDisplay%> %message%'
+    Leave-Format: '&e[%channel%] User %player% has left the channel.'
+    Join-Format: '&e[%channel%] User %player% has joined the channel.'
+  MobTurret-Module:
+    Turret-Radius: 40
+  CaptureBall-Module:
+    Banned-Mobs:
+      - ARMOR_STAND
+      - ENDER_DRAGON
+      - PLAYER
+      - SHULKER
+      - WANDERING_TRADER
+      - TRADER_LLAMA
+      - WITHER
+      - VILLAGER
+      - ZOMBIE_VILLAGER

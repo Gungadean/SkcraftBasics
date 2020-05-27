@@ -19,15 +19,9 @@ public class MiningWorldModule implements Listener {
     private int resetTimer;
 
     public MiningWorldModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
 
         initializeWorldResetTimer();
-
-        moduleEnabled = plugin.enabledModules.contains("MiningWorld");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- MiningWorldModule Enabled");
-        }
     }
 
     public void initializeWorldResetTimer() {
@@ -134,6 +128,7 @@ public class MiningWorldModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         moduleEnabled = plugin.enabledModules.contains("MiningWorld");
 
         if(moduleEnabled) {

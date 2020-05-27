@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 public class RotatorModule implements Listener {
 
@@ -20,14 +21,10 @@ public class RotatorModule implements Listener {
 
     private boolean moduleEnabled;
 
+    private Material tool;
+
     public RotatorModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("Rotator");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- RotatorModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -36,7 +33,15 @@ public class RotatorModule implements Listener {
             return;
         }
 
-        if (event.getPlayer().getInventory().getItemInMainHand().getType() != Material.BLAZE_ROD) {
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
+            return;
+        }
+
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
+            return;
+        }
+
+        if (event.getPlayer().getInventory().getItemInMainHand().getType() != tool) {
             return;
         }
 
@@ -59,9 +64,7 @@ public class RotatorModule implements Listener {
             }
         }
 
-        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
-            return;
-        }
+        plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
         if(event.getPlayer().isSneaking()) {
             if(event.getClickedBlock().getType().toString().endsWith("_STAIRS")) {
@@ -172,6 +175,9 @@ public class RotatorModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        tool = Material.getMaterial(plugin.getConfig().getString("Module-Settings.Rotator-Module.Tool-Material"));
+
         moduleEnabled = plugin.enabledModules.contains("Rotator");
 
         if(moduleEnabled) {

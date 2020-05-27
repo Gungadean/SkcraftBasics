@@ -21,6 +21,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
@@ -287,9 +288,11 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
-        String uuid = event.getPlayer().getUniqueId().toString();
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND) && event.getPlayer().getInventory().getItemInOffHand().getType() == Material.ENDER_EYE && event.getPlayer().getInventory().getItemInMainHand().getType() == Material.AIR) {
+            return;
+        }
 
-        if(plugin.interactCooldown.contains(uuid)) {
+        if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
 
@@ -298,15 +301,10 @@ public class SkcraftEventHandler implements Listener {
                 return;
             }
 
+            plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
+
             event.getPlayer().openInventory(event.getPlayer().getEnderChest());
             event.setCancelled(true);
         }
-
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                plugin.interactCooldown.remove(uuid);
-            }
-        }, 2);
     }
 }

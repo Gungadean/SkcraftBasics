@@ -24,12 +24,8 @@ public class BetterPistonsModule implements Listener {
 
     public BetterPistonsModule(SkcraftBasics plugin) {
         addFaces();
-        this.plugin = plugin;
-        moduleEnabled = plugin.enabledModules.contains("BetterPistons");
 
-        if(moduleEnabled) {
-            plugin.logger.info("- BetterPistonsModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler

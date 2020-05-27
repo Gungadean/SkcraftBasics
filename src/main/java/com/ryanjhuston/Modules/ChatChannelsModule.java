@@ -18,16 +18,15 @@ public class ChatChannelsModule implements Listener {
     public HashMap<String, List<String>> chatChannels = new HashMap<>();
     public HashMap<String, String> inChannelPlayers = new HashMap<>();
 
+    private String chatFormat;
+    private String globalChatFormat;
+    private String leaveFormat;
+    private String joinFormat;
+
     private boolean moduleEnabled;
 
     public ChatChannelsModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("ChatChannels");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- ChatChannelsModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     public void joinChatChannel(String player, String channel) {
@@ -100,7 +99,7 @@ public class ChatChannelsModule implements Listener {
             if(plugin.checkOnline(receiver)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(receiver));
 
-                player.sendMessage(ChatColor.YELLOW + "[" + channel + "] User " + name + " has joined the channel.");
+                player.sendMessage(useChatFormat(joinFormat, channel, player, ""));
             }
         }
     }
@@ -112,7 +111,7 @@ public class ChatChannelsModule implements Listener {
             if(plugin.checkOnline(receiver)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(receiver));
 
-                player.sendMessage(ChatColor.YELLOW + "[" + channel + "] User " + name + " has left the channel.");
+                player.sendMessage(useChatFormat(leaveFormat, channel, player, ""));
             }
         }
     }
@@ -124,13 +123,35 @@ public class ChatChannelsModule implements Listener {
             if(plugin.checkOnline(receiver)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(receiver));
 
-                player.sendMessage(ChatColor.GREEN + "[" + channel + "] " + Bukkit.getPlayer(UUID.fromString(name)).getName() + ": " + message);
+                player.sendMessage(useChatFormat(chatFormat, channel, player, message));
             }
         }
     }
 
+    public String useChatFormat(String format, String channel, Player player, String message) {
+        String result = format;
+
+        result = result.replaceAll("%channel%", channel);
+        result = result.replaceAll("%player%", player.getName());
+        result = result.replaceAll("%playerDisplay%", player.getDisplayName());
+        result = ChatColor.translateAlternateColorCodes('&', result);
+        result = result.replaceAll("%message%", message);
+
+        return result;
+    }
+
+    public String getGlobalChatFormat() {
+        return globalChatFormat;
+    }
+
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        chatFormat = plugin.getConfig().getString("Module-Settings.ChatChannels-Module.Chat-Format");
+        globalChatFormat = plugin.getConfig().getString("Module-Settings.ChatChannels-Module.Global-Chat-Format");
+        leaveFormat = plugin.getConfig().getString("Module-Settings.ChatChannels-Module.Leave-Format");
+        joinFormat = plugin.getConfig().getString("Module-Settings.ChatChannels-Module.Join-Format");
+
         moduleEnabled = plugin.enabledModules.contains("ChatChannels");
 
         if(moduleEnabled) {

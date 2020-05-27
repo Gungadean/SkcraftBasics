@@ -69,10 +69,11 @@ public class SkcraftBasics extends JavaPlugin {
     public Location spawnLocation;
     public SkcraftWorldManager worldManager;
     public List<World> worlds = new ArrayList<>();
-    public List<String> interactCooldown = new ArrayList<>();
     public List<String> disabledCommands = new ArrayList<>();
 
     public List<String> enabledModules = new ArrayList<>();
+
+    public List<String> interactCooldown = new ArrayList<>();
 
     public String debug = "[SkcraftBasics Debug] ";
 
@@ -177,12 +178,12 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
         this.getCommand("paccept").setExecutor(skcraftCommandHandler);
         this.getCommand("sb").setExecutor(skcraftCommandHandler);
+        this.getCommand("sba").setExecutor(skcraftCommandHandler);
         this.getCommand("nethercoords").setExecutor(skcraftCommandHandler);
         this.getCommand("here").setExecutor(skcraftCommandHandler);
         this.getCommand("join").setExecutor(skcraftCommandHandler);
         this.getCommand("leave").setExecutor(skcraftCommandHandler);
         this.getCommand("g").setExecutor(skcraftCommandHandler);
-        this.getCommand("help").setExecutor(skcraftCommandHandler);
         this.getCommand("worldmanager").setExecutor(skcraftCommandHandler);
         this.getCommand("wm").setExecutor(skcraftCommandHandler);
 
@@ -524,6 +525,17 @@ public class SkcraftBasics extends JavaPlugin {
             }
         }
         return false;
+    }
+
+    public void removeInteractCooldown(String uuid) {
+        interactCooldown.add(uuid);
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            @Override
+            public void run() {
+                interactCooldown.remove(uuid);
+            }
+        }, 1);
     }
 
     public void savePlayerToFile(Player player) {

@@ -31,7 +31,7 @@ public class SkcraftCommandHandler implements CommandExecutor {
 
         try {
             if (command.equalsIgnoreCase("invite")) {
-                InviteCommand.command(commandSender, args);
+                InviteCommand.command(commandSender, args, plugin);
             }
 
             if (command.equalsIgnoreCase("accept") && commandSender instanceof Player) {
@@ -62,16 +62,16 @@ public class SkcraftCommandHandler implements CommandExecutor {
                 GlobalChatCommand.command((Player) commandSender, args, plugin);
             }
 
-            if (command.equalsIgnoreCase("help")) {
-                HelpCommand.command(commandSender);
-            }
-
             if (command.equalsIgnoreCase("worldmanager") || command.equalsIgnoreCase("wm")) {
                 WorldManagerCommand.command(plugin, commandSender, args);
             }
 
             if (command.equalsIgnoreCase("sb")) {
                 SkcraftBasicCommand.command(plugin, commandSender, args);
+            }
+
+            if (command.equalsIgnoreCase("sba")) {
+                SkcraftBasicAdminCommand.command(plugin, commandSender, args);
             }
         } catch(CommandException e) {
             commandSender.sendMessage(ChatColor.RED + e.getMessage());

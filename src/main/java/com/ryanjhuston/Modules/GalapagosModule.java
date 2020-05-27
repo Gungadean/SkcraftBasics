@@ -22,16 +22,12 @@ public class GalapagosModule implements Listener {
 
     private SkcraftBasics plugin;
 
+    private int spawnChance;
+
     private boolean moduleEnabled;
 
     public GalapagosModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("Galapagos");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- GalapagosModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -45,7 +41,7 @@ public class GalapagosModule implements Listener {
         }
 
         Random rand = new Random();
-        if(rand.nextInt(20) != 1) {
+        if(rand.nextInt(100) <= spawnChance) {
             return;
         }
 
@@ -145,6 +141,9 @@ public class GalapagosModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        spawnChance = plugin.getConfig().getInt("Module-Settings.Galapagos-Module.Spawn-Chance");
+
         moduleEnabled = plugin.enabledModules.contains("Galapagos");
 
         if(moduleEnabled) {

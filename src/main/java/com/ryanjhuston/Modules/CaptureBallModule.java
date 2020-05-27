@@ -17,29 +17,13 @@ public class CaptureBallModule implements Listener {
 
     private SkcraftBasics plugin;
 
-    private List<EntityType> entityList = new ArrayList<>();
+    private List<EntityType> bannedMobs = new ArrayList<>();
     private List<Entity> hitEntity = new ArrayList<>();
 
     private boolean moduleEnabled;
 
     public CaptureBallModule(SkcraftBasics plugin) {
-        entityList.add(EntityType.ARMOR_STAND);
-        entityList.add(EntityType.ENDER_DRAGON);
-        entityList.add(EntityType.PLAYER);
-        entityList.add(EntityType.SHULKER);
-        entityList.add(EntityType.WANDERING_TRADER);
-        entityList.add(EntityType.TRADER_LLAMA);
-        entityList.add(EntityType.WITHER);
-        entityList.add(EntityType.VILLAGER);
-        entityList.add(EntityType.ZOMBIE_VILLAGER);
-
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("CaptureBall");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- CaptureBallModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -58,7 +42,7 @@ public class CaptureBallModule implements Listener {
             return;
         }
 
-        if (entityList.contains(entity.getType())) {
+        if (bannedMobs.contains(entity.getType())) {
             return;
         }
 
@@ -132,6 +116,13 @@ public class CaptureBallModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        List<String> bannedMobsString = plugin.getConfig().getStringList("Module-Settings.CaptureBall-Module.Banned-Mobs");
+
+        for(String bannedMobName : bannedMobsString) {
+            bannedMobs.add(EntityType.valueOf(bannedMobName));
+        }
+
         moduleEnabled = plugin.enabledModules.contains("CaptureBall");
 
         if(moduleEnabled) {

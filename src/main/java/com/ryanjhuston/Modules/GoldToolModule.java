@@ -30,13 +30,7 @@ public class GoldToolModule implements Listener {
         foodstuff.add(Material.COD);
         foodstuff.add(Material.SALMON);
 
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("GoldTools");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- GoldToolsModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -124,6 +118,7 @@ public class GoldToolModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         moduleEnabled = plugin.enabledModules.contains("GoldTools");
 
         if(moduleEnabled) {

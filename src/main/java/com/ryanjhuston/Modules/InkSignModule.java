@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.HashMap;
 
@@ -17,21 +18,21 @@ public class InkSignModule implements Listener {
 
     private HashMap<String, String[]> savedSigns = new HashMap<>();
 
+    private Material tool;
+
     private boolean moduleEnabled;
 
     public InkSignModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("InkSign");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- InkSignModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if(!moduleEnabled) {
+            return;
+        }
+
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
             return;
         }
 
@@ -43,7 +44,7 @@ public class InkSignModule implements Listener {
             return;
         }
 
-        if(event.getPlayer().getInventory().getItemInMainHand().getType() != Material.INK_SAC) {
+        if(event.getPlayer().getInventory().getItemInMainHand().getType() != tool) {
             return;
         }
 
@@ -51,8 +52,10 @@ public class InkSignModule implements Listener {
             return;
         }
 
-        Sign sign = (Sign)event.getClickedBlock().getState();
+        plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
+
         String uuid = event.getPlayer().getUniqueId().toString();
+        Sign sign = (Sign)event.getClickedBlock().getState();
 
         if(event.getPlayer().isSneaking()) {
             if(!savedSigns.containsKey(uuid)) {
@@ -83,6 +86,9 @@ public class InkSignModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        tool = Material.getMaterial(plugin.getConfig().getString("Module-Settings.InkSign-Module.Tool-Material"));
+
         moduleEnabled = plugin.enabledModules.contains("InkSign");
 
         if(moduleEnabled) {

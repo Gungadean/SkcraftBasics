@@ -1,7 +1,7 @@
 main: com.ryanjhuston.SkcraftBasics
 name: SkcraftBasics
-version: 1.0
-api-version: 1.14
+version: 2.0
+api-version: 1.15
 commands:
   accept:
     description: Accept teleport requests from player.
@@ -19,13 +19,11 @@ commands:
     description: Leave chat channel.
   g:
     description: Message global chat when in a channel.
-  help:
-    description: A not very helpful help command.
   worldmanager:
     description: A world management addition.
   wm:
     description: Short form of /worldmanager.
   sb:
-    description: SkcraftBasics command
-  cprc:
-    description: I'm testing
+    description: SkcraftBasics command.
+  sba:
+      description: SkcraftBasics admin command.

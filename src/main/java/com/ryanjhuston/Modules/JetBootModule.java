@@ -4,7 +4,7 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.*;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,6 +16,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -34,16 +35,18 @@ public class JetBootModule implements Listener {
     public HashMap<String, Integer> flyTime = new HashMap<>();
     public List<String> fallGraceCheck = new ArrayList<>();
 
+    private double tierOneRadius;
+    private double tierTwoRadius;
+    private double tierThreeRadius;
+    private double tierFourRadius;
+
+    private int jetbootDamage;
+    private int durabilityFreq;
+
     private boolean moduleEnabled;
 
     public JetBootModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("JetBoot");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- JetBootModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -165,7 +168,7 @@ public class JetBootModule implements Listener {
 
                                 int currentFlyTime = flyTime.get(player.getUniqueId().toString());
 
-                                if(currentFlyTime >= 10) {
+                                if(currentFlyTime >= durabilityFreq) {
                                     boolean remove = updateDurability(player);
                                     if(remove) {
                                         forRemoval.add(player);
@@ -251,6 +254,10 @@ public class JetBootModule implements Listener {
             return;
         }
 
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -270,6 +277,8 @@ public class JetBootModule implements Listener {
                 item.getType() == Material.CHAINMAIL_BOOTS ||
                 item.getType() == Material.GOLDEN_BOOTS ||
                 item.getType() == Material.DIAMOND_BOOTS) {
+
+            plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
             ItemMeta meta = item.getItemMeta();
             List<String> lore;
@@ -388,8 +397,13 @@ public class JetBootModule implements Listener {
             if(beacon.getTier() == 0) {
                 forRemoval.add(beacon.getLocation());
             } else {
-                for(LivingEntity entity : beacon.getEntitiesInRange()) {
+                double radius = getRadius(beacon.getTier());
+                for(Entity entity : beacon.getWorld().getNearbyEntities(beacon.getLocation(), radius, radius, radius)) {
                     if(entity == null) {
+                        continue;
+                    }
+
+                    if(!(entity instanceof Player)) {
                         continue;
                     }
 
@@ -435,17 +449,41 @@ public class JetBootModule implements Listener {
 
     public boolean updateDurability(Player player) {
         ItemMeta meta = player.getInventory().getBoots().getItemMeta();
-        ((Damageable)meta).setDamage(((Damageable)meta).getDamage()+1);
+        ((Damageable)meta).setDamage(((Damageable)meta).getDamage() + jetbootDamage);
         player.getInventory().getBoots().setItemMeta(meta);
 
-        if(((Damageable)meta).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability()-1)) {
+        if(((Damageable)meta).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability() - jetbootDamage)) {
             return true;
         }
         return false;
     }
 
+    public double getRadius(int tier) {
+        switch(tier) {
+            case 1:
+                return tierOneRadius;
+            case 2:
+                return tierTwoRadius;
+            case 3:
+                return tierThreeRadius;
+            case 4:
+                return tierFourRadius;
+            default:
+                return 0;
+        }
+    }
+
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        tierOneRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-One-Radius");
+        tierTwoRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-Two-Radius");
+        tierThreeRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-Three-Radius");
+        tierFourRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-Four-Radius");
+
+        jetbootDamage = plugin.getConfig().getInt("Module-Settings.JetBoot-Module.JetBoot-Damage");
+        durabilityFreq = plugin.getConfig().getInt("Module-Settings.JetBoot-Module.Durability-Update-Freq");
+
         moduleEnabled = plugin.enabledModules.contains("JetBoot");
 
         if(moduleEnabled) {

@@ -33,13 +33,7 @@ public class RailModule implements Listener {
     private boolean moduleEnabled;
 
     public RailModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("Rail");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- RailModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -448,6 +442,7 @@ public class RailModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         moduleEnabled = plugin.enabledModules.contains("Rail");
 
         if(moduleEnabled) {

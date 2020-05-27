@@ -2,10 +2,10 @@ package com.ryanjhuston.Commands.TeleportCommands;
 
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.SkcraftPlayer;
+import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandException;
-import org.bukkit.craftbukkit.libs.org.apache.commons.io.IOUtils;
 import org.bukkit.entity.Player;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -38,7 +38,7 @@ public class PermanentAcceptCommand {
                 String uuid = null;
 
                 try {
-                    uuid = IOUtils.toString(new URL(url));
+                    uuid = IOUtils.toString(new URL(url), "UTF-8");
                     if(uuid.isEmpty()) {
                         uuid = null;
                     } else {

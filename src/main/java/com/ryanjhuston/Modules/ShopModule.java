@@ -20,10 +20,7 @@ import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.DoubleChestInventory;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,13 +35,7 @@ public class ShopModule implements Listener {
     private boolean moduleEnabled;
 
     public ShopModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("Shop");
-
-        if(moduleEnabled) {
-            plugin.logger.info("- ShopModule Enabled");
-        }
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -157,6 +148,10 @@ public class ShopModule implements Listener {
             return;
         }
 
+        if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
+            return;
+        }
+
         if(plugin.interactCooldown.contains(event.getPlayer().getUniqueId().toString())) {
             return;
         }
@@ -172,6 +167,8 @@ public class ShopModule implements Listener {
         if(!shops.containsKey(event.getClickedBlock().getLocation())) {
             return;
         }
+
+        plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
         Shop shop = shops.get(event.getClickedBlock().getLocation());
         Player player = event.getPlayer();
@@ -589,6 +586,7 @@ public class ShopModule implements Listener {
 
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
+
         moduleEnabled = plugin.enabledModules.contains("Shop");
 
         if(moduleEnabled) {

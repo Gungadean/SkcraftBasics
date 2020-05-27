@@ -2,7 +2,6 @@ package com.ryanjhuston.Commands.ChatChannelCommands;
 
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
 
@@ -23,6 +22,6 @@ public class GlobalChatCommand {
             message += arg + " ";
         }
 
-        Bukkit.broadcastMessage("<" + player.getDisplayName() + "> " + message);
+        Bukkit.broadcastMessage(plugin.chatChannelsModule.useChatFormat(plugin.chatChannelsModule.getGlobalChatFormat(), "", player, message));
     }
 }
