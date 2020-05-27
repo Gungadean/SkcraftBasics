@@ -88,7 +88,11 @@ public class SkcraftBasics extends JavaPlugin {
         enabledModules = getConfig().getStringList("Enabled-Modules");
 
         enderPearlTeleportModule = new EnderPearlTeleportModule(this);
-        craftingModule = new CraftingModule(this);
+
+        if(enabledModules.contains("Crafting")) {
+            craftingModule = new CraftingModule(this);
+        }
+
         stargateModule = new StargateModule(this);
         jetBootModule = new JetBootModule(this);
         captureBallModule = new CaptureBallModule(this);
@@ -105,7 +109,6 @@ public class SkcraftBasics extends JavaPlugin {
         miningWorldModule = new MiningWorldModule(this);
         chunkLoaderModule = new ChunkLoaderModule(this);
 
-
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
         } else {
@@ -115,7 +118,11 @@ public class SkcraftBasics extends JavaPlugin {
         pm.registerEvents(new SkcraftEventHandler(this), this);
 
         pm.registerEvents(enderPearlTeleportModule, this);
-        pm.registerEvents(craftingModule, this);
+
+        if(enabledModules.contains("Crafting")) {
+            pm.registerEvents(craftingModule, this);
+        }
+
         pm.registerEvents(stargateModule, this);
         pm.registerEvents(jetBootModule, this);
         pm.registerEvents(captureBallModule, this);
@@ -174,6 +181,16 @@ public class SkcraftBasics extends JavaPlugin {
             worldManager.createWorld("Mining", WorldType.NORMAL, World.Environment.NORMAL, null, null);
         }
 
+        if(!enabledModules.contains("ChatChannels")) {
+            disabledCommands.add("here");
+            disabledCommands.add("join");
+            disabledCommands.add("leave");
+        }
+
+        if(!enabledModules.contains("Invite")) {
+            disabledCommands.add("Invite");
+        }
+
         this.getCommand("invite").setExecutor(skcraftCommandHandler);
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
         this.getCommand("paccept").setExecutor(skcraftCommandHandler);
@@ -183,7 +200,6 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("here").setExecutor(skcraftCommandHandler);
         this.getCommand("join").setExecutor(skcraftCommandHandler);
         this.getCommand("leave").setExecutor(skcraftCommandHandler);
-        this.getCommand("g").setExecutor(skcraftCommandHandler);
         this.getCommand("worldmanager").setExecutor(skcraftCommandHandler);
         this.getCommand("wm").setExecutor(skcraftCommandHandler);
 
@@ -237,6 +253,22 @@ public class SkcraftBasics extends JavaPlugin {
         logger.info("[SkcraftBasics] Reloading config...");
         reloadConfig();
         loadConfig();
+
+        if(enabledModules.contains("ChatChannels")) {
+            disabledCommands.remove("here");
+            disabledCommands.remove("join");
+            disabledCommands.remove("leave");
+        } else {
+            disabledCommands.add("here");
+            disabledCommands.add("join");
+            disabledCommands.add("leave");
+        }
+
+        if(enabledModules.contains("Invite")) {
+            disabledCommands.remove("invite");
+        } else {
+            disabledCommands.add("invite");
+        }
 
         createCustomConfigs();
 

@@ -8,6 +8,6 @@ public class ReloadCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender sender) {
         plugin.reloadPlugin();
-        sender.sendMessage(ChatColor.GOLD + "Plugin configs have been successfully reloaded.");
+        sender.sendMessage(ChatColor.YELLOW + "Plugin configs have been successfully reloaded.");
     }
 }

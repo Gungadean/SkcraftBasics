@@ -1,6 +1,6 @@
 main: com.ryanjhuston.SkcraftBasics
 name: SkcraftBasics
-version: 2.0
+version: 1.0.1
 api-version: 1.15
 commands:
   accept:
@@ -17,8 +17,6 @@ commands:
     description: Join chat channel.
   leave:
     description: Leave chat channel.
-  g:
-    description: Message global chat when in a channel.
   worldmanager:
     description: A world management addition.
   wm:

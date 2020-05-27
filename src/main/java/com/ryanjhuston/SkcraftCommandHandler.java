@@ -1,11 +1,13 @@
 package com.ryanjhuston;
 
 import com.ryanjhuston.Commands.AdminCommands.WorldManagerCommand;
-import com.ryanjhuston.Commands.ChatChannelCommands.GlobalChatCommand;
 import com.ryanjhuston.Commands.ChatChannelCommands.HereCommand;
 import com.ryanjhuston.Commands.ChatChannelCommands.JoinCommand;
 import com.ryanjhuston.Commands.ChatChannelCommands.LeaveCommand;
-import com.ryanjhuston.Commands.*;
+import com.ryanjhuston.Commands.InviteCommand;
+import com.ryanjhuston.Commands.NetherCoordsCommand;
+import com.ryanjhuston.Commands.SkcraftBasicAdminCommand;
+import com.ryanjhuston.Commands.SkcraftBasicCommand;
 import com.ryanjhuston.Commands.TeleportCommands.AcceptCommand;
 import com.ryanjhuston.Commands.TeleportCommands.PermanentAcceptCommand;
 import org.bukkit.ChatColor;
@@ -56,10 +58,6 @@ public class SkcraftCommandHandler implements CommandExecutor {
 
             if (command.equalsIgnoreCase("leave") && commandSender instanceof Player) {
                 LeaveCommand.command((Player) commandSender, args, plugin);
-            }
-
-            if (command.equalsIgnoreCase("g") && commandSender instanceof Player) {
-                GlobalChatCommand.command((Player) commandSender, args, plugin);
             }
 
             if (command.equalsIgnoreCase("worldmanager") || command.equalsIgnoreCase("wm")) {

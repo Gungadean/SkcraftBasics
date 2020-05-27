@@ -9,6 +9,7 @@ Enabled-Modules:
   - Galapagos
   - GoldTool
   - InkSign
+  - Invite
   - JetBoot
   - MiningWorld
   - MobTurret
@@ -20,6 +21,7 @@ Enabled-Modules:
   - InfiniteSigns
   - DisableExplosions
   - EnderEyeChests
+Disabled-Commands: {}
 Spawn-Location: ""
 Module-Settings:
   Stargate-Module:
@@ -44,7 +46,7 @@ Module-Settings:
     Leave-Format: '&e[%channel%] User %player% has left the channel.'
     Join-Format: '&e[%channel%] User %player% has joined the channel.'
   MobTurret-Module:
-    Turret-Radius: 40
+    Turret-Radius: 45
   CaptureBall-Module:
     Banned-Mobs:
       - ARMOR_STAND

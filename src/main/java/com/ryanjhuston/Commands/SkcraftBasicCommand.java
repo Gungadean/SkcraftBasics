@@ -23,7 +23,6 @@ public class SkcraftBasicCommand {
             sender.sendMessage(ChatColor.GREEN + " /join {channel-name}" + ChatColor.GRAY + " - Join a private chat channel.");
             sender.sendMessage(ChatColor.GREEN + " /leave {channel-name}" + ChatColor.GRAY + " - Leave a private chat channel.");
             sender.sendMessage(ChatColor.GREEN + " /here" + ChatColor.GRAY + " - List players who are currently in your chat channel.");
-            sender.sendMessage(ChatColor.GREEN + " /g {message}" + ChatColor.GRAY + " - Send a message to the entire server without leaving the chat channel.");
             sender.sendMessage(ChatColor.GREEN + "Information about commands and mechanics can be found on our wiki at: https://skcraft.com/wiki/vincent/");
             return;
         }

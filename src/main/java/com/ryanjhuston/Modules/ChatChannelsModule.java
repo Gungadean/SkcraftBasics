@@ -64,12 +64,18 @@ public class ChatChannelsModule implements Listener {
     @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
         if(inChannelPlayers.containsKey(event.getPlayer().getUniqueId().toString())) {
+            if(moduleEnabled) {
+                sendJoinMessage(event.getPlayer().getName(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
+            }
             return;
         }
 
         for(Map.Entry<String, List<String>> entry : chatChannels.entrySet()) {
             if(entry.getValue().contains(event.getPlayer().getUniqueId().toString())) {
                 inChannelPlayers.put(event.getPlayer().getUniqueId().toString(), entry.getKey());
+                if(moduleEnabled) {
+                    sendJoinMessage(event.getPlayer().getName(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
+                }
                 return;
             }
         }
@@ -83,7 +89,11 @@ public class ChatChannelsModule implements Listener {
 
         String uuid = event.getPlayer().getUniqueId().toString();
         if(inChannelPlayers.containsKey(uuid)) {
-            sendMessageToChannel(uuid, inChannelPlayers.get(uuid), event.getMessage());
+            if(event.getMessage().startsWith("\\")) {
+                sendGlobalMessage(event.getPlayer(), event.getMessage());
+            } else {
+                sendMessageToChannel(uuid, inChannelPlayers.get(uuid), event.getMessage());
+            }
             event.setCancelled(true);
         }
     }
@@ -128,6 +138,10 @@ public class ChatChannelsModule implements Listener {
         }
     }
 
+    public void sendGlobalMessage(Player player, String message) {
+        Bukkit.broadcastMessage(useChatFormat(globalChatFormat, "", player, message));
+    }
+
     public String useChatFormat(String format, String channel, Player player, String message) {
         String result = format;
 
@@ -138,10 +152,6 @@ public class ChatChannelsModule implements Listener {
         result = result.replaceAll("%message%", message);
 
         return result;
-    }
-
-    public String getGlobalChatFormat() {
-        return globalChatFormat;
     }
 
     public void updateConfig(SkcraftBasics plugin) {

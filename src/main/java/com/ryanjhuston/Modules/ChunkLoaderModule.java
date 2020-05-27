@@ -30,8 +30,12 @@ public class ChunkLoaderModule implements Listener {
 
     private SkcraftBasics plugin;
 
+    private boolean moduleEnabled;
+
     public ChunkLoaderModule (SkcraftBasics plugin) {
         this.plugin = plugin;
+
+        this.moduleEnabled = plugin.enabledModules.contains("ChunkLoader");
 
         initializeChunkUnloader();
     }
@@ -77,6 +81,10 @@ public class ChunkLoaderModule implements Listener {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
             @Override
             public void run() {
+                if(!moduleEnabled) {
+                    return;
+                }
+
                 long now = System.currentTimeMillis();
 
                 Iterator<Map.Entry<WorldChunkCoord, Long>> it = forceLoaded.entrySet().iterator();
@@ -107,6 +115,10 @@ public class ChunkLoaderModule implements Listener {
 
     @EventHandler
     public void onVehicleMove(VehicleMoveEvent event) {
+        if(!moduleEnabled) {
+            return;
+        }
+
         Location from = event.getFrom();
         Location to = event.getTo();
         Vehicle vehicle = event.getVehicle();
@@ -125,5 +137,11 @@ public class ChunkLoaderModule implements Listener {
                 }
             }
         }
+    }
+
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+
+        moduleEnabled = plugin.enabledModules.contains("ChunkLoader");
     }
 }
