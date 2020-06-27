@@ -2,27 +2,28 @@ package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Stargate;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import net.minecraft.server.v1_16_R1.EntityPlayer;
+import net.minecraft.server.v1_16_R1.PlayerAbilities;
+import org.bukkit.*;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.Dispenser;
+import org.bukkit.craftbukkit.v1_16_R1.entity.CraftPlayer;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
-import org.bukkit.event.entity.EntityPortalEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class RailModule implements Listener {
 
@@ -34,6 +35,13 @@ public class RailModule implements Listener {
 
     public RailModule(SkcraftBasics plugin) {
         updateConfig(plugin);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        if(event.getPlayer().isInvulnerable() && event.getPlayer().getGameMode() != GameMode.CREATIVE) {
+            setInvulnerable(event.getPlayer(), false);
+        }
     }
 
     @EventHandler
@@ -110,6 +118,10 @@ public class RailModule implements Listener {
 
         Entity passenger = event.getVehicle().getPassengers().get(0);
 
+        if(!(passenger instanceof Player)) {
+            return;
+        }
+
         if(players.contains(passenger.getUniqueId().toString())) {
             return;
         }
@@ -118,57 +130,61 @@ public class RailModule implements Listener {
 
         players.add(passenger.getUniqueId().toString());
 
-        Entity entity = null;
-
         if(event.getTo().getBlock().hasMetadata("Stargate")) {
             Stargate stargate = plugin.stargateModule.stargateList.get(to.getBlock().getMetadata("Stargate").get(0).asString());
             to = stargate.getTeleportLocation();
             teleportThroughStargate(event.getVehicle(), to);
         } else {
-            entity = event.getTo().getWorld().spawnEntity(to, EntityType.SILVERFISH);
-            entity.setMetadata("PortalCheck", new FixedMetadataValue(plugin, passenger.getUniqueId().toString()));
-            entity.setMetadata("xVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getX()));
-            entity.setMetadata("zVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getZ()));
+            passenger.setMetadata("PortalLocation", new FixedMetadataValue(plugin, plugin.locationToString(event.getVehicle().getLocation())));
+            passenger.setMetadata("xVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getX()));
+            passenger.setMetadata("zVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getZ()));
+
+            if(passenger instanceof Player) {
+                setInvulnerable((Player)passenger, true);
+            }
+
+            event.getVehicle().eject();
+            event.getVehicle().remove();
         }
 
-        Entity finalEntity = entity;
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
                 players.remove(passenger.getUniqueId().toString());
-                if(finalEntity != null) {
-                    finalEntity.remove();
+
+                if(passenger instanceof Player) {
+                    setInvulnerable((Player) passenger, false);
                 }
             }
         }, 10L);
     }
 
     @EventHandler
-    public void onEntityTeleport(EntityPortalEvent event) {
+    public void onEntityTeleport(PlayerPortalEvent event) {
         if(!moduleEnabled) {
             return;
         }
 
-        if(!event.getEntity().hasMetadata("PortalCheck")) {
+        if(!event.getPlayer().hasMetadata("PortalLocation")) {
             return;
         }
 
-        Entity entity = event.getEntity();
+        Entity entity = event.getPlayer();
 
-        Entity passenger = Bukkit.getEntity(UUID.fromString(event.getEntity().getMetadata("PortalCheck").get(0).asString()));
-        Vector vector = new Vector(event.getEntity().getMetadata("xVel").get(0).asDouble(), 0, event.getEntity().getMetadata("zVel").get(0).asDouble());
+        Location from = plugin.stringToLocation(event.getPlayer().getMetadata("PortalLocation").get(0).asString());
 
-        if(passenger != null) {
-            if(passenger.isInsideVehicle()) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        teleportThroughPortal(passenger, entity.getLocation(), vector);
-                        entity.remove();
-                    }
-                }, 2);
+        Vector vector = new Vector(event.getPlayer().getMetadata("xVel").get(0).asDouble(), 0, event.getPlayer().getMetadata("zVel").get(0).asDouble());
+
+        entity.removeMetadata("PortalLocation", plugin);
+        entity.removeMetadata("xVel", plugin);
+        entity.removeMetadata("zVel", plugin);
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                teleportThroughPortal(entity, from, entity.getLocation(), vector);
             }
-        }
+            }, 2);
     }
 
     @EventHandler
@@ -312,11 +328,9 @@ public class RailModule implements Listener {
         return null;
     }
 
-    public void teleportThroughPortal(Entity passenger, Location to, Vector vector) {
-        Vehicle vehicle = (Vehicle)passenger.getVehicle();
-
+    public void teleportThroughPortal(Entity passenger, Location from, Location to, Vector vector) {
         Location railLocation;
-        Location underRailLocation = vehicle.getLocation().clone();
+        Location underRailLocation = from.clone();
 
         double xVel = vector.getX();
         double zVel = vector.getZ();
@@ -339,8 +353,6 @@ public class RailModule implements Listener {
             Vector direction = railLocation.toVector().subtract(portal.toVector());
 
             Vector velocity = direction.multiply(1);
-            vehicle.eject();
-            vehicle.remove();
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
@@ -447,6 +459,22 @@ public class RailModule implements Listener {
 
         if(moduleEnabled) {
             plugin.logger.info("- RailModule Enabled");
+        }
+    }
+
+    public boolean setInvulnerable(Player player, boolean invulnerable) {
+        EntityPlayer entityPlayer = ((CraftPlayer) player).getHandle();
+
+        PlayerAbilities abilities = entityPlayer.abilities;
+        Field field = null;
+        try {
+            field = abilities.getClass().getDeclaredField("isInvulnerable");
+            field.setAccessible(true);
+            field.setBoolean(abilities, invulnerable);
+            field.setAccessible(false);
+            return true;
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            return false;
         }
     }
 }
