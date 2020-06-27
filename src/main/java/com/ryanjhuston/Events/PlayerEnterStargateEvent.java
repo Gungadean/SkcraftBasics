@@ -22,8 +22,8 @@ public class PlayerEnterStargateEvent extends Event implements Cancellable {
     }
 
     @Override
-    public void setCancelled(boolean arg0) {
-        this.isCancelled = arg0;
+    public void setCancelled(boolean isCancelled) {
+        this.isCancelled = isCancelled;
     }
 
     @Override

@@ -27,6 +27,10 @@ public class SkcraftBasics extends JavaPlugin {
     public Logger logger = Logger.getLogger("Minecraft");
     private PluginManager pm = Bukkit.getPluginManager();
     private SkcraftCommandHandler skcraftCommandHandler;
+    private Class<?> craftPlayer;
+    private Class<?> entityPlayer;
+    private Class<?> playerAbilities;
+    private String version;
 
     private SqlHandler sql;
 
@@ -60,6 +64,7 @@ public class SkcraftBasics extends JavaPlugin {
     private File turretsFile = new File(getDataFolder(), "enderTurrets.yml");
     private File shopsFile = new File(getDataFolder(), "shops.yml");
     public File playersDir = new File(getDataFolder(), "Players");
+    public File generatorDir = new File(getDataFolder(), "Generators");
     private FileConfiguration stargatesConfig;
     private FileConfiguration networksConfig;
     private FileConfiguration turretsConfig;
@@ -69,6 +74,9 @@ public class SkcraftBasics extends JavaPlugin {
     public Location spawnLocation;
     public SkcraftWorldManager worldManager;
     public List<World> worlds = new ArrayList<>();
+
+    public HashMap<String, String> worldGenerators = new HashMap<>();
+
     public List<String> disabledCommands = new ArrayList<>();
 
     public List<String> enabledModules = new ArrayList<>();
@@ -78,6 +86,9 @@ public class SkcraftBasics extends JavaPlugin {
     public String debug = "[SkcraftBasics Debug] ";
 
     public void onEnable() {
+        version = getServer().getClass().getPackage().getName();
+        version = "net.minecraft.server." + version.substring(version.lastIndexOf('.') + 1);
+
         saveDefaultConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -147,6 +158,7 @@ public class SkcraftBasics extends JavaPlugin {
 
         logger.info("[SkcraftBasics] Loading data from configs.");
         playersDir.mkdirs();
+        generatorDir.mkdirs();
         loadStargatesFromFile();
         loadBeaconsFromFile();
         loadChatChannelsFromFile();
@@ -160,9 +172,16 @@ public class SkcraftBasics extends JavaPlugin {
         skcraftCommandHandler = new SkcraftCommandHandler(this);
         worldManager = new SkcraftWorldManager(this);
 
-        for(String world : getConfig().getStringList("Loaded-Worlds")) {
+        for(String world : getConfig().getStringList("Worlds")) {
             try {
-                worldManager.loadWorld(world);
+                String generator = getConfig().getString("World-Settings." + world + ".Generator");
+                boolean loaded = getConfig().getBoolean("World-Settings." + world + ".Loaded");
+
+                worldGenerators.put(world, generator);
+
+                if(loaded) {
+                    worldManager.loadWorld(world);
+                }
             } catch (CommandException e) {
                 e.printStackTrace();
             }
@@ -224,11 +243,16 @@ public class SkcraftBasics extends JavaPlugin {
 
         List<String> worldNames = new ArrayList<>();
 
-        for(World world : worlds) {
-            worldNames.add(world.getName());
+        for(String world : worldGenerators.keySet()) {
+            worldNames.add(world);
         }
 
-        getConfig().set("Loaded-Worlds", worldNames);
+        getConfig().set("Worlds", worldNames);
+
+        for(String world : worldNames) {
+            getConfig().set("World-Settings." + world + ".Generator", worldGenerators.get(world));
+            getConfig().set("World-Settings." + world + ".Loaded", (Bukkit.getWorld(world) != null));
+        }
 
         saveConfig();
         saveConfigs();
@@ -633,5 +657,9 @@ public class SkcraftBasics extends JavaPlugin {
                 }
             }
         }, 1);
+    }
+
+    public Class<?> getMinecraftClass(String className) throws ClassNotFoundException {
+        return craftPlayer = Class.forName(version + "." + className);
     }
 }

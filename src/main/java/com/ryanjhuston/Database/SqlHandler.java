@@ -1,7 +1,7 @@
 package com.ryanjhuston.Database;
 
 import com.ryanjhuston.SkcraftBasics;
-import net.md_5.bungee.api.ChatColor;
+import org.bukkit.ChatColor;
 
 import java.io.File;
 import java.sql.Connection;
@@ -22,6 +22,8 @@ public class SqlHandler {
     private int port;
     private String database;
 
+    private static int INITIAL_POOL_SIZE = 3;
+
     public SqlHandler (String username, String password, String address, int port, String database, SkcraftBasics main) {
         this.username = username;
         this.password = password;
@@ -32,14 +34,14 @@ public class SqlHandler {
         this.main = main;
         this.useMysql = true;
 
-        openConnection();
+        con = openConnection();
     }
 
     public SqlHandler (SkcraftBasics main) {
         this.main = main;
         this.useMysql = false;
 
-        openConnection();
+        con = openConnection();
     }
 
     public Connection openConnection() {
@@ -58,13 +60,14 @@ public class SqlHandler {
         } catch (SQLException e) {
             main.logger.severe(ChatColor.RED + "Failed to initialize connection.");
         }
+
+        initializeDatabases();
+
         return con;
     }
 
     public void reloadConnection(String username, String password, String address, int port, String database) {
         closeConnection();
-
-        con = null;
 
         this.useMysql = true;
         this.username = username;
@@ -73,8 +76,7 @@ public class SqlHandler {
         this.port = port;
         this.database = database;
 
-        openConnection();
-        initializeDatabase();
+        con = openConnection();
 
         if(con != null) {
             main.logger.info("Database connection successfully reloaded.");
@@ -85,12 +87,9 @@ public class SqlHandler {
 
         closeConnection();
 
-        con = null;
-
         this.useMysql = false;
 
-        openConnection();
-        initializeDatabase();
+        con = openConnection();
 
         if(con != null) {
             main.logger.info("Database connection successfully reloaded.");
@@ -114,8 +113,8 @@ public class SqlHandler {
         }
     }
 
-    public void initializeDatabase() {
-        String sql = "CREATE TABLE IF NOT EXISTS 'Stats';";
+    public void initializeDatabases() {
+        String sql = "CREATE TABLE IF NOT EXISTS 'Skcraft_Players';";
 
         try {
             PreparedStatement stmt = con.prepareStatement(sql);

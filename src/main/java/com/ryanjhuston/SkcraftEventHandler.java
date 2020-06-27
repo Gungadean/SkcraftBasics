@@ -1,6 +1,5 @@
 package com.ryanjhuston;
 
-import com.ryanjhuston.Events.PlayerEnterStargateEvent;
 import com.ryanjhuston.Lib.ChatColorLib;
 import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
@@ -146,24 +145,6 @@ public class SkcraftEventHandler implements Listener {
                 }
             }, 1);
         }
-    }
-
-    @EventHandler
-    public void onPlayerMoveEvent(PlayerMoveEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
-        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL) {
-            return;
-        }
-
-        if(!event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
-            return;
-        }
-
-        PlayerEnterStargateEvent playerEnterStargateEvent = new PlayerEnterStargateEvent(event.getPlayer());
-        Bukkit.getPluginManager().callEvent(playerEnterStargateEvent);
     }
 
     @EventHandler

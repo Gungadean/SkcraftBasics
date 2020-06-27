@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -243,6 +244,24 @@ public class StargateModule implements Listener {
         stargate.getButtonLocation().getBlock().removeMetadata("Stargate", plugin);
 
         stargateList.remove(portalName);
+    }
+
+    @EventHandler
+    public void onPlayerMoveEvent(PlayerMoveEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
+        if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL) {
+            return;
+        }
+
+        if(!event.getPlayer().getLocation().getBlock().hasMetadata("Stargate")) {
+            return;
+        }
+
+        PlayerEnterStargateEvent playerEnterStargateEvent = new PlayerEnterStargateEvent(event.getPlayer());
+        Bukkit.getPluginManager().callEvent(playerEnterStargateEvent);
     }
 
     @EventHandler

@@ -3,6 +3,7 @@ package com.ryanjhuston;
 import org.bukkit.*;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
+import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,6 +14,8 @@ public class SkcraftWorldManager {
     private SkcraftBasics plugin;
 
     public List<String> resetting = new ArrayList<>();
+
+    private JSONParser parser = new JSONParser();
 
     public SkcraftWorldManager(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -32,8 +35,14 @@ public class SkcraftWorldManager {
 
         WorldCreator worldCreator = WorldCreator.name(worldName);
 
+        if(plugin.worldGenerators.containsKey(worldName)) {
+            if (plugin.worldGenerators.get(worldName) != null) {
+                worldCreator.generator(plugin.worldGenerators.get(worldName));
+            }
+        }
+
         Bukkit.broadcastMessage(ChatColor.YELLOW + "A world is being mounted, standby.");
-        world = Bukkit.createWorld(worldCreator);
+        world = worldCreator.createWorld();
         plugin.worlds.add(world);
         Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being mounted.");
 
@@ -59,10 +68,10 @@ public class SkcraftWorldManager {
         }
 
         if(generator != null) {
-            worldCreator.generatorSettings(generator);
+            worldCreator.generator(generator);
         }
 
-        if(worldType != null) {
+        if (worldType != null) {
             worldCreator.type(worldType);
         } else {
             worldCreator.type(WorldType.NORMAL);
@@ -74,8 +83,9 @@ public class SkcraftWorldManager {
 
         Bukkit.broadcastMessage(ChatColor.YELLOW + "A world is being created, standby.");
 
-        world = Bukkit.createWorld(worldCreator);
+        world = worldCreator.createWorld();
         plugin.worlds.add(world);
+        plugin.worldGenerators.put(worldName, generator);
 
         Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being created.");
         return world;
@@ -117,6 +127,10 @@ public class SkcraftWorldManager {
             throw new CommandException("You cannot delete a default world.");
         }
 
+        if(world != null) {
+            throw new CommandException("Worlds cannot be deleted while loaded on server.");
+        }
+
         if(!new File(worldName, "level.dat").exists()) {
             throw new CommandException("The world '" + worldName + "' does not exist.");
         }
@@ -130,6 +144,8 @@ public class SkcraftWorldManager {
         File worldFolder = new File(worldName);
 
         plugin.worlds.remove(world);
+        plugin.worldGenerators.remove(worldName);
+        plugin.getConfig().set("World-Settings." + worldName, null);
 
         Bukkit.unloadWorld(world, true);
         Bukkit.broadcastMessage(ChatColor.YELLOW + "The world has finished being deleted.");
@@ -172,6 +188,7 @@ public class SkcraftWorldManager {
         WorldCreator worldCreator = WorldCreator.name(worldName);
         worldCreator.type(worldType);
         worldCreator.environment(environment);
+        worldCreator.generator(plugin.worldGenerators.get(worldName));
 
         world = Bukkit.createWorld(worldCreator);
         plugin.worlds.add(world);
