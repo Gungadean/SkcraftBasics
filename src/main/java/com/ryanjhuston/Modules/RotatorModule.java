@@ -36,6 +36,10 @@ public class RotatorModule implements Listener {
             return;
         }
 
+        if(event.getAction() == Action.PHYSICAL) {
+            return;
+        }
+
         if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
             return;
         }

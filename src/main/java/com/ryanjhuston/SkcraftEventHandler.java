@@ -269,6 +269,10 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
+        if(event.getAction() == Action.PHYSICAL) {
+            return;
+        }
+
         if(event.getHand().equals(EquipmentSlot.OFF_HAND) && event.getPlayer().getInventory().getItemInOffHand().getType() == Material.ENDER_EYE && event.getPlayer().getInventory().getItemInMainHand().getType() == Material.AIR) {
             return;
         }

@@ -27,10 +27,6 @@ public class SkcraftBasics extends JavaPlugin {
     public Logger logger = Logger.getLogger("Minecraft");
     private PluginManager pm = Bukkit.getPluginManager();
     private SkcraftCommandHandler skcraftCommandHandler;
-    private Class<?> craftPlayer;
-    private Class<?> entityPlayer;
-    private Class<?> playerAbilities;
-    private String version;
 
     private SqlHandler sql;
 
@@ -86,9 +82,6 @@ public class SkcraftBasics extends JavaPlugin {
     public String debug = "[SkcraftBasics Debug] ";
 
     public void onEnable() {
-        version = getServer().getClass().getPackage().getName();
-        version = "net.minecraft.server." + version.substring(version.lastIndexOf('.') + 1);
-
         saveDefaultConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -657,9 +650,5 @@ public class SkcraftBasics extends JavaPlugin {
                 }
             }
         }, 1);
-    }
-
-    public Class<?> getMinecraftClass(String className) throws ClassNotFoundException {
-        return craftPlayer = Class.forName(version + "." + className);
     }
 }

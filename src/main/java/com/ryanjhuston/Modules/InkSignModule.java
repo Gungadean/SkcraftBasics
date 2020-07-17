@@ -32,6 +32,10 @@ public class InkSignModule implements Listener {
             return;
         }
 
+        if(event.getAction() == Action.PHYSICAL) {
+            return;
+        }
+
         if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
             return;
         }

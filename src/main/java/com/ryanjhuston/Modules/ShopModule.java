@@ -111,7 +111,7 @@ public class ShopModule implements Listener {
         event.setLine(2, event.getLine(2).toLowerCase());
         event.setLine(3, player.getName());
         shops.put(event.getBlock().getLocation(), new Shop(player.getUniqueId().toString(), productMat, productAmount, priceMat, priceAmount, event.getBlock().getRelative(0, -1, 0).getLocation()));
-        player.sendMessage(ChatColor.GOLD + "You successfully created a shop.");
+        player.sendMessage(ChatColor.YELLOW + "You successfully created a shop.");
     }
 
     @EventHandler
@@ -134,17 +134,21 @@ public class ShopModule implements Listener {
             return;
         }
 
-        if(!event.getBlock().getLocation().equals(shop.getShopLocation())) {
-            return;
+        if(event.getBlock().getLocation().equals(shop.getShopLocation())) {
+            shops.remove(shop.getShopLocation().add(0, 1, 0));
+        } else {
+            shops.remove(event.getBlock().getLocation());
         }
-
-        shops.remove(shop.getShopLocation().add(0, 1, 0));
-        event.getPlayer().sendMessage(ChatColor.GOLD + "Shop has been successfully removed.");
+        event.getPlayer().sendMessage(ChatColor.YELLOW + "Shop has been successfully removed.");
     }
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
         if(!moduleEnabled) {
+            return;
+        }
+
+        if(event.getAction() == Action.PHYSICAL) {
             return;
         }
 

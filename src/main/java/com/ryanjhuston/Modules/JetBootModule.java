@@ -254,6 +254,10 @@ public class JetBootModule implements Listener {
             return;
         }
 
+        if(event.getAction() == Action.PHYSICAL) {
+            return;
+        }
+
         if(event.getHand().equals(EquipmentSlot.OFF_HAND)) {
             return;
         }
@@ -276,7 +280,8 @@ public class JetBootModule implements Listener {
         if(item.getType() == Material.IRON_BOOTS ||
                 item.getType() == Material.CHAINMAIL_BOOTS ||
                 item.getType() == Material.GOLDEN_BOOTS ||
-                item.getType() == Material.DIAMOND_BOOTS) {
+                item.getType() == Material.DIAMOND_BOOTS ||
+                item.getType() == Material.NETHERITE_BOOTS) {
 
             plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -339,7 +344,8 @@ public class JetBootModule implements Listener {
         if(event.getCurrentItem().getType() != Material.IRON_BOOTS &&
                 event.getCurrentItem().getType() != Material.CHAINMAIL_BOOTS &&
                 event.getCurrentItem().getType() != Material.GOLDEN_BOOTS &&
-                event.getCurrentItem().getType() != Material.DIAMOND_BOOTS) {
+                event.getCurrentItem().getType() != Material.DIAMOND_BOOTS &&
+                event.getCurrentItem().getType() != Material.NETHERITE_BOOTS) {
             return;
         }
 

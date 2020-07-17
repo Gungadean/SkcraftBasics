@@ -3,7 +3,6 @@ package com.ryanjhuston;
 import org.bukkit.*;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
-import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,8 +13,6 @@ public class SkcraftWorldManager {
     private SkcraftBasics plugin;
 
     public List<String> resetting = new ArrayList<>();
-
-    private JSONParser parser = new JSONParser();
 
     public SkcraftWorldManager(SkcraftBasics plugin) {
         this.plugin = plugin;

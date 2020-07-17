@@ -1,7 +1,7 @@
 main: com.ryanjhuston.SkcraftBasics
 name: SkcraftBasics
-version: 1.0.2
-api-version: 1.15
+version: 1.0.3
+api-version: 1.16
 commands:
   accept:
     description: Accept teleport requests from player.
