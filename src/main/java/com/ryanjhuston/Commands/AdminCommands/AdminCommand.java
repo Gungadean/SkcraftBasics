@@ -12,7 +12,7 @@ public class AdminCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender commandSender, String[] args) {
         if(commandSender instanceof Player) {
-            if(!plugin.skcraftPlayerList.get(((Player) commandSender).getUniqueId().toString()).isAdmin()) {
+            if(!plugin.getSkcraftPlayer((Player)commandSender).getIsAdmin()) {
                 throw new CommandException("You do not have permission for this command.");
             }
         }
@@ -31,8 +31,8 @@ public class AdminCommand {
             throw new CommandException("The player must be online to make them an admin.");
         }
 
-        SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(target.getUniqueId().toString());
-        if(!skcraftPlayer.isAdmin()) {
+        SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(target);
+        if(!skcraftPlayer.getIsAdmin()) {
             skcraftPlayer.setIsAdmin(true);
             commandSender.sendMessage(ChatColor.YELLOW + target.getName() + " has been made an admin.");
             target.sendMessage(ChatColor.YELLOW + "You are now an admin.");

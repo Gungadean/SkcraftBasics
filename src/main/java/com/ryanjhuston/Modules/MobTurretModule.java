@@ -36,40 +36,37 @@ public class MobTurretModule implements Listener {
     }
 
     public void scheduleTask() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                if(!moduleEnabled) {
-                    return;
-                }
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            if(!moduleEnabled) {
+                return;
+            }
 
-                for(EnderTurret enderTurret : turretList) {
-                    if(enderTurret.getTarget() != null) {
-                        if(((LivingEntity)enderTurret.getTarget()).hasLineOfSight(enderTurret.getTurret())) {
-                            Damageable damageable = (Damageable)enderTurret.getTarget();
-                            damageable.damage(10, enderTurret.getTurret());
+            for(EnderTurret enderTurret : turretList) {
+                if(enderTurret.getTarget() != null) {
+                    if(((LivingEntity)enderTurret.getTarget()).hasLineOfSight(enderTurret.getTurret())) {
+                        Damageable damageable = (Damageable)enderTurret.getTarget();
+                        damageable.damage(10, enderTurret.getTurret());
 
-                            enderTurret.updateBeam();
+                        enderTurret.updateBeam();
 
-                            if(damageable.getHealth() <= 0) {
-                                enderTurret.getTarget().removeMetadata("Turret", plugin);
-                                enderTurret.setTarget(null);
-                                damageable.remove();
-                            }
-                        } else {
+                        if(damageable.getHealth() <= 0) {
                             enderTurret.getTarget().removeMetadata("Turret", plugin);
                             enderTurret.setTarget(null);
+                            damageable.remove();
                         }
-                        continue;
+                    } else {
+                        enderTurret.getTarget().removeMetadata("Turret", plugin);
+                        enderTurret.setTarget(null);
                     }
+                    continue;
+                }
 
-                    for(Entity entity : enderTurret.getTurret().getNearbyEntities(turretRadius, turretRadius, turretRadius)) {
-                        if(targetableMob(entity)) {
-                            if(((LivingEntity)entity).hasLineOfSight(enderTurret.getTurret()) && !entity.hasMetadata("Turret")) {
-                                enderTurret.setTarget(entity);
-                                entity.setMetadata("Turret", new FixedMetadataValue(plugin, "True"));
-                                break;
-                            }
+                for(Entity entity : enderTurret.getTurret().getNearbyEntities(turretRadius, turretRadius, turretRadius)) {
+                    if(targetableMob(entity)) {
+                        if(((LivingEntity)entity).hasLineOfSight(enderTurret.getTurret()) && !entity.hasMetadata("Turret")) {
+                            enderTurret.setTarget(entity);
+                            entity.setMetadata("Turret", new FixedMetadataValue(plugin, "True"));
+                            break;
                         }
                     }
                 }
@@ -106,6 +103,10 @@ public class MobTurretModule implements Listener {
         event.getEntity().getLocation().getWorld().dropItemNaturally(event.getEntity().getLocation(), new ItemStack(Material.END_CRYSTAL, 1));
 
         turretList.remove(turret);
+
+        event.getEntity().sendMessage(ChatColor.RED + "Ender Turret removed.");
+
+        plugin.saveTurretsToFile();
     }
 
     @EventHandler
@@ -154,11 +155,13 @@ public class MobTurretModule implements Listener {
         event.getPlayer().getInventory().removeItem(new ItemStack(event.getPlayer().getInventory().getItemInMainHand().getType(), 1));
         event.setCancelled(true);
 
-        event.getPlayer().sendMessage(ChatColor.GOLD + "Ender Turret created.");
+        event.getPlayer().sendMessage(ChatColor.YELLOW + "Ender Turret created.");
+
+        plugin.saveTurretsToFile();
     }
 
     public boolean targetableMob(Entity entity) {
-        if(entity.getType() == EntityType.BLAZE ||
+        return entity.getType() == EntityType.BLAZE ||
                 entity.getType() == EntityType.CAVE_SPIDER ||
                 entity.getType() == EntityType.CREEPER ||
                 entity.getType() == EntityType.DROWNED ||
@@ -179,12 +182,9 @@ public class MobTurretModule implements Listener {
                 entity.getType() == EntityType.VEX ||
                 entity.getType() == EntityType.VINDICATOR ||
                 entity.getType() == EntityType.WITCH ||
-                entity.getType() == EntityType.WITHER_SKELETON||
+                entity.getType() == EntityType.WITHER_SKELETON ||
                 entity.getType() == EntityType.ZOMBIE ||
-                entity.getType() == EntityType.ZOMBIE_VILLAGER) {
-            return true;
-        }
-        return false;
+                entity.getType() == EntityType.ZOMBIE_VILLAGER;
     }
 
     public boolean checkIfClear(Location location) {

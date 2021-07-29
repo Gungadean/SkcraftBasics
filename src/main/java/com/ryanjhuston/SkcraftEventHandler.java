@@ -40,7 +40,10 @@ public class SkcraftEventHandler implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        event.getPlayer().setDisplayName(ChatColorLib.getRandomColor() + event.getPlayer().getDisplayName() + ChatColor.WHITE);
+
+        if(plugin.getConfig().getBoolean("Chat-Colors")) {
+            event.getPlayer().setDisplayName(ChatColorLib.getRandomColor() + event.getPlayer().getDisplayName() + ChatColor.WHITE);
+        }
 
         if(!event.getPlayer().isWhitelisted()) {
             event.getPlayer().setWhitelisted(true);
@@ -51,28 +54,28 @@ public class SkcraftEventHandler implements Listener {
         }
 
         String uuid = event.getPlayer().getUniqueId().toString();
-        File playerFile = new File(plugin.playersDir, uuid + ".yml");
+        File playerFileLegacy = new File(plugin.playersDir, uuid + ".yml");
+        File playerFile = new File (plugin.playersDir, uuid + ".json");
         YamlConfiguration playerConfig = new YamlConfiguration();
+
+        SkcraftPlayer skcraftPlayer;
 
         if(playerFile.exists()) {
             try {
-                playerConfig.load(playerFile);
+                skcraftPlayer = plugin.mapper.readValue(playerFile, SkcraftPlayer.class);
+            } catch (Exception e) {
+                System.out.println("[SkcraftBasics] ERROR: It appears that " + event.getPlayer().getName() + "'s data file is corrupted. Creating new SkcraftPlayer instance.");
+                skcraftPlayer = new SkcraftPlayer(uuid, null, false, new ArrayList<>(), new ArrayList<>(), false, false);
+            }
+        }else if(playerFileLegacy.exists()) {
+            try {
+                playerConfig.load(playerFileLegacy);
             } catch(Exception e) {
                 e.printStackTrace();
             }
 
-            Material teleportItem;
-
-            if(playerConfig.getString("TeleportItem") == null) {
-                Random random = new Random();
-                do {
-                    teleportItem = Material.values()[random.nextInt(Material.values().length - 1)];
-                } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR || !teleportItem.isItem());
-            } else {
-                teleportItem = Material.matchMaterial(playerConfig.getString("TeleportItem"));
-            }
-
-            plugin.skcraftPlayerList.put(uuid, new SkcraftPlayer(uuid, teleportItem, playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), playerConfig.getBoolean("IsAdmin"), playerConfig));
+            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") && playerConfig.getBoolean("InModMode")), playerConfig.getBoolean("IsAdmin"));
+            playerFileLegacy.delete();
         } else {
             try {
                 playerFile.createNewFile();
@@ -81,16 +84,22 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            Material teleportItem;
+            skcraftPlayer = new SkcraftPlayer(uuid, null, false, new ArrayList<>(), new ArrayList<>(), false, false);
+        }
+
+        Material teleportItem = skcraftPlayer.getTeleportItem();
+        if(teleportItem == null) {
             Random random = new Random();
             do {
                 teleportItem = Material.values()[random.nextInt(Material.values().length - 1)];
             } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR || !teleportItem.isItem());
-
-            plugin.skcraftPlayerList.put(uuid, new SkcraftPlayer(uuid, teleportItem, false, new ArrayList<>(), new ArrayList<>(), false, playerConfig));
         }
 
-        if(plugin.skcraftPlayerList.get(uuid).wasFlying()) {
+        skcraftPlayer.setTeleportItem(teleportItem);
+
+        plugin.addSkcraftPlayer(skcraftPlayer);
+
+        if(plugin.getSkcraftPlayer(event.getPlayer()).getWasFlying()) {
             plugin.jetBootModule.activateJetboots(event.getPlayer());
             event.getPlayer().setFlying(true);
         }
@@ -136,13 +145,9 @@ public class SkcraftEventHandler implements Listener {
         }
 
         if(event.getItem().getType() == Material.MINECART && event.getBlock().getType() == Material.DISPENSER) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-
-                @Override
-                public void run() {
-                    InventoryHolder dispenser = (InventoryHolder)event.getBlock().getState();
-                    dispenser.getInventory().addItem(new ItemStack(Material.MINECART));
-                }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                InventoryHolder dispenser = (InventoryHolder)event.getBlock().getState();
+                dispenser.getInventory().addItem(new ItemStack(Material.MINECART));
             }, 1);
         }
     }
@@ -157,24 +162,14 @@ public class SkcraftEventHandler implements Listener {
             return;
         }
 
-        if(event.getBlock().getType() != Material.OAK_WALL_SIGN && event.getBlock().getType() != Material.OAK_SIGN) {
+        if(!event.getBlockPlaced().getType().toString().endsWith("_SIGN")) {
             return;
         }
 
-        Player player = event.getPlayer();
-        int slot;
+        Material newsign = Material.getMaterial(event.getBlockPlaced().getType().toString().replace("_WALL", ""));
 
-        if(player.getInventory().getItemInMainHand().getType() == Material.OAK_SIGN || player.getInventory().getItemInMainHand().getType() == Material.OAK_WALL_SIGN) {
-            slot = player.getInventory().getHeldItemSlot();
-        } else if(player.getInventory().getItemInOffHand().getType() == Material.OAK_SIGN || player.getInventory().getItemInOffHand().getType() == Material.OAK_WALL_SIGN) {
-            slot = 40;
-        } else {
-            return;
-        }
-
-
-        ItemStack sign = new ItemStack(Material.OAK_SIGN, 1);
-        event.getPlayer().getInventory().setItem(slot, sign);
+        ItemStack sign = new ItemStack(newsign, 1);
+        event.getPlayer().getInventory().setItem(event.getHand(), sign);
     }
 
     @EventHandler
@@ -194,11 +189,11 @@ public class SkcraftEventHandler implements Listener {
 
         Player player = (Player)event.getEntity();
 
-        if(event.getItem().getItemStack().getType() != Material.OAK_SIGN) {
+        if(!event.getItem().getItemStack().getType().toString().endsWith("_SIGN")) {
             return;
         }
 
-        if(player.getInventory().contains(Material.OAK_SIGN)) {
+        if(player.getInventory().contains(event.getItem().getItemStack().getType())) {
             event.getItem().remove();
             event.setCancelled(true);
         }

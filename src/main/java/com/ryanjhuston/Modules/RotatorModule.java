@@ -157,14 +157,11 @@ public class RotatorModule implements Listener {
     }
 
     public boolean isWallBlock(Block block) {
-        if(block.getType() == Material.WALL_TORCH ||
+        return block.getType() == Material.WALL_TORCH ||
                 block.getType() == Material.REDSTONE_WALL_TORCH ||
                 block.getType() == Material.LADDER ||
                 block.getType() == Material.TRIPWIRE_HOOK ||
-                block.getType().toString().endsWith("_WALL_SIGN")) {
-            return true;
-        }
-        return false;
+                block.getType().toString().endsWith("_WALL_SIGN");
     }
 
     public void flipLogsShift(Block block, BlockFace clicked) {

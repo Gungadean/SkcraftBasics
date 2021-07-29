@@ -54,7 +54,7 @@ public class StargateModule implements Listener {
         String portalName = "";
         String network = "public";
         String owner = player.getUniqueId().toString();
-        String direction = "";
+        String direction;
 
         if(clicked.getRelative(1, 0, 0).getType() == Material.DIAMOND_BLOCK && clicked.getRelative(1, 1, 0).getType() == Material.AIR) {
             blocks.add(clicked.getRelative(1, 0, 0).getLocation());
@@ -90,11 +90,10 @@ public class StargateModule implements Listener {
         for(y += 1; y <= 3; y++) {
             if(y != 3) {
                 if(clicked.getRelative(x, y, z).getType() != Material.DIAMOND_BLOCK) {return false;}
-                blocks.add(clicked.getRelative(x, y, z).getLocation());
             } else {
                 if(clicked.getRelative(x, y, z).getType() != Material.BEACON) {return false;}
-                blocks.add(clicked.getRelative(x, y, z).getLocation());
             }
+            blocks.add(clicked.getRelative(x, y, z).getLocation());
         }
 
         y = 4;
@@ -124,11 +123,11 @@ public class StargateModule implements Listener {
                 blocks.add(clicked.getRelative(x, y, z).getLocation());
             }
 
-            if(clicked.getRelative(1, 2, 1).getType().toString().contains("_SIGN") && clicked.getRelative(1, 2, -2).getType().toString().contains("_BUTTON")) {
+            if(clicked.getRelative(1, 2, 1).getType().toString().endsWith("_SIGN") && clicked.getRelative(1, 2, -2).getType().toString().endsWith("_BUTTON")) {
                 signLocation = clicked.getRelative(1, 2, 1).getLocation();
                 buttonLocation = clicked.getRelative(1, 2, -2).getLocation();
                 teleportLocation.setYaw(-90);
-            } else if(clicked.getRelative(-1, 2, -2).getType().toString().contains("_SIGN") && clicked.getRelative(-1, 2, 1).getType().toString().contains("_BUTTON")) {
+            } else if(clicked.getRelative(-1, 2, -2).getType().toString().endsWith("_SIGN") && clicked.getRelative(-1, 2, 1).getType().toString().endsWith("_BUTTON")) {
                 signLocation = clicked.getRelative(-1, 2, -2).getLocation();
                 buttonLocation = clicked.getRelative(-1, 2, 1).getLocation();
                 teleportLocation.setYaw(90);
@@ -140,11 +139,10 @@ public class StargateModule implements Listener {
         for(y -= 1; y >= 1; y--) {
             if(y != 3) {
                 if(clicked.getRelative(x, y, z).getType() != Material.DIAMOND_BLOCK) {return false;}
-                blocks.add(clicked.getRelative(x, y, z).getLocation());
             } else {
                 if(clicked.getRelative(x, y, z).getType() != Material.BEACON) {return false;}
-                blocks.add(clicked.getRelative(x, y, z).getLocation());
             }
+            blocks.add(clicked.getRelative(x, y, z).getLocation());
         }
 
         if(x != 0) {
@@ -184,6 +182,7 @@ public class StargateModule implements Listener {
 
             if(sign.getLine(2).isEmpty()) {
                 network = "public";
+
                 networkList.get(network).add(portalName);
             } else {
                 network = sign.getLine(2);
@@ -198,24 +197,34 @@ public class StargateModule implements Listener {
             }
         }
 
-        sign.setLine(0, "-" + portalName + "-");
-        sign.setLine(1, "Right click");
-        sign.setLine(2, "to use gate");
-        sign.setLine(3, "(" + network + ")");
-        sign.update();
+        Stargate stargate = new Stargate(portalName, owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction);
 
-        Iterator it = blocks.iterator();
-        while(it.hasNext()) {
-            ((Location)it.next()).getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
-        }
+        updateStargateBlocks(stargate);
 
-        signLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
-        buttonLocation.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, portalName));
-
-        stargateList.put(portalName, new Stargate(owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction));
+        stargateList.put(portalName, stargate);
 
         player.sendMessage(ChatColor.YELLOW + "New stargate has been successfully created.");
+
+        plugin.saveStargatesToFile();
+
         return true;
+    }
+
+    public void updateStargateBlocks(Stargate stargate) {
+        Sign sign = (Sign)stargate.getSignLocation().getBlock().getState();
+
+        sign.setLine(0, "-" + stargate.getName() + "-");
+        sign.setLine(1, "Right click");
+        sign.setLine(2, "to use gate");
+        sign.setLine(3, "(" + stargate.getNetwork() + ")");
+        sign.update();
+
+        for(Location location : stargate.getBlocks()) {
+            location.getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, stargate.getName()));
+        }
+
+        stargate.getSignLocation().getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, stargate.getName()));
+        stargate.getButtonLocation().getBlock().setMetadata("Stargate", new FixedMetadataValue(plugin, stargate.getName()));
     }
 
     public void removeStargate(String portalName) {
@@ -233,7 +242,7 @@ public class StargateModule implements Listener {
         Sign sign = (Sign)stargate.getSignLocation().getBlock().getState();
         sign.setLine(0, "[Stargate]");
         sign.setLine(1, portalName);
-        if(stargate.getNetwork() == "public") {
+        if(stargate.getNetwork().equals("public")) {
             sign.setLine(2, "");
         } else {
             sign.setLine(2, stargate.getNetwork());
@@ -244,6 +253,8 @@ public class StargateModule implements Listener {
         stargate.getButtonLocation().getBlock().removeMetadata("Stargate", plugin);
 
         stargateList.remove(portalName);
+
+        plugin.saveStargatesToFile();
     }
 
     @EventHandler
@@ -306,7 +317,7 @@ public class StargateModule implements Listener {
             }
         }
 
-        if(event.getClickedBlock().getType().toString().contains("_SIGN")) {
+        if(event.getClickedBlock().getType().toString().endsWith("_SIGN")) {//) {
             if(event.getClickedBlock().hasMetadata("Stargate")) {
                 plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -315,7 +326,7 @@ public class StargateModule implements Listener {
             }
         }
 
-        if(event.getClickedBlock().getType().toString().contains("_BUTTON")) {
+        if(event.getClickedBlock().getType().toString().endsWith("_BUTTON")) {
             if(event.getClickedBlock().hasMetadata("Stargate")) {
                 plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -382,9 +393,7 @@ public class StargateModule implements Listener {
         Stargate stargate = stargateList.get(clicked.getMetadata("Stargate").get(0).asString());
         List<String> networkList = new ArrayList<>();
 
-        for(int i = 0; i < this.networkList.get(stargate.getNetwork()).size(); i++) {
-            networkList.add(this.networkList.get(stargate.getNetwork()).get(i));
-        }
+        networkList.addAll(this.networkList.get(stargate.getNetwork()));
 
         networkList.remove(clicked.getMetadata("Stargate").get(0).asString());
 
@@ -403,6 +412,10 @@ public class StargateModule implements Listener {
         BukkitTask bukrun = new BukkitRunnable() {
             @Override
             public void run() {
+                if(!clicked.hasMetadata("Stargate")) {
+                    return;
+                }
+
                 if(clicked.getMetadata("Stargate").get(0) == null) {
                     return;
                 }
@@ -496,8 +509,8 @@ public class StargateModule implements Listener {
 
         List<Location> portalBlocks = stargate.getPortalBlocks();
 
-        for(int i = 0; i < portalBlocks.size(); i++) {
-            Block block = portalBlocks.get(i).getBlock();
+        for(Location location : portalBlocks) {
+            Block block = location.getBlock();
             block.setType(Material.NETHER_PORTAL);
 
             block.setMetadata("Stargate", new FixedMetadataValue(plugin, sign.getLine(0).substring(1, sign.getLine(0).length()-1)));
@@ -512,8 +525,8 @@ public class StargateModule implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                for(int i = 0; i < portalBlocks.size(); i++) {
-                    Block block = portalBlocks.get(i).getBlock();
+                for(Location location : portalBlocks) {
+                    Block block = location.getBlock();
                     block.setType(Material.AIR);
                 }
             }
@@ -540,8 +553,8 @@ public class StargateModule implements Listener {
 
         List<Location> portalBlocks = stargate.getPortalBlocks();
 
-        for(int i = 0; i < portalBlocks.size(); i++) {
-            Block block = portalBlocks.get(i).getBlock();
+        for (Location location : portalBlocks) {
+            Block block = location.getBlock();
             block.setType(Material.NETHER_PORTAL);
 
             block.setMetadata("Stargate", new FixedMetadataValue(plugin, destination));

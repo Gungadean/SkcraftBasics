@@ -197,21 +197,18 @@ public class SkcraftWorldManager {
     }
 
     private boolean isDefaultWorld(String worldName) {
-        if(Bukkit.getWorlds().get(0).getName().equals(worldName) || Bukkit.getWorlds().get(1).getName().equals(worldName) || Bukkit.getWorlds().get(2).getName().equals(worldName)) {
-            return true;
-        }
-        return false;
+        return Bukkit.getWorlds().get(0).getName().equals(worldName) || Bukkit.getWorlds().get(1).getName().equals(worldName) || Bukkit.getWorlds().get(2).getName().equals(worldName);
     }
 
     private boolean deleteDirectory(File file) {
         if(file.exists()) {
             File[] files = file.listFiles();
 
-            for(int i = 0; i < files.length; i++) {
-                if(files[i].isDirectory()) {
-                    deleteDirectory(files[i]);
+            for(File dirFile : files) {
+                if(dirFile.isDirectory()) {
+                    deleteDirectory(dirFile);
                 } else {
-                    files[i].delete();
+                    dirFile.delete();
                 }
             }
         }

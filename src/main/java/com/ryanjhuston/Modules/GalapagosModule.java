@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ public class GalapagosModule implements Listener {
 
         event.getEntity().setCustomNameVisible(true);
         event.getEntity().setCustomName("Galapagos Tortoise");
+        event.getEntity().setMetadata("SkcraftBasics", new FixedMetadataValue(plugin, "Test"));
     }
 
     @EventHandler

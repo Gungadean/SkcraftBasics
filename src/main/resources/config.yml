@@ -21,8 +21,12 @@ Enabled-Modules:
   - InfiniteSigns
   - DisableExplosions
   - EnderEyeChests
-Disabled-Commands: {}
+Disabled-Commands:
+  - mod
 Spawn-Location: ""
+Default-Group: "default"
+Mod-Group: "mod"
+Chat-Color: true
 Module-Settings:
   Stargate-Module:
     Portal-Reset-Time: 4

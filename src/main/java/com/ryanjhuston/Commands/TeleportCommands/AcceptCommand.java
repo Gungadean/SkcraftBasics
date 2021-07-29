@@ -3,13 +3,8 @@ package com.ryanjhuston.Commands.TeleportCommands;
 import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 
 public class AcceptCommand {
 
@@ -20,8 +15,7 @@ public class AcceptCommand {
 
         String username = args[0];
 
-        for(Iterator iterator = Bukkit.getOnlinePlayers().iterator(); iterator.hasNext();) {
-            Player target = (Player)iterator.next();
+        for(Player target : Bukkit.getOnlinePlayers()) {
             if(target.getName().toLowerCase().startsWith(username.toLowerCase())) {
                 if(player.getName().equals(target.getName())) {
                     throw new CommandException("You cannot accept yourself.");

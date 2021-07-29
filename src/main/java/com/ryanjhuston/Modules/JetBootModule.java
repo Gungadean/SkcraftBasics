@@ -69,20 +69,19 @@ public class JetBootModule implements Listener {
 
         Location location = event.getBlockPlaced().getLocation();
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                if(!(location.getBlock().getState() instanceof Beacon)) {
-                    return;
-                }
-
-                Beacon beacon = (Beacon)location.getBlock().getState();
-                if(beacon.getTier() == 0) {
-                    return;
-                }
-
-                activeBeacons.add(beacon.getLocation());
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            if(!(location.getBlock().getState() instanceof Beacon)) {
+                return;
             }
+
+            Beacon beacon = (Beacon)location.getBlock().getState();
+            if(beacon.getTier() == 0) {
+                return;
+            }
+
+            activeBeacons.add(beacon.getLocation());
+
+            plugin.saveBeaconsToFile();
         }, 100);
     }
 
@@ -107,21 +106,18 @@ public class JetBootModule implements Listener {
             return;
         }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                for(int x = (event.getBlock().getChunk().getX()-1); x <= 1; x++) {
-                    for(int z = (event.getBlock().getChunk().getZ()-1); z <=1; z++) {
-                        Chunk chunk = event.getBlock().getWorld().getChunkAt(x, z);
-                        for(BlockState state : chunk.getTileEntities()) {
-                            if(state instanceof Beacon) {
-                                if(((Beacon) state).getTier() == 0) {
-                                    continue;
-                                }
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            for(int x = (event.getBlock().getChunk().getX()-1); x <= 1; x++) {
+                for(int z = (event.getBlock().getChunk().getZ()-1); z <=1; z++) {
+                    Chunk chunk = event.getBlock().getWorld().getChunkAt(x, z);
+                    for(BlockState state : chunk.getTileEntities()) {
+                        if(state instanceof Beacon) {
+                            if(((Beacon) state).getTier() == 0) {
+                                continue;
+                            }
 
-                                if(!activeBeacons.contains(state.getLocation())) {
-                                    activeBeacons.add(state.getLocation());
-                                }
+                            if(!activeBeacons.contains(state.getLocation())) {
+                                activeBeacons.add(state.getLocation());
                             }
                         }
                     }
@@ -145,105 +141,101 @@ public class JetBootModule implements Listener {
         }
 
         activeBeacons.remove(event.getBlock().getLocation());
+
+        plugin.saveBeaconsToFile();
     }
 
     public void registerJetbootDurabilityCheck() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                List<Player> forRemoval = new ArrayList<>();
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            List<Player> forRemoval = new ArrayList<>();
 
-                if(!moduleEnabled) {
-                    return;
-                }
+            if(!moduleEnabled) {
+                return;
+            }
 
-                for(String uuid : jetboots) {
-                    Player player = Bukkit.getPlayer(UUID.fromString(uuid));
-                    if(player != null) {
-                        if(player.getGameMode() != GameMode.CREATIVE) {
-                            if (player.isFlying()) {
-                                if(!flyTime.containsKey(player.getUniqueId().toString())) {
-                                    flyTime.put(player.getUniqueId().toString(), 1);
+            for(String uuid : jetboots) {
+                Player player = Bukkit.getPlayer(UUID.fromString(uuid));
+                if(player != null) {
+                    if(player.getGameMode() != GameMode.CREATIVE) {
+                        if (player.isFlying()) {
+                            if(!flyTime.containsKey(player.getUniqueId().toString())) {
+                                flyTime.put(player.getUniqueId().toString(), 1);
+                            }
+
+                            int currentFlyTime = flyTime.get(player.getUniqueId().toString());
+
+                            if(currentFlyTime >= durabilityFreq) {
+                                boolean remove = updateDurability(player);
+                                if(remove) {
+                                    forRemoval.add(player);
                                 }
 
-                                int currentFlyTime = flyTime.get(player.getUniqueId().toString());
-
-                                if(currentFlyTime >= durabilityFreq) {
-                                    boolean remove = updateDurability(player);
-                                    if(remove) {
-                                        forRemoval.add(player);
-                                    }
-
-                                    flyTime.replace(player.getUniqueId().toString(), 1);
-                                } else {
-                                    flyTime.replace(player.getUniqueId().toString(), (currentFlyTime + 1));
-                                }
+                                flyTime.replace(player.getUniqueId().toString(), 1);
+                            } else {
+                                flyTime.replace(player.getUniqueId().toString(), (currentFlyTime + 1));
                             }
                         }
                     }
                 }
+            }
 
-                for(Player player : forRemoval) {
-                    deactivateJetboots(player);
-                }
+            for(Player player : forRemoval) {
+                deactivateJetboots(player);
             }
         }, 0, 20);
     }
 
     public void registerBeaconCheck() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                List<String> playerRemoval = new ArrayList<>();
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            List<String> playerRemoval = new ArrayList<>();
 
-                if(!moduleEnabled) {
-                    return;
-                }
+            if(!moduleEnabled) {
+                return;
+            }
 
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    String uuid = player.getUniqueId().toString();
+            for(Player player : Bukkit.getOnlinePlayers()) {
+                String uuid = player.getUniqueId().toString();
 
-                    if(!checkBeaconList(uuid)) {
-                        if(jetboots.contains(uuid)) {
-                            playerRemoval.add(uuid);
-                        }
-                    } else {
-                        if (player.getGameMode() == GameMode.CREATIVE) {
-                            continue;
-                        }
-
-                        if (player.getInventory().getBoots() == null) {
-                            deactivateJetboots(player);
-                            continue;
-                        }
-
-                        if (!player.getInventory().getBoots().hasItemMeta()) {
-                            deactivateJetboots(player);
-                            continue;
-                        }
-
-                        if (!player.getInventory().getBoots().getItemMeta().hasLore()) {
-                            deactivateJetboots(player);
-                            continue;
-                        }
-
-                        if (!player.getInventory().getBoots().getItemMeta().getLore().contains("Jetboots")) {
-                            deactivateJetboots(player);
-                            continue;
-                        }
-
-                        if(((Damageable)player.getInventory().getBoots().getItemMeta()).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability()-1)) {
-                            deactivateJetboots(player);
-                            continue;
-                        }
-
-                        activateJetboots(player);
+                if(!checkBeaconList(uuid)) {
+                    if(jetboots.contains(uuid)) {
+                        playerRemoval.add(uuid);
                     }
-                }
+                } else {
+                    if (player.getGameMode() == GameMode.CREATIVE) {
+                        continue;
+                    }
 
-                for(String uuid : playerRemoval) {
-                    deactivateJetboots(Bukkit.getPlayer(UUID.fromString(uuid)));
+                    if (player.getInventory().getBoots() == null) {
+                        deactivateJetboots(player);
+                        continue;
+                    }
+
+                    if (!player.getInventory().getBoots().hasItemMeta()) {
+                        deactivateJetboots(player);
+                        continue;
+                    }
+
+                    if (!player.getInventory().getBoots().getItemMeta().hasLore()) {
+                        deactivateJetboots(player);
+                        continue;
+                    }
+
+                    if (!player.getInventory().getBoots().getItemMeta().getLore().contains("Jetboots")) {
+                        deactivateJetboots(player);
+                        continue;
+                    }
+
+                    if(((Damageable)player.getInventory().getBoots().getItemMeta()).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability()-1)) {
+                        deactivateJetboots(player);
+                        continue;
+                    }
+
+                    activateJetboots(player);
                 }
+            }
+
+            for(String uuid : playerRemoval) {
+                deactivateJetboots(Bukkit.getPlayer(UUID.fromString(uuid)));
             }
         }, 0, 20);
     }
@@ -442,12 +434,9 @@ public class JetBootModule implements Listener {
 
             fallGraceCheck.add(uuid);
 
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    if(fallGraceCheck.contains(uuid)) {
-                        fallGraceCheck.remove(uuid);
-                    }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                if(fallGraceCheck.contains(uuid)) {
+                    fallGraceCheck.remove(uuid);
                 }
             }, 200);
         }
@@ -458,10 +447,7 @@ public class JetBootModule implements Listener {
         ((Damageable)meta).setDamage(((Damageable)meta).getDamage() + jetbootDamage);
         player.getInventory().getBoots().setItemMeta(meta);
 
-        if(((Damageable)meta).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability() - jetbootDamage)) {
-            return true;
-        }
-        return false;
+        return ((Damageable) meta).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability() - jetbootDamage);
     }
 
     public double getRadius(int tier) {

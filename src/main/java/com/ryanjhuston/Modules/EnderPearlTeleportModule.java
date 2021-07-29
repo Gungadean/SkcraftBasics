@@ -19,8 +19,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Iterator;
-
 public class EnderPearlTeleportModule implements Listener {
 
     private SkcraftBasics plugin;
@@ -67,7 +65,7 @@ public class EnderPearlTeleportModule implements Listener {
                 return;
             }
 
-            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(Bukkit.getPlayer(playerName).getUniqueId().toString());
+            SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(Bukkit.getPlayer(playerName));
 
             if(skcraftPlayer.getTeleAuthed().contains(event.getWhoClicked().getUniqueId().toString())) {
                 event.getWhoClicked().teleport(Bukkit.getPlayer(playerName));
@@ -137,7 +135,7 @@ public class EnderPearlTeleportModule implements Listener {
         if(event.isPlayerTeleport()) {
             event.getPlayer().closeInventory();
 
-            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(event.getPlayer().getUniqueId().toString());
+            SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(event.getPlayer());
 
             if(!skcraftPlayer.getPTeleAuthed().contains(event.getTarget().getUniqueId().toString())) {
                 skcraftPlayer.getTeleAuthed().remove(event.getTarget().getUniqueId().toString());
@@ -168,6 +166,7 @@ public class EnderPearlTeleportModule implements Listener {
             return;
         }
 
+        //noinspection deprecation
         if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround() && player.getInventory().getItemInOffHand().getType() != Material.WATER_BUCKET) {
             if(player.getBedSpawnLocation() == null) {
                 player.sendMessage(ChatColor.RED + "You do not have a home set yet.");
@@ -175,21 +174,11 @@ public class EnderPearlTeleportModule implements Listener {
                 return;
             } else {
                 //Fix for "Removing ticking entity" bug when teleporting between dimensions.
-                plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        player.teleport(player.getBedSpawnLocation());
-                    }
-                }, 1L);
+                plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> player.teleport(player.getBedSpawnLocation()), 1L);
             }
         } else {
             //Fix for "Removing ticking entity" bug when teleporting between dimensions.
-            plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    player.teleport(plugin.spawnLocation);
-                }
-            }, 1L);
+            plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> player.teleport(plugin.spawnLocation), 1L);
         }
 
         PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent(player, null, false);
@@ -207,9 +196,8 @@ public class EnderPearlTeleportModule implements Listener {
 
         Inventory inv = Bukkit.createInventory(null, inventorySize , "Teleport Menu:");
 
-        for(Iterator iterator = Bukkit.getOnlinePlayers().iterator(); iterator.hasNext();) {
-            Player player = (Player) iterator.next();
-            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(player.getUniqueId().toString());
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(player);
 
             if(player.hasMetadata("vanished")) {
                 if(player.getMetadata("vanished").get(0).asBoolean()) {
