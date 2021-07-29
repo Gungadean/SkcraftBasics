@@ -48,6 +48,8 @@ public class ChatChannelsModule implements Listener {
             chatChannels.put(channel, players);
         }
         inChannelPlayers.put(player, channel);
+
+        plugin.saveChatChannelsToFile();
     }
 
     public void leaveChatChannel(String player) {
@@ -59,6 +61,8 @@ public class ChatChannelsModule implements Listener {
             chatChannels.remove(inChannelPlayers.get(player));
         }
         inChannelPlayers.remove(player);
+
+        plugin.saveChatChannelsToFile();
     }
 
     @EventHandler

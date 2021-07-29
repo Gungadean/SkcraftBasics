@@ -13,7 +13,7 @@ public class SkcraftBasicAdminCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender sender, String[] args) {
         if(sender instanceof Player) {
-            if (!plugin.skcraftPlayerList.get(((Player) sender).getUniqueId().toString()).isAdmin()) {
+            if (!plugin.getSkcraftPlayer((Player)sender).getIsAdmin() && !sender.isOp()) {
                 throw new CommandException("You do not have permission for this command.");
             }
         }
@@ -29,8 +29,6 @@ public class SkcraftBasicAdminCommand {
             sender.sendMessage(ChatColor.GREEN + "/worldmanager" + ChatColor.GRAY + "- WorldManager basic command.");
             return;
         }
-
-
 
         if(args[0].equalsIgnoreCase("spawn")) {
             if(!(sender instanceof Player)) {

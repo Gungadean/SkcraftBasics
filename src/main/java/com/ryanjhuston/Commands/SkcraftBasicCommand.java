@@ -10,7 +10,7 @@ public class SkcraftBasicCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender sender, String[] args) {
         if(sender instanceof Player) {
-            if (!plugin.skcraftPlayerList.get(((Player) sender).getUniqueId().toString()).isAdmin()) {
+            if (!plugin.getSkcraftPlayer((Player)sender).getIsAdmin()) {
                 throw new CommandException("You do not have permission for this command.");
             }
         }

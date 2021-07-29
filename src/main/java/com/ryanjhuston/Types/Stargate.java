@@ -7,8 +7,9 @@ import java.util.List;
 
 public class Stargate {
 
-    private String network;
+    private String name;
     private String owner;
+    private String network;
 
     private Location teleportLocation;
     private Location signLocation;
@@ -22,7 +23,8 @@ public class Stargate {
 
     private BukkitTask signTask;
 
-    public Stargate(String owner, String network, Location teleportLocation, Location signLocation, Location buttonLocation, List<Location> blocks, List<Location> portalBlocks, String direction) {
+    public Stargate(String name, String owner, String network, Location teleportLocation, Location signLocation, Location buttonLocation, List<Location> blocks, List<Location> portalBlocks, String direction) {
+        this.name = name;
         this.owner = owner;
         this.network = network;
         this.teleportLocation = teleportLocation;
@@ -33,6 +35,10 @@ public class Stargate {
         this.signTask = null;
         this.direction = direction;
         this.isLocked = false;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setNetwork(String network) {
@@ -73,6 +79,10 @@ public class Stargate {
 
     public void setLocked(boolean isSignLocked) {
         this.isLocked = isSignLocked;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getNetwork() {

@@ -52,9 +52,13 @@ public class InkSignModule implements Listener {
             return;
         }
 
-        if(!event.getClickedBlock().getType().toString().endsWith("_SIGN")) {
+        if(!(event.getClickedBlock().getState() instanceof Sign)) {
             return;
         }
+
+        /*if(!event.getClickedBlock().getType().toString().endsWith("_SIGN")) {
+            return;
+        }*/
 
         plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 

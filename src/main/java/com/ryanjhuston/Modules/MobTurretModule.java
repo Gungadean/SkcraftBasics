@@ -106,6 +106,10 @@ public class MobTurretModule implements Listener {
         event.getEntity().getLocation().getWorld().dropItemNaturally(event.getEntity().getLocation(), new ItemStack(Material.END_CRYSTAL, 1));
 
         turretList.remove(turret);
+
+        event.getEntity().sendMessage(ChatColor.RED + "Ender Turret removed.");
+
+        plugin.saveTurretsToFile();
     }
 
     @EventHandler
@@ -154,7 +158,9 @@ public class MobTurretModule implements Listener {
         event.getPlayer().getInventory().removeItem(new ItemStack(event.getPlayer().getInventory().getItemInMainHand().getType(), 1));
         event.setCancelled(true);
 
-        event.getPlayer().sendMessage(ChatColor.GOLD + "Ender Turret created.");
+        event.getPlayer().sendMessage(ChatColor.YELLOW + "Ender Turret created.");
+
+        plugin.saveTurretsToFile();
     }
 
     public boolean targetableMob(Entity entity) {

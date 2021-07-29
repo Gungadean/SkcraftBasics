@@ -2,12 +2,9 @@ package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Stargate;
-import net.minecraft.server.v1_16_R1.EntityPlayer;
-import net.minecraft.server.v1_16_R1.PlayerAbilities;
 import org.bukkit.*;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.Dispenser;
-import org.bukkit.craftbukkit.v1_16_R1.entity.CraftPlayer;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,6 +19,8 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +31,9 @@ public class RailModule implements Listener {
     private List<String> players = new ArrayList<>();
 
     private boolean moduleEnabled;
+    private Class<?> craftPlayerClass;
+    private Class<?> entityPlayerClass;
+    private Class<?> playerAbilitiesClass;
 
     public RailModule(SkcraftBasics plugin) {
         updateConfig(plugin);
@@ -40,7 +42,11 @@ public class RailModule implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         if(event.getPlayer().isInvulnerable() && event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-            setInvulnerable(event.getPlayer(), false);
+            try {
+                setInvulnerable(event.getPlayer(), false);
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -140,7 +146,11 @@ public class RailModule implements Listener {
             passenger.setMetadata("zVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getZ()));
 
             if(passenger instanceof Player) {
-                setInvulnerable((Player)passenger, true);
+                try {
+                    setInvulnerable((Player)passenger, true);
+                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
             }
 
             event.getVehicle().eject();
@@ -153,7 +163,11 @@ public class RailModule implements Listener {
                 players.remove(passenger.getUniqueId().toString());
 
                 if(passenger instanceof Player) {
-                    setInvulnerable((Player) passenger, false);
+                    try {
+                        setInvulnerable((Player) passenger, false);
+                    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }, 10L);
@@ -352,7 +366,14 @@ public class RailModule implements Listener {
 
             Vector direction = railLocation.toVector().subtract(portal.toVector());
 
-            Vector velocity = direction.multiply(1);
+            Vector velocity = new Vector(0, 0, 0);
+            if(xVel != 0) {
+                velocity.setX(xVel/Math.abs(xVel));
+            }
+
+            if(zVel != 0) {
+                velocity.setZ(zVel/Math.abs(zVel));
+            }
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                 @Override
@@ -462,19 +483,33 @@ public class RailModule implements Listener {
         }
     }
 
-    public boolean setInvulnerable(Player player, boolean invulnerable) {
-        EntityPlayer entityPlayer = ((CraftPlayer) player).getHandle();
+    public boolean setInvulnerable(Player player, boolean invulnerable) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        if(craftPlayerClass == null) {
+            craftPlayerClass = Class.forName("org.bukkit.craftbukkit." + getServerVersion() +".entity.CraftPlayer");
+        }
 
-        PlayerAbilities abilities = entityPlayer.abilities;
-        Field field = null;
-        try {
-            field = abilities.getClass().getDeclaredField("isInvulnerable");
+        Method getHandle = craftPlayerClass.getMethod("getHandle");
+
+        Object entityPlayer = getHandle.invoke(player);
+        Object playerAbilities = entityPlayer.getClass().getSuperclass().getDeclaredField("abilities").get(entityPlayer);
+
+        if(player.getGameMode() != GameMode.CREATIVE) {
+            Field field = playerAbilities.getClass().getDeclaredField("isInvulnerable");
             field.setAccessible(true);
-            field.setBoolean(abilities, invulnerable);
+            field.setBoolean(playerAbilities, invulnerable);
             field.setAccessible(false);
             return true;
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            return false;
         }
+        return false;
+    }
+
+    public String getServerVersion() {
+        String version;
+        try {
+            version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return "unknown";
+        }
+        return version;
     }
 }

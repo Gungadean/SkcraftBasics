@@ -67,7 +67,7 @@ public class EnderPearlTeleportModule implements Listener {
                 return;
             }
 
-            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(Bukkit.getPlayer(playerName).getUniqueId().toString());
+            SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(Bukkit.getPlayer(playerName));
 
             if(skcraftPlayer.getTeleAuthed().contains(event.getWhoClicked().getUniqueId().toString())) {
                 event.getWhoClicked().teleport(Bukkit.getPlayer(playerName));
@@ -137,7 +137,7 @@ public class EnderPearlTeleportModule implements Listener {
         if(event.isPlayerTeleport()) {
             event.getPlayer().closeInventory();
 
-            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(event.getPlayer().getUniqueId().toString());
+            SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(event.getPlayer());
 
             if(!skcraftPlayer.getPTeleAuthed().contains(event.getTarget().getUniqueId().toString())) {
                 skcraftPlayer.getTeleAuthed().remove(event.getTarget().getUniqueId().toString());
@@ -168,6 +168,7 @@ public class EnderPearlTeleportModule implements Listener {
             return;
         }
 
+        //noinspection deprecation
         if(player.getLocation().getBlock().getType() != Material.WATER && player.isOnGround() && player.getInventory().getItemInOffHand().getType() != Material.WATER_BUCKET) {
             if(player.getBedSpawnLocation() == null) {
                 player.sendMessage(ChatColor.RED + "You do not have a home set yet.");
@@ -209,7 +210,7 @@ public class EnderPearlTeleportModule implements Listener {
 
         for(Iterator iterator = Bukkit.getOnlinePlayers().iterator(); iterator.hasNext();) {
             Player player = (Player) iterator.next();
-            SkcraftPlayer skcraftPlayer = plugin.skcraftPlayerList.get(player.getUniqueId().toString());
+            SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(player);
 
             if(player.hasMetadata("vanished")) {
                 if(player.getMetadata("vanished").get(0).asBoolean()) {

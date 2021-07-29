@@ -82,6 +82,8 @@ public class JetBootModule implements Listener {
                 }
 
                 activeBeacons.add(beacon.getLocation());
+
+                plugin.saveBeaconsToFile();
             }
         }, 100);
     }
@@ -145,6 +147,8 @@ public class JetBootModule implements Listener {
         }
 
         activeBeacons.remove(event.getBlock().getLocation());
+
+        plugin.saveBeaconsToFile();
     }
 
     public void registerJetbootDurabilityCheck() {

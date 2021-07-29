@@ -67,6 +67,10 @@ public class GoldToolModule implements Listener {
             if(event.getBlock().getType() == Material.STONE || event.getBlock().getType() == Material.COBBLESTONE) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.STONE, 1));
+
+            } else if(event.getBlock().getType() == Material.COPPER_ORE) {
+                event.setDropItems(false);
+                location.getWorld().dropItem(location, new ItemStack(Material.COPPER_INGOT, 1));
             } else if(event.getBlock().getType() == Material.IRON_ORE) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.IRON_INGOT, 1));
