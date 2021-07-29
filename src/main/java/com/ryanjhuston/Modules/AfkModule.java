@@ -17,9 +17,9 @@ import java.util.List;
 
 public class AfkModule implements Listener {
 
-    private SkcraftBasics plugin;
+    private final SkcraftBasics plugin;
 
-    private HashMap<String, AfkTracker> playerTracker = new HashMap();
+    private HashMap<String, AfkTracker> playerTracker = new HashMap<>();
     private List<String> afkPlayers = new ArrayList<>();
 
 
@@ -29,31 +29,28 @@ public class AfkModule implements Listener {
     }
 
     private void scheduleTask() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    AfkTracker afkTracker = playerTracker.get(player.getUniqueId().toString());
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            for(Player player : Bukkit.getOnlinePlayers()) {
+                AfkTracker afkTracker = playerTracker.get(player.getUniqueId().toString());
 
-                    if(afkPlayers.contains(player.getUniqueId().toString())) {
-                        if(afkTracker.getStartLocation().equals(player.getLocation())) {
-                            continue;
-                        } else {
-                            removeAfk(player);
-                            continue;
-                        }
-                    }
-
-                    if(player.getLocation().equals(afkTracker.getStartLocation())) {
-                        afkTracker.setAfkTime(afkTracker.getAfkTime() + 5);
+                if(afkPlayers.contains(player.getUniqueId().toString())) {
+                    if(afkTracker.getStartLocation().equals(player.getLocation())) {
+                        continue;
                     } else {
-                        afkTracker.setStartLocation(player.getLocation());
-                        afkTracker.setAfkTime(0);
+                        removeAfk(player);
+                        continue;
                     }
+                }
 
-                    if(afkTracker.getAfkTime() >= 300) {
-                        afkPlayers.add(player.getUniqueId().toString());
-                    }
+                if(player.getLocation().equals(afkTracker.getStartLocation())) {
+                    afkTracker.setAfkTime(afkTracker.getAfkTime() + 5);
+                } else {
+                    afkTracker.setStartLocation(player.getLocation());
+                    afkTracker.setAfkTime(0);
+                }
+
+                if(afkTracker.getAfkTime() >= 300) {
+                    afkPlayers.add(player.getUniqueId().toString());
                 }
             }
         }, 0, 100);

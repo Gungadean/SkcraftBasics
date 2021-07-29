@@ -74,7 +74,7 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") ? playerConfig.getBoolean("InModMode") : false), playerConfig.getBoolean("IsAdmin"));
+            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") && playerConfig.getBoolean("InModMode")), playerConfig.getBoolean("IsAdmin"));
             playerFileLegacy.delete();
         } else {
             try {
@@ -145,13 +145,9 @@ public class SkcraftEventHandler implements Listener {
         }
 
         if(event.getItem().getType() == Material.MINECART && event.getBlock().getType() == Material.DISPENSER) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-
-                @Override
-                public void run() {
-                    InventoryHolder dispenser = (InventoryHolder)event.getBlock().getState();
-                    dispenser.getInventory().addItem(new ItemStack(Material.MINECART));
-                }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                InventoryHolder dispenser = (InventoryHolder)event.getBlock().getState();
+                dispenser.getInventory().addItem(new ItemStack(Material.MINECART));
             }, 1);
         }
     }

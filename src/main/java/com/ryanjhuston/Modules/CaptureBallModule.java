@@ -110,8 +110,7 @@ public class CaptureBallModule implements Listener {
             return null;
         }
 
-        ItemStack spawnEgg = new ItemStack(material);
-        return spawnEgg;
+        return new ItemStack(material);
     }
 
     public void updateConfig(SkcraftBasics plugin) {

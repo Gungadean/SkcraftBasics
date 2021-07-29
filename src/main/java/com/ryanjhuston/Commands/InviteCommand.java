@@ -14,6 +14,7 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -31,46 +32,43 @@ public class InviteCommand {
             throw new CommandException("You cannot invite yourself.");
         }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                String url = "https://api.mojang.com/users/profiles/minecraft/"+args[0];
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            String url = "https://api.mojang.com/users/profiles/minecraft/"+args[0];
 
-                String uuid = null;
+            String uuid = null;
 
-                try {
-                    uuid = IOUtils.toString(new URL(url), "UTF-8");
-                    if(uuid.isEmpty()) {
-                        uuid = null;
-                    } else {
-                        uuid = ((JSONObject) JSONValue.parseWithException(uuid)).get("id").toString();
-                    }
-                } catch (IOException | ParseException e) {
-                    e.printStackTrace();
+            try {
+                uuid = IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
+                if(uuid.isEmpty()) {
+                    uuid = null;
+                } else {
+                    uuid = ((JSONObject) JSONValue.parseWithException(uuid)).get("id").toString();
                 }
-
-                if(uuid == null) {
-                    commandSender.sendMessage(ChatColor.RED + "This player does not exist.");
-                    return;
-                }
-
-                uuid = UUID_FIX.matcher(uuid.replace("-", "")).replaceAll("$1-$2-$3-$4-$5");
-
-                OfflinePlayer target = Bukkit.getOfflinePlayer(UUID.fromString(uuid));
-
-                if(target.isWhitelisted()) {
-                    commandSender.sendMessage(ChatColor.RED + "This player is already invited.");
-                    return;
-                }
-
-                if(target != null) {
-                    target.setWhitelisted(true);
-                    commandSender.sendMessage(ChatColor.YELLOW + "Player has been successfully invited.");
-                    return;
-                }
-
-                commandSender.sendMessage(ChatColor.RED + "Player was not found. Please check the spelling and try again.");
+            } catch (IOException | ParseException e) {
+                e.printStackTrace();
             }
+
+            if(uuid == null) {
+                commandSender.sendMessage(ChatColor.RED + "This player does not exist.");
+                return;
+            }
+
+            uuid = UUID_FIX.matcher(uuid.replace("-", "")).replaceAll("$1-$2-$3-$4-$5");
+
+            OfflinePlayer target = Bukkit.getOfflinePlayer(UUID.fromString(uuid));
+
+            if(target.isWhitelisted()) {
+                commandSender.sendMessage(ChatColor.RED + "This player is already invited.");
+                return;
+            }
+
+            if(target != null) {
+                target.setWhitelisted(true);
+                commandSender.sendMessage(ChatColor.YELLOW + "Player has been successfully invited.");
+                return;
+            }
+
+            commandSender.sendMessage(ChatColor.RED + "Player was not found. Please check the spelling and try again.");
         }, 0);
     }
 }

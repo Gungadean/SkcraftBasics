@@ -36,7 +36,7 @@ public class ChatChannelsModule implements Listener {
         }
 
         if(chatChannels.containsKey(channel)) {
-            sendJoinMessage(Bukkit.getPlayer(UUID.fromString(player)).getName(), channel);
+            sendJoinMessage(Bukkit.getPlayer(UUID.fromString(player)), channel);
             chatChannels.get(channel).add(player);
         } else {
             List<String> players = new ArrayList<>();
@@ -44,7 +44,7 @@ public class ChatChannelsModule implements Listener {
 
             channel = channel.replaceAll("[^a-zA-z0-9]", "");
 
-            sendJoinMessage(Bukkit.getPlayer(UUID.fromString(player)).getName(), channel);
+            sendJoinMessage(Bukkit.getPlayer(UUID.fromString(player)), channel);
             chatChannels.put(channel, players);
         }
         inChannelPlayers.put(player, channel);
@@ -55,7 +55,7 @@ public class ChatChannelsModule implements Listener {
     public void leaveChatChannel(String player) {
         chatChannels.get(inChannelPlayers.get(player)).remove(player);
 
-        sendLeaveMessage(Bukkit.getPlayer(UUID.fromString(player)).getName(), inChannelPlayers.get(player));
+        sendLeaveMessage(Bukkit.getPlayer(UUID.fromString(player)), inChannelPlayers.get(player));
 
         if(chatChannels.get(inChannelPlayers.get(player)).isEmpty()) {
             chatChannels.remove(inChannelPlayers.get(player));
@@ -69,7 +69,7 @@ public class ChatChannelsModule implements Listener {
     public void playerJoin(PlayerJoinEvent event) {
         if(inChannelPlayers.containsKey(event.getPlayer().getUniqueId().toString())) {
             if(moduleEnabled) {
-                sendJoinMessage(event.getPlayer().getName(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
+                sendJoinMessage(event.getPlayer(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
             }
             return;
         }
@@ -78,7 +78,7 @@ public class ChatChannelsModule implements Listener {
             if(entry.getValue().contains(event.getPlayer().getUniqueId().toString())) {
                 inChannelPlayers.put(event.getPlayer().getUniqueId().toString(), entry.getKey());
                 if(moduleEnabled) {
-                    sendJoinMessage(event.getPlayer().getName(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
+                    sendJoinMessage(event.getPlayer(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
                 }
                 return;
             }
@@ -96,13 +96,13 @@ public class ChatChannelsModule implements Listener {
             if(event.getMessage().startsWith("\\")) {
                 sendGlobalMessage(event.getPlayer(), event.getMessage());
             } else {
-                sendMessageToChannel(uuid, inChannelPlayers.get(uuid), event.getMessage());
+                sendMessageToChannel(event.getPlayer(), inChannelPlayers.get(uuid), event.getMessage());
             }
             event.setCancelled(true);
         }
     }
 
-    public void sendJoinMessage(String name, String channel) {
+    public void sendJoinMessage(Player sender, String channel) {
         if(!chatChannels.containsKey(channel)) {
             return;
         }
@@ -113,31 +113,31 @@ public class ChatChannelsModule implements Listener {
             if(plugin.checkOnline(receiver)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(receiver));
 
-                player.sendMessage(useChatFormat(joinFormat, channel, player, ""));
+                player.sendMessage(useChatFormat(joinFormat, channel, sender, ""));
             }
         }
     }
 
-    public void sendLeaveMessage(String name, String channel) {
+    public void sendLeaveMessage(Player sender, String channel) {
         List<String> players = chatChannels.get(channel);
 
         for(String receiver : players) {
             if(plugin.checkOnline(receiver)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(receiver));
 
-                player.sendMessage(useChatFormat(leaveFormat, channel, player, ""));
+                player.sendMessage(useChatFormat(leaveFormat, channel, sender, ""));
             }
         }
     }
 
-    public void sendMessageToChannel(String name, String channel, String message) {
+    public void sendMessageToChannel(Player sender, String channel, String message) {
         List<String> players = chatChannels.get(channel);
 
         for(String receiver : players) {
             if(plugin.checkOnline(receiver)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(receiver));
 
-                player.sendMessage(useChatFormat(chatFormat, channel, player, message));
+                player.sendMessage(useChatFormat(chatFormat, channel, sender, message));
             }
         }
     }

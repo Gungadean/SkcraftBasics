@@ -12,12 +12,7 @@ public class SerializedNetworks {
     }
 
     public SerializedNetworks(HashMap<String, List<String>> networkMap) {
-        this.networksList = networksList;
-
-        Iterator it = networkMap.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
-
+        for(Map.Entry pair : networkMap.entrySet()) {
             this.networksList.add((String)pair.getKey());
             this.networks.add(new SerializedNetwork((String)pair.getKey(), (List<String>)pair.getValue()));
         }

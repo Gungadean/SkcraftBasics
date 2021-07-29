@@ -32,8 +32,6 @@ public class RailModule implements Listener {
 
     private boolean moduleEnabled;
     private Class<?> craftPlayerClass;
-    private Class<?> entityPlayerClass;
-    private Class<?> playerAbilitiesClass;
 
     public RailModule(SkcraftBasics plugin) {
         updateConfig(plugin);
@@ -157,17 +155,14 @@ public class RailModule implements Listener {
             event.getVehicle().remove();
         }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                players.remove(passenger.getUniqueId().toString());
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            players.remove(passenger.getUniqueId().toString());
 
-                if(passenger instanceof Player) {
-                    try {
-                        setInvulnerable((Player) passenger, false);
-                    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                        e.printStackTrace();
-                    }
+            if(passenger instanceof Player) {
+                try {
+                    setInvulnerable((Player) passenger, false);
+                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                    e.printStackTrace();
                 }
             }
         }, 10L);
@@ -193,12 +188,7 @@ public class RailModule implements Listener {
         entity.removeMetadata("xVel", plugin);
         entity.removeMetadata("zVel", plugin);
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                teleportThroughPortal(entity, from, entity.getLocation(), vector);
-            }
-            }, 2);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> teleportThroughPortal(entity, from, entity.getLocation(), vector), 2);
     }
 
     @EventHandler
@@ -266,13 +256,10 @@ public class RailModule implements Listener {
 
         Sign sign = (Sign)event.getBlock().getState();
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                sign.setLine(0, "[Stargate Rail]");
-                sign.setLine(1, destination);
-                sign.update();
-            }
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            sign.setLine(0, "[Stargate Rail]");
+            sign.setLine(1, destination);
+            sign.update();
         }, 2);
     }
 
@@ -364,8 +351,6 @@ public class RailModule implements Listener {
         if(railLocation != null) {
             Location portal = getOffsetPortal(railLocation);
 
-            Vector direction = railLocation.toVector().subtract(portal.toVector());
-
             Vector velocity = new Vector(0, 0, 0);
             if(xVel != 0) {
                 velocity.setX(xVel/Math.abs(xVel));
@@ -375,23 +360,17 @@ public class RailModule implements Listener {
                 velocity.setZ(zVel/Math.abs(zVel));
             }
 
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    passenger.teleport(railLocation);
-                    Minecart minecart = to.getWorld().spawn(railLocation, Minecart.class);
-                    minecart.addPassenger(passenger);
-                    minecart.setVelocity(velocity);
-                }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                passenger.teleport(railLocation);
+                Minecart minecart = to.getWorld().spawn(railLocation, Minecart.class);
+                minecart.addPassenger(passenger);
+                minecart.setVelocity(velocity);
             }, 2);
         } else {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    passenger.teleport(to);
-                    Minecart minecart = to.getWorld().spawn(to, Minecart.class);
-                    minecart.addPassenger(passenger);
-                }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                passenger.teleport(to);
+                Minecart minecart = to.getWorld().spawn(to, Minecart.class);
+                minecart.addPassenger(passenger);
             }, 2);
         }
     }
@@ -417,23 +396,17 @@ public class RailModule implements Listener {
             vehicle.remove();
 
             Location finalRailLocation = railLocation;
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    passenger.teleport(finalRailLocation);
-                    Minecart minecart = to.getWorld().spawn(finalRailLocation, Minecart.class);
-                    minecart.addPassenger(passenger);
-                    minecart.setVelocity(velocity);
-                }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                passenger.teleport(finalRailLocation);
+                Minecart minecart = to.getWorld().spawn(finalRailLocation, Minecart.class);
+                minecart.addPassenger(passenger);
+                minecart.setVelocity(velocity);
             }, 2);
         } else {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    passenger.teleport(to);
-                    Minecart minecart = to.getWorld().spawn(to, Minecart.class);
-                    minecart.addPassenger(passenger);
-                }
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                passenger.teleport(to);
+                Minecart minecart = to.getWorld().spawn(to, Minecart.class);
+                minecart.addPassenger(passenger);
             }, 2);
         }
     }

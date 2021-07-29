@@ -13,6 +13,7 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 public class PermanentAcceptCommand {
@@ -30,51 +31,46 @@ public class PermanentAcceptCommand {
     }
 
     public static void getUuidFromName(SkcraftPlayer skcraftPlayer, Player player, String username, SkcraftBasics plugin) throws CommandException{
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                String url = "https://api.mojang.com/users/profiles/minecraft/"+username;
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            String url = "https://api.mojang.com/users/profiles/minecraft/"+username;
 
-                String uuid = null;
+            String uuid = null;
 
-                try {
-                    uuid = IOUtils.toString(new URL(url), "UTF-8");
-                    if(uuid.isEmpty()) {
-                        uuid = null;
-                    } else {
-                        uuid = ((JSONObject)JSONValue.parseWithException(uuid)).get("id").toString();
-                    }
-                } catch (IOException | ParseException e) {
-                    e.printStackTrace();
-                }
-
-                if(uuid == null) {
-                    throw new CommandException("This player does not exist.");
-                }
-
-                uuid = UUID_FIX.matcher(uuid.replace("-", "")).replaceAll("$1-$2-$3-$4-$5");
-
-
-                if(player.getUniqueId().toString().equals(uuid)) {
-                    throw new CommandException("You cannot accept yourself.");
-                }
-
-                if(skcraftPlayer.getPTeleAuthed().contains(uuid)) {
-                    if(skcraftPlayer.getTeleAuthed().contains(uuid)) {
-                        skcraftPlayer.getTeleAuthed().remove(uuid);
-                    }
-                    skcraftPlayer.getPTeleAuthed().remove(uuid);
-                    player.sendMessage(ChatColor.YELLOW + username + " has been removed from accepted list.");
-                    return;
+            try {
+                uuid = IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
+                if(uuid.isEmpty()) {
+                    uuid = null;
                 } else {
-                    if(!skcraftPlayer.getTeleAuthed().contains(uuid)) {
-                        skcraftPlayer.getTeleAuthed().add(uuid);
-                    }
-                    skcraftPlayer.getPTeleAuthed().add(uuid);
-                    player.sendMessage(ChatColor.YELLOW + username + " has been added to the accepted list.");
-                    return;
+                    uuid = ((JSONObject)JSONValue.parseWithException(uuid)).get("id").toString();
                 }
+            } catch (IOException | ParseException e) {
+                e.printStackTrace();
             }
+
+            if(uuid == null) {
+                throw new CommandException("This player does not exist.");
+            }
+
+            uuid = UUID_FIX.matcher(uuid.replace("-", "")).replaceAll("$1-$2-$3-$4-$5");
+
+            if(player.getUniqueId().toString().equals(uuid)) {
+                throw new CommandException("You cannot accept yourself.");
+            }
+
+            if(skcraftPlayer.getPTeleAuthed().contains(uuid)) {
+                if(skcraftPlayer.getTeleAuthed().contains(uuid)) {
+                    skcraftPlayer.getTeleAuthed().remove(uuid);
+                }
+                skcraftPlayer.getPTeleAuthed().remove(uuid);
+                player.sendMessage(ChatColor.YELLOW + username + " has been removed from accepted list.");
+            } else {
+                if(!skcraftPlayer.getTeleAuthed().contains(uuid)) {
+                    skcraftPlayer.getTeleAuthed().add(uuid);
+                }
+                skcraftPlayer.getPTeleAuthed().add(uuid);
+                player.sendMessage(ChatColor.YELLOW + username + " has been added to the accepted list.");
+            }
+            return;
         }, 0);
     }
 }

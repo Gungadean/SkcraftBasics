@@ -12,9 +12,6 @@ import com.ryanjhuston.Types.Stargate;
 import net.luckperms.api.LuckPerms;
 import org.bukkit.*;
 import org.bukkit.command.CommandException;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -68,11 +65,6 @@ public class SkcraftBasics extends JavaPlugin {
     public final File playersDir = new File(getDataFolder(), "Players");
     public final File inventoriesDir = new File(playersDir, "Inventories");
 
-    private final File legacyStargatesFile = new File(getDataFolder(), "stargates.yml");
-    private final File legacyNetworksFile = new File(getDataFolder(), "stargateNetworks.yml");
-    private final File legacyTurretsFile = new File(getDataFolder(), "enderTurrets.yml");
-    private final File legacyShopsFile = new File(getDataFolder(), "shops.yml");
-
     private final File stargatesFile = new File(stargateDir, "stargates.json");
     private final File networksFile = new File(stargateDir, "stargateNetworks.json");
     private final File turretsFile = new File(getDataFolder(), "enderTurrets.json");
@@ -80,11 +72,6 @@ public class SkcraftBasics extends JavaPlugin {
     private final File beaconsFile = new File(getDataFolder(), "beacons.json");
     private final File chatChannelsFile = new File(getDataFolder(), "chatchannels.json");
     private final File worldsFile = new File(getDataFolder(), "worldmanager.json");
-
-    private FileConfiguration stargatesConfig;
-    private FileConfiguration networksConfig;
-    private FileConfiguration turretsConfig;
-    private FileConfiguration shopsConfig;
 
     private HashMap<String, SkcraftPlayer> skcraftPlayerList = new HashMap<>();
     public Location spawnLocation;
@@ -224,62 +211,17 @@ public class SkcraftBasics extends JavaPlugin {
             disabledCommands.add("invite");
         }
 
-        if(legacyNetworksFile.exists() && legacyStargatesFile.exists()) {
-            System.out.println("[SkcraftBasics] Legacy stargates files found. Converting to new format.");
-            legacyLoadStargatesFromFile();
-            legacyNetworksFile.renameTo(new File(getDataFolder(), "stargateNetworks.yml.legacy"));
-            legacyStargatesFile.renameTo(new File(getDataFolder(), "stargates.yml.legacy"));
-            saveStargatesToFile();
-            System.out.println("[SkcraftBasics] Stargates successfully converted.");
-        } else {
-            loadStargatesFromFile();
-        }
-
-        if(getConfig().contains("Active-Beacons")) {
-            System.out.println("[SkcraftBasics] Legacy jetboot beacons found. Converting to new format.");
-            legacyLoadBeaconsFromFile();
-            getConfig().set("Active-Beacons", null);
-            saveBeaconsToFile();
-            System.out.println("[SkcraftBasics] Beacons successfully converted.");
-        } else {
-            loadBeaconsFromFile();
-        }
-
-        if(legacyTurretsFile.exists()) {
-            System.out.println("[SkcraftBasics] Legacy ender turrets files found. Converting to new format.");
-            legacyLoadTurretsFromFile();
-            legacyTurretsFile.renameTo(new File(getDataFolder(), "enderTurrets.yml.legacy"));
-            saveTurretsToFile();
-            System.out.println("[SkcraftBasics] Turrets successfully converted.");
-        } else {
-            loadTurretsFromFile();
-        }
-
-        if(legacyShopsFile.exists()) {
-            System.out.println("[SkcraftBasics] Legacy shops files found. Converting to new format.");
-            legacyLoadShopsFromFile();
-            legacyShopsFile.renameTo(new File(getDataFolder(), "shops.yml.legacy"));
-            saveShopsToFile();
-            System.out.println("[SkcraftBasics] Shops successfully converted.");
-        } else {
-            loadShopsFromFile();
-        }
+        loadStargatesFromFile();
+        loadBeaconsFromFile();
+        loadTurretsFromFile();
+        loadShopsFromFile();
+        loadChatChannelsFromFile();
 
         /*if(!worldsFile.exists() && getConfig().contains("Worlds")) {
             legacyLoadWorldsFromFile();
         } else {
             loadWorldsFromFile();
         }*/
-
-        if(getConfig().contains("Chat-Channels-List")) {
-            System.out.println("[SkcraftBasics] Legacy chat channels data found. Converting to new format.");
-            legacyLoadChatChannelsFromFile();
-            getConfig().set("Chat-Channels-List", null);
-            saveChatChannelsToFile();
-            System.out.println("[SkcraftBasics] Chat channels successfully converted.");
-        } else {
-            loadChatChannelsFromFile();
-        }
 
         this.getCommand("invite").setExecutor(skcraftCommandHandler);
         this.getCommand("accept").setExecutor(skcraftCommandHandler);
@@ -316,7 +258,6 @@ public class SkcraftBasics extends JavaPlugin {
         saveChatChannelsToFile();
         saveTurretsToFile();
         saveShopsToFile();
-        logger.info("[SkcraftBasics] Finished saving data to configs.");
 
         getConfig().set("Spawn-Location", locationToString(spawnLocation));
 
@@ -334,6 +275,7 @@ public class SkcraftBasics extends JavaPlugin {
         }
 
         saveConfig();
+        logger.info("[SkcraftBasics] Finished saving data to configs.");
         logger.info("[SkcraftBasics] has stopped.");
     }
 
@@ -410,39 +352,6 @@ public class SkcraftBasics extends JavaPlugin {
         if(!shopsFile.exists()) {
             shopsFile.getParentFile().mkdirs();
         }
-
-        if(legacyNetworksFile.exists()) {
-            networksConfig = new YamlConfiguration();
-            try {
-                networksConfig.load(legacyNetworksFile);
-            } catch (IOException | InvalidConfigurationException e) {
-                e.printStackTrace();
-            }
-        }
-        if(legacyStargatesFile.exists()) {
-            stargatesConfig = new YamlConfiguration();
-            try {
-                stargatesConfig.load(legacyStargatesFile);
-            } catch (IOException | InvalidConfigurationException e) {
-                e.printStackTrace();
-            }
-        }
-        if(legacyTurretsFile.exists()) {
-            turretsConfig = new YamlConfiguration();
-            try {
-                turretsConfig.load(legacyTurretsFile);
-            } catch (IOException | InvalidConfigurationException e) {
-                e.printStackTrace();
-            }
-        }
-        if(legacyShopsFile.exists()) {
-            shopsConfig = new YamlConfiguration();
-            try {
-                shopsConfig.load(legacyShopsFile);
-            } catch (IOException | InvalidConfigurationException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void loadChatChannelsFromFile() {
@@ -456,14 +365,6 @@ public class SkcraftBasics extends JavaPlugin {
             } catch (Exception e) {
                 System.out.println("[SkcraftBasics] ERROR: It appears that the chat channel file's data is corrupted. Creating new chat channel file.");
             }
-        }
-    }
-
-    public void legacyLoadChatChannelsFromFile() {
-        List<String> channels = getConfig().getStringList("Chat-Channels-List");
-
-        for(String channel : channels) {
-            chatChannelsModule.chatChannels.put(channel, getConfig().getStringList("Chat-Channels." + channel));
         }
     }
 
@@ -481,18 +382,6 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
-    /*public void saveChatChannelsToFile() {
-        getConfig().set("Chat-Channels", null);
-
-        List<String> channels = new ArrayList<>();
-
-        for(Map.Entry<String, List<String>> entry : chatChannelsModule.chatChannels.entrySet()) {
-            channels.add(entry.getKey());
-            getConfig().set("Chat-Channels." + entry.getKey(), entry.getValue());
-        }
-        getConfig().set("Chat-Channels-List", channels);
-    }*/
-
     public void loadShopsFromFile() {
         if(shopsFile.exists()) {
             try {
@@ -506,21 +395,6 @@ public class SkcraftBasics extends JavaPlugin {
             } catch (Exception e) {
                 System.out.println("[SkcraftBasics] ERROR: It appears that the shop file's data is corrupted. Creating new shop file.");
             }
-        }
-    }
-
-    public void legacyLoadShopsFromFile() {
-        List<String> shopLocations = shopsConfig.getStringList("Shops");
-
-        for(String stringLocation : shopLocations) {
-            String path = stringLocation.replace(".", "^");
-            shopModule.getShops().put(stringToLocation(stringLocation),
-                    new Shop(shopsConfig.getString(path + ".Owner"),
-                            Material.matchMaterial(shopsConfig.getString(path + ".ProductMaterial")),
-                            shopsConfig.getInt(path + ".ProductAmount"),
-                            Material.matchMaterial(shopsConfig.getString(path + ".PriceMaterial")),
-                            shopsConfig.getInt(path + ".PriceAmount"),
-                            stringToLocation(stringLocation).add(0, -1, 0)));
         }
     }
 
@@ -538,33 +412,6 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
-    /*public void saveShopsToFile() {
-        List<String> shopLocations = new ArrayList<>();
-
-        Iterator it = shopModule.getShops().entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
-            String stringLocation = locationToString((Location)pair.getKey()).replace(".", "^");
-            Shop shop = (Shop)pair.getValue();
-
-            shopsConfig.set(stringLocation + ".Owner", shop.getOwner());
-            shopsConfig.set(stringLocation + ".ProductMaterial", shop.getProduct().toString());
-            shopsConfig.set(stringLocation + ".ProductAmount", shop.getProductAmount());
-            shopsConfig.set(stringLocation + ".PriceMaterial", shop.getPrice().toString());
-            shopsConfig.set(stringLocation + ".PriceAmount", shop.getPriceAmount());
-
-            shopLocations.add(locationToString((Location)pair.getKey()));
-        }
-
-        shopsConfig.set("Shops", shopLocations);
-
-        try {
-            shopsConfig.save(shopsFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
-
     public void loadBeaconsFromFile() {
         if(beaconsFile.exists()) {
             try {
@@ -575,16 +422,6 @@ public class SkcraftBasics extends JavaPlugin {
                 }
             } catch (Exception e) {
                 System.out.println("[SkcraftBasics] ERROR: It appears that the beacons file's data is corrupted. Creating new beacons file.");
-            }
-        }
-    }
-
-    public void legacyLoadBeaconsFromFile() {
-        List<String> beacons = getConfig().getStringList("Active-Beacons");
-
-        for(String locationString : beacons) {
-            if(stringToLocation(locationString).getBlock().getType() == Material.BEACON) {
-                jetBootModule.activeBeacons.add(stringToLocation(locationString));
             }
         }
     }
@@ -602,17 +439,6 @@ public class SkcraftBasics extends JavaPlugin {
             e.printStackTrace();
         }
     }
-
-    /*public void saveBeaconsToFile() {
-        List<String> beaconLocations = new ArrayList<>();
-        for(Location location : jetBootModule.activeBeacons) {
-            beaconLocations.add(locationToString(location));
-        }
-
-        getConfig().set("Active-Beacons", beaconLocations);
-
-        saveConfig();
-    }*/
 
     public void loadStargatesFromFile() {
         if(networksFile.exists()) {
@@ -650,50 +476,6 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
-    public void legacyLoadStargatesFromFile() {
-        List<String> networksList = (List<String>)networksConfig.getList("Networks-List");
-
-        if(networksList.isEmpty()) {
-            networksList.add("public");
-        }
-
-        for(String network : networksList) {
-            List<String> stargatesList = (List<String>)networksConfig.getList("Networks." + network);
-
-            stargateModule.networkList.put(network, stargatesList);
-
-            for(String name : stargatesList) {
-                String owner = stargatesConfig.getString(name  + ".Owner");
-                network = stargatesConfig.getString(name + ".Network");
-                String direction = stargatesConfig.getString(name + ".Direction");
-
-                List<String> blocksString = (List<String>)stargatesConfig.getList(name + ".Blocks");
-                List<String> portalBlocksString = (List<String>)stargatesConfig.getList(name + ".Portal-Blocks");
-
-                Location teleportLocation = stringToLocation(stargatesConfig.getString(name + ".Teleport-Location"));
-                Location signLocation = stringToLocation(stargatesConfig.getString(name + ".Sign-Location"));
-                Location buttonLocation = stringToLocation(stargatesConfig.getString(name + ".Button-Location"));
-
-                List<Location> blocks = new ArrayList<>();
-                List<Location> portalBlocks = new ArrayList<>();
-
-                for(String stringLocation : blocksString) {
-                    blocks.add(stringToLocation(stringLocation));
-                }
-
-                for(String stringLocation : portalBlocksString) {
-                    portalBlocks.add(stringToLocation(stringLocation));
-                }
-
-                Stargate stargate = new Stargate(name, owner, network, teleportLocation, signLocation, buttonLocation, blocks, portalBlocks, direction);
-
-                stargateModule.updateStargateBlocks(stargate);
-
-                stargateModule.stargateList.put(name, stargate);
-            }
-        }
-    }
-
     public void saveStargatesToFile() {
         SerializedNetworks networks = new SerializedNetworks(stargateModule.networkList);
         List<SerializedStargate> stargates = new ArrayList<>();
@@ -709,51 +491,6 @@ public class SkcraftBasics extends JavaPlugin {
             e.printStackTrace();
         }
     }
-
-    /*public void saveStargatesToFile() {
-        List<String> networks = new ArrayList<>();
-
-        for(HashMap.Entry<String, List<String>> entryNetwork : stargateModule.networkList.entrySet()) {
-            networksConfig.set("Networks." + entryNetwork.getKey(), entryNetwork.getValue());
-            networks.add(entryNetwork.getKey());
-        }
-
-        networksConfig.set("Networks-List", networks);
-
-        for(HashMap.Entry<String, Stargate> entryStargate : stargateModule.stargateList.entrySet()) {
-            stargatesConfig.set(entryStargate.getKey() + ".Owner", entryStargate.getValue().getOwner());
-            stargatesConfig.set(entryStargate.getKey() + ".Network", entryStargate.getValue().getNetwork());
-            stargatesConfig.set(entryStargate.getKey() + ".Teleport-Location", locationToString(entryStargate.getValue().getTeleportLocation()) + ","
-                    + entryStargate.getValue().getTeleportLocation().getYaw());
-            stargatesConfig.set(entryStargate.getKey() + ".Sign-Location", locationToString(entryStargate.getValue().getSignLocation()));
-            stargatesConfig.set(entryStargate.getKey() + ".Button-Location", locationToString(entryStargate.getValue().getButtonLocation()));
-            stargatesConfig.set(entryStargate.getKey() + ".Direction", entryStargate.getValue().getDirection());
-
-            List<String> blocks = new ArrayList<>();
-
-            Iterator it = entryStargate.getValue().getBlocks().iterator();
-            while(it.hasNext()) {
-                blocks.add(locationToString((Location)it.next()));
-            }
-
-            List<String> portalBlocks = new ArrayList<>();
-
-            it = entryStargate.getValue().getPortalBlocks().iterator();
-            while(it.hasNext()) {
-                portalBlocks.add(locationToString((Location)it.next()));
-            }
-
-            stargatesConfig.set(entryStargate.getKey() + ".Blocks", blocks);
-            stargatesConfig.set(entryStargate.getKey() + ".Portal-Blocks", portalBlocks);
-        }
-
-        try {
-            stargatesConfig.save(stargatesFile);
-            networksConfig.save(networksFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
 
     public void loadTurretsFromFile() {
         if(turretsFile.exists()) {
@@ -775,20 +512,6 @@ public class SkcraftBasics extends JavaPlugin {
         }
     }
 
-    public void legacyLoadTurretsFromFile() {
-        List<String> turretLocations = turretsConfig.getStringList("Turrets");
-
-        for(String locationString : turretLocations) {
-            Location location = stringToLocation(locationString);
-
-            for(Entity entity : location.getWorld().getNearbyEntities(location, 1, 1, 1)) {
-                if(entity.getType() == EntityType.ENDER_CRYSTAL) {
-                    mobTurretModule.getTurretList().add(new EnderTurret((EnderCrystal)entity));
-                }
-            }
-        }
-    }
-
     public void saveTurretsToFile() {
         List<SerializedLocation> turrets = new ArrayList<>();
 
@@ -802,22 +525,6 @@ public class SkcraftBasics extends JavaPlugin {
             e.printStackTrace();
         }
     }
-
-    /*public void saveTurretsToFile() {
-        List<String> locationList = new ArrayList<>();
-
-        for(EnderTurret turret : mobTurretModule.getTurretList()) {
-            locationList.add(locationToString(turret.getTurretLocation()));
-        }
-
-        turretsConfig.set("Turrets", locationList);
-
-        try {
-            turretsConfig.save(turretsFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
 
     public static String locationToString(Location location) {
         return (location.getWorld().getName() + "," + location.getX() + "," + location.getY() + "," + location.getZ());

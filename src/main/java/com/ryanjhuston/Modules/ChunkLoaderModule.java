@@ -78,36 +78,33 @@ public class ChunkLoaderModule implements Listener {
     }
 
     private void initializeChunkUnloader() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-            @Override
-            public void run() {
-                if(!moduleEnabled) {
-                    return;
-                }
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            if(!moduleEnabled) {
+                return;
+            }
 
-                long now = System.currentTimeMillis();
+            long now = System.currentTimeMillis();
 
-                Iterator<Map.Entry<WorldChunkCoord, Long>> it = forceLoaded.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<WorldChunkCoord, Long> entry = it.next();
+            Iterator<Map.Entry<WorldChunkCoord, Long>> it = forceLoaded.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<WorldChunkCoord, Long> entry = it.next();
 
-                    long deltaTime = now - entry.getValue();
+                long deltaTime = now - entry.getValue();
 
-                    if (deltaTime > 1000 * 30) {
-                        Chunk chunk = ChunkUtil.getPotentialChunk(entry.getKey());
-                        if (chunk != null && !isNearSpawn(chunk)) {
-                            chunk.setForceLoaded(false);
-                            chunk.unload(true);
-                        }
-                        it.remove();
-                    } else if (deltaTime > 1000 * 5) {
-                        Chunk chunk = ChunkUtil.getPotentialChunk(entry.getKey());
-                        if (chunk != null && !isNearSpawn(chunk) && !shouldKeepLoaded(chunk)) {
-                            chunk.setForceLoaded(false);
-                            chunk.unload(true);
-                        }
-                        it.remove();
+                if (deltaTime > 1000 * 30) {
+                    Chunk chunk = ChunkUtil.getPotentialChunk(entry.getKey());
+                    if (chunk != null && !isNearSpawn(chunk)) {
+                        chunk.setForceLoaded(false);
+                        chunk.unload(true);
                     }
+                    it.remove();
+                } else if (deltaTime > 1000 * 5) {
+                    Chunk chunk = ChunkUtil.getPotentialChunk(entry.getKey());
+                    if (chunk != null && !isNearSpawn(chunk) && !shouldKeepLoaded(chunk)) {
+                        chunk.setForceLoaded(false);
+                        chunk.unload(true);
+                    }
+                    it.remove();
                 }
             }
         },20, 80);

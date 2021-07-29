@@ -19,8 +19,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Iterator;
-
 public class EnderPearlTeleportModule implements Listener {
 
     private SkcraftBasics plugin;
@@ -176,21 +174,11 @@ public class EnderPearlTeleportModule implements Listener {
                 return;
             } else {
                 //Fix for "Removing ticking entity" bug when teleporting between dimensions.
-                plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        player.teleport(player.getBedSpawnLocation());
-                    }
-                }, 1L);
+                plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> player.teleport(player.getBedSpawnLocation()), 1L);
             }
         } else {
             //Fix for "Removing ticking entity" bug when teleporting between dimensions.
-            plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    player.teleport(plugin.spawnLocation);
-                }
-            }, 1L);
+            plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> player.teleport(plugin.spawnLocation), 1L);
         }
 
         PlayerEnderPearlTeleportEvent teleportEvent = new PlayerEnderPearlTeleportEvent(player, null, false);
@@ -208,8 +196,7 @@ public class EnderPearlTeleportModule implements Listener {
 
         Inventory inv = Bukkit.createInventory(null, inventorySize , "Teleport Menu:");
 
-        for(Iterator iterator = Bukkit.getOnlinePlayers().iterator(); iterator.hasNext();) {
-            Player player = (Player) iterator.next();
+        for(Player player : Bukkit.getOnlinePlayers()) {
             SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(player);
 
             if(player.hasMetadata("vanished")) {
