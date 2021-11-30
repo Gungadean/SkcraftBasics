@@ -7,6 +7,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
@@ -34,7 +35,7 @@ public class RailModule implements Listener {
     private Class<?> craftPlayerClass;
 
     public RailModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
@@ -50,10 +51,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onItemDispense(BlockDispenseEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getItem().getType() != Material.MINECART || event.getBlock().getType() != Material.DISPENSER) {
             return;
         }
@@ -89,10 +86,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onVehicleDamage(VehicleDamageEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         Vehicle vehicle = event.getVehicle();
         Entity attacker = event.getAttacker();
 
@@ -103,10 +96,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void portalTeleport(VehicleMoveEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getTo().getBlock().getType() != Material.NETHER_PORTAL) {
             return;
         }
@@ -170,10 +159,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onEntityTeleport(PlayerPortalEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!event.getPlayer().hasMetadata("PortalLocation")) {
             return;
         }
@@ -193,10 +178,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void stargateActivator(BlockRedstoneEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!plugin.enabledModules.contains("Stargate")) {
             return;
         }
@@ -234,10 +215,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onSignPlace(SignChangeEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!event.getLine(0).equalsIgnoreCase("[Stargate Rail]")) {
             return;
         }
@@ -452,7 +429,13 @@ public class RailModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Rail");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.railModule)) {
+                plugin.pm.registerEvents(plugin.railModule, plugin);
+            }
+
             plugin.logger.info("- RailModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.railModule);
         }
     }
 

@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -22,6 +23,8 @@ public class GoldToolModule implements Listener {
     private boolean moduleEnabled;
 
     public GoldToolModule(SkcraftBasics plugin) {
+        this.plugin = plugin;
+
         foodstuff.add(Material.PORKCHOP);
         foodstuff.add(Material.BEEF);
         foodstuff.add(Material.CHICKEN);
@@ -29,16 +32,10 @@ public class GoldToolModule implements Listener {
         foodstuff.add(Material.MUTTON);
         foodstuff.add(Material.COD);
         foodstuff.add(Material.SALMON);
-
-        updateConfig(plugin);
     }
 
     @EventHandler
     public void playerBreakBlock(BlockBreakEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -86,10 +83,6 @@ public class GoldToolModule implements Listener {
 
     @EventHandler
     public void playerKillEntity(EntityDeathEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!(event.getEntity().getKiller() instanceof Player)) {
             return;
         }
@@ -126,7 +119,12 @@ public class GoldToolModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("GoldTools");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.goldToolModule)) {
+                plugin.pm.registerEvents(plugin.goldToolModule, plugin);
+            }
             plugin.logger.info("- GoldToolsModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.goldToolModule);
         }
     }
 }

@@ -14,6 +14,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
@@ -35,15 +36,11 @@ public class ShopModule implements Listener {
     private boolean moduleEnabled;
 
     public ShopModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
     public void onSignChange(SignChangeEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -148,10 +145,6 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -226,10 +219,6 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -251,10 +240,6 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -346,10 +331,6 @@ public class ShopModule implements Listener {
 
     @EventHandler
     public void onItemMoveInventory(InventoryMoveItemEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -602,7 +583,13 @@ public class ShopModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Shop");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.shopModule)) {
+                plugin.pm.registerEvents(plugin.shopModule, plugin);
+            }
+
             plugin.logger.info("- ShopModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.shopModule);
         }
     }
 }

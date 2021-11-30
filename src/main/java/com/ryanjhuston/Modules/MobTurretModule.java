@@ -1,20 +1,23 @@
 package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
+import com.ryanjhuston.Tasks.MobTurretTask;
 import com.ryanjhuston.Types.EnderTurret;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.*;
+import org.bukkit.entity.EnderCrystal;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,62 +27,23 @@ public class MobTurretModule implements Listener {
     private SkcraftBasics plugin;
 
     private List<EnderTurret> turretList = new ArrayList<>();
+    public List<EntityType> attackableMobs = new ArrayList<>();
 
-    private double turretRadius;
+    public double turretRadius;
+    public double turretAttackDamage;
+    public int turretAttackInterval;
+
+    private BukkitTask mobTurretTask;
 
     private boolean moduleEnabled;
 
     public MobTurretModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
-
-        scheduleTask();
+        this.plugin = plugin;
     }
-
-    public void scheduleTask() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            if(!moduleEnabled) {
-                return;
-            }
-
-            for(EnderTurret enderTurret : turretList) {
-                if(enderTurret.getTarget() != null) {
-                    if(((LivingEntity)enderTurret.getTarget()).hasLineOfSight(enderTurret.getTurret())) {
-                        Damageable damageable = (Damageable)enderTurret.getTarget();
-                        damageable.damage(10, enderTurret.getTurret());
-
-                        enderTurret.updateBeam();
-
-                        if(damageable.getHealth() <= 0) {
-                            enderTurret.getTarget().removeMetadata("Turret", plugin);
-                            enderTurret.setTarget(null);
-                            damageable.remove();
-                        }
-                    } else {
-                        enderTurret.getTarget().removeMetadata("Turret", plugin);
-                        enderTurret.setTarget(null);
-                    }
-                    continue;
-                }
-
-                for(Entity entity : enderTurret.getTurret().getNearbyEntities(turretRadius, turretRadius, turretRadius)) {
-                    if(targetableMob(entity)) {
-                        if(((LivingEntity)entity).hasLineOfSight(enderTurret.getTurret()) && !entity.hasMetadata("Turret")) {
-                            enderTurret.setTarget(entity);
-                            entity.setMetadata("Turret", new FixedMetadataValue(plugin, "True"));
-                            break;
-                        }
-                    }
-                }
-            }
-        }, 0, 10);
-    }
+    
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -111,10 +75,6 @@ public class MobTurretModule implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -160,33 +120,6 @@ public class MobTurretModule implements Listener {
         plugin.saveTurretsToFile();
     }
 
-    public boolean targetableMob(Entity entity) {
-        return entity.getType() == EntityType.BLAZE ||
-                entity.getType() == EntityType.CAVE_SPIDER ||
-                entity.getType() == EntityType.CREEPER ||
-                entity.getType() == EntityType.DROWNED ||
-                entity.getType() == EntityType.EVOKER ||
-                entity.getType() == EntityType.ENDERMAN ||
-                entity.getType() == EntityType.GHAST ||
-                entity.getType() == EntityType.GUARDIAN ||
-                entity.getType() == EntityType.HUSK ||
-                entity.getType() == EntityType.ILLUSIONER ||
-                entity.getType() == EntityType.MAGMA_CUBE ||
-                entity.getType() == EntityType.PHANTOM ||
-                entity.getType() == EntityType.PILLAGER ||
-                entity.getType() == EntityType.RAVAGER ||
-                entity.getType() == EntityType.SILVERFISH ||
-                entity.getType() == EntityType.SKELETON ||
-                entity.getType() == EntityType.SLIME ||
-                entity.getType() == EntityType.SPIDER ||
-                entity.getType() == EntityType.VEX ||
-                entity.getType() == EntityType.VINDICATOR ||
-                entity.getType() == EntityType.WITCH ||
-                entity.getType() == EntityType.WITHER_SKELETON ||
-                entity.getType() == EntityType.ZOMBIE ||
-                entity.getType() == EntityType.ZOMBIE_VILLAGER;
-    }
-
     public boolean checkIfClear(Location location) {
         for(int x = -1; x < 2; x++) {
             for(int y = 1; y < 3; y++) {
@@ -217,11 +150,35 @@ public class MobTurretModule implements Listener {
         this.plugin = plugin;
 
         turretRadius = plugin.getConfig().getDouble("Module-Settings.MobTurret-Module.Turret-Radius");
+        turretAttackDamage = plugin.getConfig().getDouble("Module-Settings.MobTurret-Module.Turret-Attack-Damage");
+        turretAttackInterval = plugin.getConfig().getInt("Module-Settings.MobTurret-Module.Turret-Attack-Interval");
+
+        List<String> attackableMobsString = plugin.getConfig().getStringList("Module-Settings.MobTurret-Module.Attackable-Mobs");
+        
+        for(String attackableMobName : attackableMobsString) {
+            attackableMobs.add(EntityType.valueOf(attackableMobName));
+        }
 
         moduleEnabled = plugin.enabledModules.contains("MobTurret");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.mobTurretModule)) {
+                plugin.pm.registerEvents(plugin.mobTurretModule, plugin);
+            }
+
+            if(mobTurretTask != null) {
+                mobTurretTask.cancel();
+            }
+
+            mobTurretTask = new MobTurretTask(this, plugin).runTaskTimer(plugin, 0, turretAttackInterval);
+
             plugin.logger.info("- MobTurretModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.mobTurretModule);
+
+            if(mobTurretTask != null) {
+                mobTurretTask.cancel();
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.Lib.ChunkUtil;
 import com.ryanjhuston.Lib.WorldChunkCoord;
 import com.ryanjhuston.SkcraftBasics;
-import org.bukkit.Bukkit;
+import com.ryanjhuston.Tasks.ChunkLoaderTask;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -17,30 +17,29 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ChunkLoaderModule implements Listener {
 
-    private Map<WorldChunkCoord, Long> forceLoaded = new LinkedHashMap<>();
+    public Map<WorldChunkCoord, Long> forceLoaded = new LinkedHashMap<>();
 
     private SkcraftBasics plugin;
 
     private boolean moduleEnabled;
 
+    private BukkitTask chunkLoaderTask;
+
     public ChunkLoaderModule (SkcraftBasics plugin) {
         this.plugin = plugin;
-
-        this.moduleEnabled = plugin.enabledModules.contains("ChunkLoader");
-
-        initializeChunkUnloader();
     }
 
-    private static boolean isNearSpawn(Chunk chunk) {
+    public static boolean isNearSpawn(Chunk chunk) {
         Location loc = chunk.getWorld().getSpawnLocation();
         double xDelta = loc.getX() - chunk.getX();
         double zDelta = loc.getZ() - chunk.getZ();
@@ -77,45 +76,8 @@ public class ChunkLoaderModule implements Listener {
         return false;
     }
 
-    private void initializeChunkUnloader() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            if(!moduleEnabled) {
-                return;
-            }
-
-            long now = System.currentTimeMillis();
-
-            Iterator<Map.Entry<WorldChunkCoord, Long>> it = forceLoaded.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<WorldChunkCoord, Long> entry = it.next();
-
-                long deltaTime = now - entry.getValue();
-
-                if (deltaTime > 1000 * 30) {
-                    Chunk chunk = ChunkUtil.getPotentialChunk(entry.getKey());
-                    if (chunk != null && !isNearSpawn(chunk)) {
-                        chunk.setForceLoaded(false);
-                        chunk.unload(true);
-                    }
-                    it.remove();
-                } else if (deltaTime > 1000 * 5) {
-                    Chunk chunk = ChunkUtil.getPotentialChunk(entry.getKey());
-                    if (chunk != null && !isNearSpawn(chunk) && !shouldKeepLoaded(chunk)) {
-                        chunk.setForceLoaded(false);
-                        chunk.unload(true);
-                    }
-                    it.remove();
-                }
-            }
-        },20, 80);
-    }
-
     @EventHandler
     public void onVehicleMove(VehicleMoveEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         Location from = event.getFrom();
         Location to = event.getTo();
         Vehicle vehicle = event.getVehicle();
@@ -140,5 +102,23 @@ public class ChunkLoaderModule implements Listener {
         this.plugin = plugin;
 
         moduleEnabled = plugin.enabledModules.contains("ChunkLoader");
+
+        if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.chunkLoaderModule)) {
+                plugin.pm.registerEvents(plugin.chunkLoaderModule, plugin);
+            }
+
+            if(chunkLoaderTask != null) {
+                chunkLoaderTask.cancel();
+            }
+
+            chunkLoaderTask = new ChunkLoaderTask(plugin).runTaskTimer(plugin, 20, 80);
+        } else {
+            HandlerList.unregisterAll(plugin.chunkLoaderModule);
+
+            if(chunkLoaderTask != null) {
+                chunkLoaderTask.cancel();
+            }
+        }
     }
 }

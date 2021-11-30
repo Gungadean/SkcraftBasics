@@ -7,6 +7,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Directional;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.SignChangeEvent;
@@ -23,17 +24,12 @@ public class BetterPistonsModule implements Listener {
     private boolean moduleEnabled;
 
     public BetterPistonsModule(SkcraftBasics plugin) {
+        this.plugin = plugin;
         addFaces();
-
-        updateConfig(plugin);
     }
 
     @EventHandler
     public void onPistonExtend(BlockPistonExtendEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -79,10 +75,6 @@ public class BetterPistonsModule implements Listener {
 
     @EventHandler
     public void onSignPlace(SignChangeEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -115,7 +107,14 @@ public class BetterPistonsModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("BetterPistons");
 
         if(moduleEnabled) {
+            System.out.println(HandlerList.getHandlerLists().contains(plugin.betterPistonsModule));
+            if(!HandlerList.getHandlerLists().contains(plugin.betterPistonsModule)) {
+                plugin.pm.registerEvents(plugin.betterPistonsModule, plugin);
+            }
+
             plugin.logger.info("- BetterPistonsModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.betterPistonsModule);
         }
     }
 }

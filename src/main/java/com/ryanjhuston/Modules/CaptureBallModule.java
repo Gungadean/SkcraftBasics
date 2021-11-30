@@ -4,6 +4,7 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -23,15 +24,11 @@ public class CaptureBallModule implements Listener {
     private boolean moduleEnabled;
 
     public CaptureBallModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         Entity entity = event.getHitEntity();
 
         if(entity == null) {
@@ -55,10 +52,6 @@ public class CaptureBallModule implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -70,10 +63,6 @@ public class CaptureBallModule implements Listener {
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -125,7 +114,12 @@ public class CaptureBallModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("CaptureBall");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.captureBallModule)) {
+                plugin.pm.registerEvents(plugin.captureBallModule, plugin);
+            }
             plugin.logger.info("- CaptureBallModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.captureBallModule);
         }
     }
 }

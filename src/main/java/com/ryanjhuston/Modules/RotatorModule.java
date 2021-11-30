@@ -12,6 +12,7 @@ import org.bukkit.block.data.type.Piston;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -27,15 +28,11 @@ public class RotatorModule implements Listener {
     private Material tool;
 
     public RotatorModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -290,7 +287,13 @@ public class RotatorModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Rotator");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.rotatorModule)) {
+                plugin.pm.registerEvents(plugin.rotatorModule, plugin);
+            }
+
             plugin.logger.info("- RotatorModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.rotatorModule);
         }
     }
 }

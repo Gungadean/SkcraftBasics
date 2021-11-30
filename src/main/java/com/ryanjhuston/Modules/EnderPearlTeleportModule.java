@@ -8,6 +8,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -26,15 +27,11 @@ public class EnderPearlTeleportModule implements Listener {
     private boolean moduleEnabled;
 
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -83,10 +80,6 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -124,10 +117,6 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerTeleportEnderPearl(PlayerEnderPearlTeleportEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.isCancelled()) {
             return;
         }
@@ -145,10 +134,6 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerTeleport(PlayerTeleportEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -225,7 +210,13 @@ public class EnderPearlTeleportModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.enderPearlTeleportModule)) {
+                plugin.pm.registerEvents(plugin.enderPearlTeleportModule, plugin);
+            }
+
             plugin.logger.info("- EnderPearlTeleportModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.enderPearlTeleportModule);
         }
     }
 }

@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -26,7 +27,7 @@ public class ChatChannelsModule implements Listener {
     private boolean moduleEnabled;
 
     public ChatChannelsModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     public void joinChatChannel(String player, String channel) {
@@ -68,18 +69,14 @@ public class ChatChannelsModule implements Listener {
     @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
         if(inChannelPlayers.containsKey(event.getPlayer().getUniqueId().toString())) {
-            if(moduleEnabled) {
-                sendJoinMessage(event.getPlayer(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
-            }
+            sendJoinMessage(event.getPlayer(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
             return;
         }
 
         for(Map.Entry<String, List<String>> entry : chatChannels.entrySet()) {
             if(entry.getValue().contains(event.getPlayer().getUniqueId().toString())) {
                 inChannelPlayers.put(event.getPlayer().getUniqueId().toString(), entry.getKey());
-                if(moduleEnabled) {
-                    sendJoinMessage(event.getPlayer(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
-                }
+                sendJoinMessage(event.getPlayer(), inChannelPlayers.get(event.getPlayer().getUniqueId().toString()));
                 return;
             }
         }
@@ -87,10 +84,6 @@ public class ChatChannelsModule implements Listener {
 
     @EventHandler
     public void playerChat(AsyncPlayerChatEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         String uuid = event.getPlayer().getUniqueId().toString();
         if(inChannelPlayers.containsKey(uuid)) {
             if(event.getMessage().startsWith("\\")) {
@@ -169,7 +162,13 @@ public class ChatChannelsModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("ChatChannels");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.chatChannelsModule)) {
+                plugin.pm.registerEvents(plugin.chatChannelsModule, plugin);
+            }
+
             plugin.logger.info("- ChatChannelModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.chatChannelsModule);
         }
     }
 }

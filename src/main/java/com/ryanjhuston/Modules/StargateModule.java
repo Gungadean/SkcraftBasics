@@ -9,6 +9,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -37,7 +38,7 @@ public class StargateModule implements Listener {
     private boolean moduleEnabled;
 
     public StargateModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     public boolean createStargate(Block clicked, Player player) {
@@ -277,10 +278,6 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -357,10 +354,6 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void blockBreak(BlockBreakEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -376,10 +369,6 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void onEnterStargate(PlayerEnterStargateEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -596,10 +585,6 @@ public class StargateModule implements Listener {
 
     @EventHandler
     public void playerTeleport(PlayerPortalEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if (event.isCancelled()) {
             return;
         }
@@ -623,7 +608,13 @@ public class StargateModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Stargate");
 
         if(moduleEnabled) {
+            if(!HandlerList.getHandlerLists().contains(plugin.stargateModule)) {
+                plugin.pm.registerEvents(plugin.stargateModule, plugin);
+            }
+
             plugin.logger.info("- StargateModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.stargateModule);
         }
     }
 }
