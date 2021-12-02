@@ -13,19 +13,25 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class BetterPistonsModule implements Listener {
 
     private SkcraftBasics plugin;
-    private List<BlockFace> blockFaces = new ArrayList<>();
+
+    private static final Set<BlockFace> blockFaces = new HashSet<>(Arrays.asList(BlockFace.NORTH,
+            BlockFace.EAST,
+            BlockFace.SOUTH,
+            BlockFace.WEST,
+            BlockFace.UP,
+            BlockFace.DOWN));
 
     private boolean moduleEnabled;
 
     public BetterPistonsModule(SkcraftBasics plugin) {
         this.plugin = plugin;
-        addFaces();
     }
 
     @EventHandler
@@ -91,15 +97,6 @@ public class BetterPistonsModule implements Listener {
             event.setLine(1, "[Grind]");
             event.getPlayer().sendMessage(ChatColor.GOLD + "Piston Grind Mechanic Created!");
         }
-    }
-
-    private void addFaces() {
-        blockFaces.add(BlockFace.NORTH);
-        blockFaces.add(BlockFace.EAST);
-        blockFaces.add(BlockFace.SOUTH);
-        blockFaces.add(BlockFace.WEST);
-        blockFaces.add(BlockFace.UP);
-        blockFaces.add(BlockFace.DOWN);
     }
 
     public void updateConfig(SkcraftBasics plugin) {
