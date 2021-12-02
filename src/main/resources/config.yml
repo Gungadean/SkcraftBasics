@@ -62,3 +62,8 @@ Module-Settings:
       - WITHER
       - VILLAGER
       - ZOMBIE_VILLAGER
+  ProgressiveDeepslate-Module:
+
+    Usable-Picks:
+      - DIAMOND_PICKAXE
+      - NETHERITE_PICKAXE
