@@ -46,22 +46,27 @@
 
     <repositories>
         <repository>
+            <id>Maven Central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+
+        <repository>
             <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/</url>
         </repository>
     </repositories>
 
     <dependencies>
         <dependency>
             <groupId>org.spigotmc</groupId>
-            <artifactId>spigot</artifactId>
+            <artifactId>spigot-api</artifactId>
             <version>1.18-R0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>net.luckperms</groupId>
             <artifactId>api</artifactId>
-            <version>5.1</version>
+            <version>5.3</version>
             <scope>provided</scope>
         </dependency>
 
@@ -75,7 +80,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.1</version>
+            <version>2.13.0</version>
         </dependency>
 
         <dependency>
@@ -83,6 +88,13 @@
             <artifactId>commons-io</artifactId>
             <scope>compile</scope>
             <version>2.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <scope>compile</scope>
+            <version>2.14.1</version>
         </dependency>
     </dependencies>
 </project>

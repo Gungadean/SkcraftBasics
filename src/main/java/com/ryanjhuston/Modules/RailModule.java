@@ -35,7 +35,7 @@ public class RailModule implements Listener {
     private Class<?> craftPlayerClass;
 
     public RailModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -132,12 +132,10 @@ public class RailModule implements Listener {
             passenger.setMetadata("xVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getX()));
             passenger.setMetadata("zVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getZ()));
 
-            if(passenger instanceof Player) {
-                try {
-                    setInvulnerable((Player)passenger, true);
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
+            try {
+                setInvulnerable((Player)passenger, true);
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                e.printStackTrace();
             }
 
             event.getVehicle().eject();
@@ -147,12 +145,10 @@ public class RailModule implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
             players.remove(passenger.getUniqueId().toString());
 
-            if(passenger instanceof Player) {
-                try {
-                    setInvulnerable((Player) passenger, false);
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
+            try {
+                setInvulnerable((Player) passenger, false);
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                e.printStackTrace();
             }
         }, 10L);
     }
@@ -190,7 +186,7 @@ public class RailModule implements Listener {
             return;
         }
 
-        if(!event.getBlock().getRelative(0, -2, 0).getType().toString().contains("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getBlock().getRelative(0, -2, 0).getType())) {
             return;
         }
 
@@ -389,7 +385,7 @@ public class RailModule implements Listener {
     }
 
     private static boolean isRail(Material mat) {
-        return mat == Material.RAIL || mat == Material.POWERED_RAIL || mat == Material.DETECTOR_RAIL || mat == Material.ACTIVATOR_RAIL;
+        return Tag.RAILS.getValues().contains(mat);
     }
 
     private static boolean isConcrete(Material mat) {

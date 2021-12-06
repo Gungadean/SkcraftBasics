@@ -33,7 +33,7 @@ public class AfkModule implements Listener {
     private BukkitTask afkCheckerTask;
 
     public AfkModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -96,7 +96,6 @@ public class AfkModule implements Listener {
         this.afkTime = plugin.getConfig().getInt("Module-Settings.Afk-Module.Afk-Time-Seconds");
 
         if(moduleEnabled) {
-            System.out.println(HandlerList.getHandlerLists().contains(plugin.betterPistonsModule));
             if(!HandlerList.getHandlerLists().contains(plugin.afkModule)) {
                 plugin.pm.registerEvents(plugin.afkModule, plugin);
             }
@@ -115,9 +114,7 @@ public class AfkModule implements Listener {
             }
 
             List<String> forRemoval = new ArrayList<>();
-            for(String uuid : afkPlayers) {
-                forRemoval.add(uuid);
-            }
+            forRemoval.addAll(afkPlayers);
 
             for(String uuid : forRemoval) {
                 removeAfk(Bukkit.getPlayer(UUID.fromString(uuid)));

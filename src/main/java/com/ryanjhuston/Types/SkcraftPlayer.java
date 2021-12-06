@@ -9,6 +9,7 @@ public class SkcraftPlayer {
     private String uuid;
     private Material teleportItem;
     private boolean wasFlying;
+    private boolean hasMiningFatigue;
     private List<String> pTeleAuthed;
     private List<String> teleAuthed;
     private boolean inModMode;
@@ -18,10 +19,11 @@ public class SkcraftPlayer {
         super();
     }
 
-    public SkcraftPlayer(String uuid, Material teleportItem, boolean wasFlying, List<String> pTeleAuthed, List<String> teleAuthed, boolean inModMode, boolean isAdmin) {
+    public SkcraftPlayer(String uuid, Material teleportItem, boolean wasFlying, boolean hasMiningFatigue, List<String> pTeleAuthed, List<String> teleAuthed, boolean inModMode, boolean isAdmin) {
         this.uuid = uuid;
         this.teleportItem = teleportItem;
         this.wasFlying = wasFlying;
+        this.hasMiningFatigue = hasMiningFatigue;
         this.pTeleAuthed = pTeleAuthed;
         this.teleAuthed = teleAuthed;
         this.inModMode = inModMode;
@@ -52,6 +54,14 @@ public class SkcraftPlayer {
 
     public void setWasFlying(boolean wasFlying) {
         this.wasFlying = wasFlying;
+    }
+
+    public boolean getHasMiningFatigue() {
+        return hasMiningFatigue;
+    }
+
+    public void setHasMiningFatigue(boolean hasMiningFatigue) {
+        this.hasMiningFatigue = hasMiningFatigue;
     }
 
     public List<String> getPTeleAuthed() {

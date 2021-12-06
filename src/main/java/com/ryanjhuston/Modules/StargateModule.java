@@ -17,14 +17,12 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class StargateModule implements Listener {
 
@@ -38,7 +36,7 @@ public class StargateModule implements Listener {
     private boolean moduleEnabled;
 
     public StargateModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     public boolean createStargate(Block clicked, Player player) {
@@ -105,11 +103,11 @@ public class StargateModule implements Listener {
                 blocks.add(clicked.getRelative(x, y, z).getLocation());
             }
 
-            if(clicked.getRelative(-1, 2, 1).getType().toString().contains("_SIGN") && clicked.getRelative(2, 2, 1).getType().toString().contains("_BUTTON")) {
+            if(Tag.SIGNS.getValues().contains(clicked.getRelative(-1, 2, 1).getType()) && Tag.BUTTONS.getValues().contains(clicked.getRelative(2, 2, 1).getType())) {
                 signLocation = clicked.getRelative(-1, 2, 1).getLocation();
                 buttonLocation = clicked.getRelative(2, 2, 1).getLocation();
                 teleportLocation.setYaw(0);
-            } else if(clicked.getRelative(2, 2, -1).getType().toString().contains("_SIGN") && clicked.getRelative(-1, 2, -1).getType().toString().contains("_BUTTON")) {
+            } else if(Tag.SIGNS.getValues().contains(clicked.getRelative(2, 2, -1).getType()) && Tag.BUTTONS.getValues().contains(clicked.getRelative(-1, 2, -1).getType())) {
                 signLocation = clicked.getRelative(2, 2, -1).getLocation();
                 buttonLocation = clicked.getRelative(-1, 2, -1).getLocation();
                 teleportLocation.setYaw(-180);
@@ -124,11 +122,11 @@ public class StargateModule implements Listener {
                 blocks.add(clicked.getRelative(x, y, z).getLocation());
             }
 
-            if(clicked.getRelative(1, 2, 1).getType().toString().endsWith("_SIGN") && clicked.getRelative(1, 2, -2).getType().toString().endsWith("_BUTTON")) {
+            if(Tag.SIGNS.getValues().contains(clicked.getRelative(1, 2, 1).getType()) && Tag.BUTTONS.getValues().contains(clicked.getRelative(1, 2, -2).getType())) {
                 signLocation = clicked.getRelative(1, 2, 1).getLocation();
                 buttonLocation = clicked.getRelative(1, 2, -2).getLocation();
                 teleportLocation.setYaw(-90);
-            } else if(clicked.getRelative(-1, 2, -2).getType().toString().endsWith("_SIGN") && clicked.getRelative(-1, 2, 1).getType().toString().endsWith("_BUTTON")) {
+            } else if(Tag.SIGNS.getValues().contains(clicked.getRelative(-1, 2, -2).getType()) && Tag.BUTTONS.getValues().contains(clicked.getRelative(-1, 2, 1).getType())) {
                 signLocation = clicked.getRelative(-1, 2, -2).getLocation();
                 buttonLocation = clicked.getRelative(-1, 2, 1).getLocation();
                 teleportLocation.setYaw(90);
@@ -233,9 +231,8 @@ public class StargateModule implements Listener {
 
         networkList.get(stargate.getNetwork()).remove(portalName);
 
-        Iterator it = stargate.getBlocks().iterator();
-        while(it.hasNext()) {
-            ((Location)it.next()).getBlock().removeMetadata("Stargate", plugin);
+        for(Location location : stargate.getBlocks()) {
+            location.getBlock().removeMetadata("Stargate", plugin);
         }
 
         stargate.getSignLocation().getBlock().removeMetadata("Stargate", plugin);
@@ -314,7 +311,7 @@ public class StargateModule implements Listener {
             }
         }
 
-        if(event.getClickedBlock().getType().toString().endsWith("_SIGN")) {//) {
+        if(Tag.SIGNS.getValues().contains(event.getClickedBlock().getType())) {
             if(event.getClickedBlock().hasMetadata("Stargate")) {
                 plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -323,7 +320,7 @@ public class StargateModule implements Listener {
             }
         }
 
-        if(event.getClickedBlock().getType().toString().endsWith("_BUTTON")) {
+        if(Tag.BUTTONS.getValues().contains(event.getClickedBlock().getType())) {
             if(event.getClickedBlock().hasMetadata("Stargate")) {
                 plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -560,8 +557,8 @@ public class StargateModule implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                for(int i = 0; i < portalBlocks.size(); i++) {
-                    Block block = portalBlocks.get(i).getBlock();
+                for(Location location : portalBlocks) {
+                    Block block = location.getBlock();
                     block.setType(Material.AIR);
                 }
 

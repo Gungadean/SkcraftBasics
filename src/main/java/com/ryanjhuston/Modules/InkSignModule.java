@@ -24,7 +24,7 @@ public class InkSignModule implements Listener {
     private boolean moduleEnabled;
 
     public InkSignModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -52,10 +52,6 @@ public class InkSignModule implements Listener {
         if(!(event.getClickedBlock().getState() instanceof Sign)) {
             return;
         }
-
-        /*if(!event.getClickedBlock().getType().toString().endsWith("_SIGN")) {
-            return;
-        }*/
 
         plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 

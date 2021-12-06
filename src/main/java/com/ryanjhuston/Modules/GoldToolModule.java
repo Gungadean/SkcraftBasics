@@ -3,6 +3,7 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -11,27 +12,24 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class GoldToolModule implements Listener {
 
     private SkcraftBasics plugin;
 
-    private List<Material> foodstuff = new ArrayList<>();
+    private static final Set<Material> foodstuff = new HashSet<>(Arrays.asList(Material.PORKCHOP,
+            Material.BEEF,
+            Material.CHICKEN,
+            Material.RABBIT,
+            Material.MUTTON,
+            Material.COD,
+            Material.SALMON));
 
     private boolean moduleEnabled;
 
     public GoldToolModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
-
-        foodstuff.add(Material.PORKCHOP);
-        foodstuff.add(Material.BEEF);
-        foodstuff.add(Material.CHICKEN);
-        foodstuff.add(Material.RABBIT);
-        foodstuff.add(Material.MUTTON);
-        foodstuff.add(Material.COD);
-        foodstuff.add(Material.SALMON);
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -51,7 +49,7 @@ public class GoldToolModule implements Listener {
             if(event.getBlock().getType() == Material.SAND) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.GLASS, 1));
-            } else if(event.getBlock().getType().toString().endsWith("_LOG")) {
+            } else if(Tag.LOGS.getValues().contains(event.getBlock().getType())) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.CHARCOAL, 1));
             } else if(event.getBlock().getType() == Material.WET_SPONGE) {
@@ -98,7 +96,7 @@ public class GoldToolModule implements Listener {
 
             for(int i = 0; i < event.getDrops().size(); i++) {
                 if(foodstuff.contains(event.getDrops().get(i).getType())) {
-                    newDrops.add(new ItemStack(Material.matchMaterial("COOKED_" + event.getDrops().get(i).getType().toString()), event.getDrops().get(i).getAmount()));
+                    newDrops.add(new ItemStack(Material.matchMaterial("COOKED_" + event.getDrops().get(i).getType()), event.getDrops().get(i).getAmount()));
                 } else if(event.getDrops().get(i).getType() == Material.ROTTEN_FLESH) {
                     newDrops.add(new ItemStack(Material.LEATHER, event.getDrops().get(i).getAmount()));
                 } else {
@@ -106,6 +104,8 @@ public class GoldToolModule implements Listener {
                 }
             }
             event.getDrops().clear();
+
+            //event.getDrops().addAll(newDrops);
 
             for(ItemStack item : newDrops) {
                 event.getEntity().getWorld().dropItem(event.getEntity().getLocation(), item);

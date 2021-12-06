@@ -24,7 +24,7 @@ public class CaptureBallModule implements Listener {
     private boolean moduleEnabled;
 
     public CaptureBallModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -93,8 +93,8 @@ public class CaptureBallModule implements Listener {
 
         if(entity.getType() == EntityType.MUSHROOM_COW) {
             material = Material.MOOSHROOM_SPAWN_EGG;
-        } else if(Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG") != null) {
-            material = Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG");
+        } else if(Material.matchMaterial(entity.getType() + "_SPAWN_EGG") != null) {
+            material = Material.matchMaterial(entity.getType() + "_SPAWN_EGG");
         } else {
             return null;
         }

@@ -53,7 +53,7 @@ public class JetBootModule implements Listener {
     private boolean moduleEnabled;
 
     public JetBootModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -320,9 +320,7 @@ public class JetBootModule implements Listener {
     public void deactivateJetboots(Player player) {
         String uuid = player.getUniqueId().toString();
 
-        if(jetboots.contains(uuid)) {
-            jetboots.remove(uuid);
-        }
+        jetboots.remove(uuid);
 
         if(player.getGameMode() != GameMode.CREATIVE) {
             player.setFlying(false);
@@ -331,9 +329,7 @@ public class JetBootModule implements Listener {
             fallGraceCheck.add(uuid);
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                if(fallGraceCheck.contains(uuid)) {
-                    fallGraceCheck.remove(uuid);
-                }
+                fallGraceCheck.remove(uuid);
             }, 200);
         }
     }
@@ -395,9 +391,7 @@ public class JetBootModule implements Listener {
             HandlerList.unregisterAll(plugin.jetBootModule);
 
             List<String> forRemoval = new ArrayList<>();
-            for(String uuid : jetboots) {
-                forRemoval.add(uuid);
-            }
+            forRemoval.addAll(jetboots);
 
             for(String uuid : forRemoval) {
                 deactivateJetboots(Bukkit.getPlayer(UUID.fromString(uuid)));

@@ -4,10 +4,7 @@ import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Shop;
 import com.ryanjhuston.Types.SkcraftPlayer;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
@@ -36,7 +33,7 @@ public class ShopModule implements Listener {
     private boolean moduleEnabled;
 
     public ShopModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -161,7 +158,7 @@ public class ShopModule implements Listener {
             return;
         }
 
-        if(!event.getClickedBlock().getType().toString().endsWith("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getClickedBlock().getType())) {
             return;
         }
 
@@ -178,8 +175,8 @@ public class ShopModule implements Listener {
 
         if(player.isSneaking()) {
             player.sendMessage(ChatColor.YELLOW + "[Shop Info]");
-            player.sendMessage(ChatColor.YELLOW + "Product: " + product.getAmount() + " " + product.getType().toString());
-            player.sendMessage(ChatColor.YELLOW + "Price: " + price.getAmount() + " " + price.getType().toString());
+            player.sendMessage(ChatColor.YELLOW + "Product: " + product.getAmount() + " " + product.getType());
+            player.sendMessage(ChatColor.YELLOW + "Price: " + price.getAmount() + " " + price.getType());
             event.setCancelled(true);
             return;
         }
@@ -234,7 +231,6 @@ public class ShopModule implements Listener {
         if(!skcraftPlayer.getUuid().equals(shop.getOwner()) && !skcraftPlayer.getIsAdmin()) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "You cannot add a chest to this shop.");
-            return;
         }
     }
 
@@ -265,12 +261,11 @@ public class ShopModule implements Listener {
         if(!skcraftPlayer.getUuid().equals(shop.getOwner()) && !skcraftPlayer.getIsAdmin()) {
             event.getPlayer().sendMessage(ChatColor.RED + "You do not have permission to open this shop.");
             event.setCancelled(true);
-            return;
         }
     }
 
     public Shop getShopFromBlock(Block block) {
-        if(block.getType().toString().endsWith("_SIGN")) {
+        if(Tag.SIGNS.getValues().contains(block.getType())) {
             if(shops.containsKey(block.getLocation())) {
                 return shops.get(block.getLocation());
             }
@@ -280,7 +275,7 @@ public class ShopModule implements Listener {
             Chest chest = (Chest)block.getState();
             DoubleChest doubleChest;
 
-            if(block.getRelative(0, 1, 0).getType().toString().endsWith("_SIGN")) {
+            if(Tag.SIGNS.getValues().contains(block.getRelative(0, 1, 0).getType())) {
                 Location sign = block.getRelative(0, 1, 0).getLocation();
                 if(shops.containsKey(sign)) {
                     return shops.get(sign);
@@ -292,7 +287,7 @@ public class ShopModule implements Listener {
 
                 Location rightLocation = doubleChest.getRightSide().getInventory().getLocation();
 
-                if(doubleChest.getRightSide().getInventory().getLocation().getBlock().getRelative(0, 1, 0).getType().toString().endsWith("_SIGN")) {
+                if(Tag.SIGNS.getValues().contains(doubleChest.getRightSide().getInventory().getLocation().getBlock().getRelative(0, 1, 0).getType())) {
                     Location sign = doubleChest.getRightSide().getInventory().getLocation().getBlock().getRelative(0, 1, 0).getLocation();
                     if(shops.containsKey(sign)) {
                         return shops.get(sign);
@@ -319,7 +314,7 @@ public class ShopModule implements Listener {
                 }
             }
         } else if(block.getType() == Material.BARREL) {
-            if(block.getRelative(0, 1, 0).getType().toString().endsWith("_SIGN")) {
+            if(Tag.SIGNS.getValues().contains(block.getRelative(0, 1, 0).getType())) {
                 if(shops.containsKey(block.getRelative(0, 1, 0).getLocation())) {
                     return shops.get(block.getRelative(0, 1, 0).getLocation());
                 }
@@ -485,6 +480,7 @@ public class ShopModule implements Listener {
         return shops;
     }
 
+    //Need to come up with different system for this. Possibly involving right-clicking with the exact item or something? Could have a 'holographic' display of the item or inventory open?
     public String parseMaterialName(String material) {
         material = material.toLowerCase();
 

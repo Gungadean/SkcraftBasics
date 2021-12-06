@@ -24,7 +24,7 @@ public class CraftingModule implements Listener {
     private boolean moduleEnabled;
 
     public CraftingModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler

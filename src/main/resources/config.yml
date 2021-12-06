@@ -7,7 +7,6 @@ Enabled-Modules:
   - ChunkLoader
   - Crafting
   - EnderPearlTeleport
-  - Galapagos
   - GoldTool
   - InkSign
   - Invite
@@ -44,8 +43,6 @@ Module-Settings:
     Tool-Material: BLAZE_ROD
   InkSign-Module:
     Tool-Material: INK_SAC
-  Galapagos-Module:
-    Spawn-Chance: 5
   ChatChannels-Module:
     Chat-Format: '&a[%channel%] %player%: %message%'
     Global-Chat-Format: '<%playerDisplay%> %message%'
@@ -93,7 +90,3 @@ Module-Settings:
       - WITHER
       - VILLAGER
       - ZOMBIE_VILLAGER
-  ProgressiveDeepslate-Module:
-    Usable-Picks:
-      - DIAMOND_PICKAXE
-      - NETHERITE_PICKAXE

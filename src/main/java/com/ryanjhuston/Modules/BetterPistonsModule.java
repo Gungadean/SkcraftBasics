@@ -3,6 +3,8 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Tag;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Directional;
@@ -31,7 +33,7 @@ public class BetterPistonsModule implements Listener {
     private boolean moduleEnabled;
 
     public BetterPistonsModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -44,7 +46,7 @@ public class BetterPistonsModule implements Listener {
         Sign sign;
 
         for(BlockFace blockFace : blockFaces) {
-            if(event.getBlock().getRelative(blockFace).getType().toString().contains("_WALL_SIGN")) {
+            if(Tag.WALL_SIGNS.getValues().contains(event.getBlock().getRelative(blockFace).getType())) {
                 sign = (Sign)event.getBlock().getRelative(blockFace).getState();
                 Directional directional = (Directional)sign.getBlockData();
 
@@ -65,16 +67,13 @@ public class BetterPistonsModule implements Listener {
         }
 
         if(event.getBlocks().get(0).getType() == Material.COBBLESTONE) {
-            event.getBlocks().get(0).setType(Material.AIR);
-            event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.GRAVEL));
+            grindBlock(event.getBlocks().get(0), Material.GRAVEL);
             event.setCancelled(true);
         } else if(event.getBlocks().get(0).getType() == Material.GRAVEL) {
-            event.getBlocks().get(0).setType(Material.AIR);
-            event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.SAND));
+            grindBlock(event.getBlocks().get(0), Material.SAND);
             event.setCancelled(true);
         } else if(event.getBlocks().get(0).getType() == Material.RED_SANDSTONE) {
-            event.getBlocks().get(0).setType(Material.AIR);
-            event.getBlocks().get(0).getWorld().dropItemNaturally(event.getBlocks().get(0).getLocation(), new ItemStack(Material.RED_SAND));
+            grindBlock(event.getBlocks().get(0), Material.RED_SAND);
             event.setCancelled(true);
         }
     }
@@ -85,7 +84,7 @@ public class BetterPistonsModule implements Listener {
             return;
         }
 
-        if(event.getBlock().getType() != Material.OAK_WALL_SIGN) {
+        if(!Tag.WALL_SIGNS.getValues().contains(event.getBlock().getType())) {
             return;
         }
 
@@ -99,12 +98,16 @@ public class BetterPistonsModule implements Listener {
         }
     }
 
+    public void grindBlock(Block block, Material result) {
+        block.setType(Material.AIR);
+        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(result, 1));
+    }
+
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
         moduleEnabled = plugin.enabledModules.contains("BetterPistons");
 
         if(moduleEnabled) {
-            System.out.println(HandlerList.getHandlerLists().contains(plugin.betterPistonsModule));
             if(!HandlerList.getHandlerLists().contains(plugin.betterPistonsModule)) {
                 plugin.pm.registerEvents(plugin.betterPistonsModule, plugin);
             }

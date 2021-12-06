@@ -3,6 +3,7 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Axis;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Bisected;
@@ -19,6 +20,10 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.Vector;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class RotatorModule implements Listener {
 
     private SkcraftBasics plugin;
@@ -28,7 +33,7 @@ public class RotatorModule implements Listener {
     private Material tool;
 
     public RotatorModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -53,13 +58,13 @@ public class RotatorModule implements Listener {
             return;
         }
 
-        if(event.getClickedBlock().getType().toString().endsWith("_BED") ||
+        if(Tag.BEDS.getValues().contains(event.getClickedBlock().getType()) ||
                 event.getClickedBlock().getType() == Material.CHEST ||
                 event.getClickedBlock().getType() == Material.LEVER ||
                 event.getClickedBlock().getType() == Material.PISTON_HEAD ||
                 event.getClickedBlock().getType() == Material.NETHER_PORTAL ||
-                event.getClickedBlock().getType().toString().endsWith("_TRAPDOOR")||
-                event.getClickedBlock().getType().toString().endsWith("_BUTTON")) {
+                Tag.TRAPDOORS.getValues().contains(event.getClickedBlock().getType()) ||
+                Tag.BUTTONS.getValues().contains(event.getClickedBlock().getType())) {
             return;
         }
 
@@ -73,9 +78,9 @@ public class RotatorModule implements Listener {
 
         if(event.getClickedBlock().getBlockData() instanceof Directional) {
             if(event.getPlayer().isSneaking()) {
-                if(event.getClickedBlock().getType().toString().endsWith("_STAIRS")) {
+                if(Tag.STAIRS.getValues().contains(event.getClickedBlock().getType())) {
                     flipStairs(event.getClickedBlock());
-                } else if(event.getClickedBlock().getType().toString().endsWith("_SLAB")) {
+                } else if(Tag.SLABS.getValues().contains(event.getClickedBlock().getType())) {
                     flipSlab(event.getClickedBlock());
                 } else if(event.getClickedBlock().getType() == Material.PISTON ||
                         event.getClickedBlock().getType() == Material.STICKY_PISTON ||
@@ -94,7 +99,6 @@ public class RotatorModule implements Listener {
             }
 
             event.setCancelled(true);
-            return;
         } else if(event.getClickedBlock().getBlockData() instanceof Orientable) {
             if(event.getPlayer().isSneaking()) {
                 flipLogsShift(event.getClickedBlock(), event.getBlockFace());
@@ -103,7 +107,6 @@ public class RotatorModule implements Listener {
             }
 
             event.setCancelled(true);
-            return;
         }
     }
 
@@ -158,7 +161,7 @@ public class RotatorModule implements Listener {
                 block.getType() == Material.REDSTONE_WALL_TORCH ||
                 block.getType() == Material.LADDER ||
                 block.getType() == Material.TRIPWIRE_HOOK ||
-                block.getType().toString().endsWith("_WALL_SIGN");
+                Tag.WALL_SIGNS.getValues().contains(block.getType());
     }
 
     public void flipLogsShift(Block block, BlockFace clicked) {

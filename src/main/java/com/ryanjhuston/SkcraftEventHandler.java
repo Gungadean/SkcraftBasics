@@ -65,7 +65,7 @@ public class SkcraftEventHandler implements Listener {
                 skcraftPlayer = plugin.mapper.readValue(playerFile, SkcraftPlayer.class);
             } catch (Exception e) {
                 System.out.println("[SkcraftBasics] ERROR: It appears that " + event.getPlayer().getName() + "'s data file is corrupted. Creating new SkcraftPlayer instance.");
-                skcraftPlayer = new SkcraftPlayer(uuid, null, false, new ArrayList<>(), new ArrayList<>(), false, false);
+                skcraftPlayer = new SkcraftPlayer(uuid, null, false, false, new ArrayList<>(), new ArrayList<>(), false, false);
             }
         }else if(playerFileLegacy.exists()) {
             try {
@@ -74,7 +74,7 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") && playerConfig.getBoolean("InModMode")), playerConfig.getBoolean("IsAdmin"));
+            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), false, playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") && playerConfig.getBoolean("InModMode")), playerConfig.getBoolean("IsAdmin"));
             playerFileLegacy.delete();
         } else {
             try {
@@ -84,7 +84,7 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            skcraftPlayer = new SkcraftPlayer(uuid, null, false, new ArrayList<>(), new ArrayList<>(), false, false);
+            skcraftPlayer = new SkcraftPlayer(uuid, null, false, false, new ArrayList<>(), new ArrayList<>(), false, false);
         }
 
         Material teleportItem = skcraftPlayer.getTeleportItem();
@@ -210,7 +210,6 @@ public class SkcraftEventHandler implements Listener {
         if(event.toWeatherState()) {
             if(rand.nextInt(2) != 0) {
                 event.setCancelled(true);
-                return;
             }
         }
     }
@@ -253,7 +252,6 @@ public class SkcraftEventHandler implements Listener {
         if(event.getEntity() instanceof ComplexEntityPart) {
             if(((ComplexEntityPart)event.getEntity()).getParent().getType() == EntityType.ENDER_DRAGON) {
                 event.setCancelled(true);
-                return;
             }
         }
     }

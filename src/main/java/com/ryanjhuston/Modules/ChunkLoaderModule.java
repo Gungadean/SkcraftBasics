@@ -36,7 +36,7 @@ public class ChunkLoaderModule implements Listener {
     private BukkitTask chunkLoaderTask;
 
     public ChunkLoaderModule (SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     public static boolean isNearSpawn(Chunk chunk) {

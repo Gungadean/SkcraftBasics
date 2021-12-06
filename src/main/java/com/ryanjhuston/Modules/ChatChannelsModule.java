@@ -27,7 +27,7 @@ public class ChatChannelsModule implements Listener {
     private boolean moduleEnabled;
 
     public ChatChannelsModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     public void joinChatChannel(String player, String channel) {

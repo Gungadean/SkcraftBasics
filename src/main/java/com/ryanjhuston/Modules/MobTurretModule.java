@@ -38,7 +38,7 @@ public class MobTurretModule implements Listener {
     private boolean moduleEnabled;
 
     public MobTurretModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
     
 

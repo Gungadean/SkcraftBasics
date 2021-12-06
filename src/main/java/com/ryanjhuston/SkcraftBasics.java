@@ -60,10 +60,10 @@ public class SkcraftBasics extends JavaPlugin {
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
     public ShopModule shopModule;
-    public GalapagosModule galapagosModule;
     public InkSignModule inkSignModule;
     public MiningWorldModule miningWorldModule;
     public ChunkLoaderModule chunkLoaderModule;
+    public ProgressiveDeepslateModule progressiveDeepslateModule;
 
     public final File stargateDir = new File(getDataFolder(), "Stargates");
     public final File worldsDir = new File(getDataFolder(), "WorldManager");
@@ -112,7 +112,6 @@ public class SkcraftBasics extends JavaPlugin {
         chunkLoaderModule = new ChunkLoaderModule(this);
         craftingModule = new CraftingModule(this);
         enderPearlTeleportModule = new EnderPearlTeleportModule(this);
-        galapagosModule = new GalapagosModule(this);
         goldToolModule = new GoldToolModule(this);
         inkSignModule = new InkSignModule(this);
         jetBootModule = new JetBootModule(this);
@@ -122,24 +121,7 @@ public class SkcraftBasics extends JavaPlugin {
         rotatorModule = new RotatorModule(this);
         shopModule = new ShopModule(this);
         stargateModule = new StargateModule(this);
-
-        afkModule.updateConfig(this);
-        betterPistonsModule.updateConfig(this);
-        captureBallModule.updateConfig(this);
-        chatChannelsModule.updateConfig(this);
-        chunkLoaderModule.updateConfig(this);
-        craftingModule.updateConfig(this);
-        enderPearlTeleportModule.updateConfig(this);
-        galapagosModule.updateConfig(this);
-        goldToolModule.updateConfig(this);
-        inkSignModule.updateConfig(this);
-        jetBootModule.updateConfig(this);
-        miningWorldModule.updateConfig(this);
-        mobTurretModule.updateConfig(this);
-        railModule.updateConfig(this);
-        rotatorModule.updateConfig(this);
-        shopModule.updateConfig(this);
-        stargateModule.updateConfig(this);
+        //progressiveDeepslateModule = new ProgressiveDeepslateModule(this);
 
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
@@ -332,7 +314,6 @@ public class SkcraftBasics extends JavaPlugin {
         chunkLoaderModule.updateConfig(this);
         craftingModule.updateConfig(this);
         enderPearlTeleportModule.updateConfig(this);
-        galapagosModule.updateConfig(this);
         goldToolModule.updateConfig(this);
         inkSignModule.updateConfig(this);
         if(enabledModules.contains("Invite")) {
@@ -341,6 +322,7 @@ public class SkcraftBasics extends JavaPlugin {
         jetBootModule.updateConfig(this);
         miningWorldModule.updateConfig(this);
         mobTurretModule.updateConfig(this);
+        progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
         rotatorModule.updateConfig(this);
         shopModule.updateConfig(this);
@@ -564,9 +546,7 @@ public class SkcraftBasics extends JavaPlugin {
     public void removeInteractCooldown(String uuid) {
         interactCooldown.add(uuid);
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
-            interactCooldown.remove(uuid);
-        }, 1);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> interactCooldown.remove(uuid), 1);
     }
 
     public void savePlayerToFile(Player player) {

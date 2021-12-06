@@ -6,6 +6,7 @@ import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -27,7 +28,7 @@ public class EnderPearlTeleportModule implements Listener {
     private boolean moduleEnabled;
 
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
-        this.plugin = plugin;
+        updateConfig(plugin);
     }
 
     @EventHandler
@@ -108,7 +109,7 @@ public class EnderPearlTeleportModule implements Listener {
         }
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getPlayer().isSneaking()) {
-            if(event.getClickedBlock().getType().toString().contains("_BED")) {
+            if(Tag.BEDS.getValues().contains(event.getClickedBlock().getType())) {
                 event.getPlayer().setBedSpawnLocation(event.getClickedBlock().getLocation());
                 event.getPlayer().sendMessage(ChatColor.GOLD + "Spawn point has been set!");
             }
