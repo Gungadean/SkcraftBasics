@@ -123,6 +123,24 @@ public class SkcraftBasics extends JavaPlugin {
         stargateModule = new StargateModule(this);
         //progressiveDeepslateModule = new ProgressiveDeepslateModule(this);
 
+        afkModule.updateConfig(this);
+        betterPistonsModule.updateConfig(this);
+        captureBallModule.updateConfig(this);
+        chatChannelsModule.updateConfig(this);
+        chunkLoaderModule.updateConfig(this);
+        craftingModule.updateConfig(this);
+        enderPearlTeleportModule.updateConfig(this);
+        goldToolModule.updateConfig(this);
+        inkSignModule.updateConfig(this);
+        jetBootModule.updateConfig(this);
+        miningWorldModule.updateConfig(this);
+        mobTurretModule.updateConfig(this);
+        //progressiveDeepslateModule.updateConfig(this);
+        railModule.updateConfig(this);
+        rotatorModule.updateConfig(this);
+        shopModule.updateConfig(this);
+        stargateModule.updateConfig(this);
+
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
         } else {
@@ -322,7 +340,7 @@ public class SkcraftBasics extends JavaPlugin {
         jetBootModule.updateConfig(this);
         miningWorldModule.updateConfig(this);
         mobTurretModule.updateConfig(this);
-        progressiveDeepslateModule.updateConfig(this);
+        //progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
         rotatorModule.updateConfig(this);
         shopModule.updateConfig(this);

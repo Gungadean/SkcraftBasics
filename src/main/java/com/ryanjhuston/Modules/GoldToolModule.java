@@ -29,7 +29,7 @@ public class GoldToolModule implements Listener {
     private boolean moduleEnabled;
 
     public GoldToolModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

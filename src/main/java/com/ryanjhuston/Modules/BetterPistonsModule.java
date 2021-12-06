@@ -33,7 +33,7 @@ public class BetterPistonsModule implements Listener {
     private boolean moduleEnabled;
 
     public BetterPistonsModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

@@ -33,7 +33,7 @@ public class RotatorModule implements Listener {
     private Material tool;
 
     public RotatorModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

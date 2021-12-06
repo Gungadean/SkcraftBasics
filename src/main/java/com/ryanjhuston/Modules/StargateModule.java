@@ -36,7 +36,7 @@ public class StargateModule implements Listener {
     private boolean moduleEnabled;
 
     public StargateModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     public boolean createStargate(Block clicked, Player player) {

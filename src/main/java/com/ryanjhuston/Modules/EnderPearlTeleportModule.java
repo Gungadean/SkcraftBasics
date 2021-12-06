@@ -28,7 +28,7 @@ public class EnderPearlTeleportModule implements Listener {
     private boolean moduleEnabled;
 
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

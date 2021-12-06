@@ -33,7 +33,7 @@ public class ShopModule implements Listener {
     private boolean moduleEnabled;
 
     public ShopModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

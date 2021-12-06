@@ -33,7 +33,7 @@ public class AfkModule implements Listener {
     private BukkitTask afkCheckerTask;
 
     public AfkModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

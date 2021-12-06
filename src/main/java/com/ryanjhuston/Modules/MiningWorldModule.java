@@ -29,7 +29,7 @@ public class MiningWorldModule implements Listener {
     private CronExpression resetCronExpression;
 
     public MiningWorldModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     public void resetWorld() {

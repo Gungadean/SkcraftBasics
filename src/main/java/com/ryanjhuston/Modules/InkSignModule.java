@@ -24,7 +24,7 @@ public class InkSignModule implements Listener {
     private boolean moduleEnabled;
 
     public InkSignModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

@@ -51,7 +51,7 @@ public class ProgressiveDeepslateModule implements Listener {
             Material.DEEPSLATE_EMERALD_ORE));
 
     public ProgressiveDeepslateModule (SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

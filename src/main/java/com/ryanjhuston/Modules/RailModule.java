@@ -35,7 +35,7 @@ public class RailModule implements Listener {
     private Class<?> craftPlayerClass;
 
     public RailModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

@@ -53,7 +53,7 @@ public class JetBootModule implements Listener {
     private boolean moduleEnabled;
 
     public JetBootModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler

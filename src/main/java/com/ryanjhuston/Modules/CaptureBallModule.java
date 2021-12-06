@@ -24,7 +24,7 @@ public class CaptureBallModule implements Listener {
     private boolean moduleEnabled;
 
     public CaptureBallModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
