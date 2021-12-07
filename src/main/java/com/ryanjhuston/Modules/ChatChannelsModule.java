@@ -82,7 +82,7 @@ public class ChatChannelsModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerChat(AsyncPlayerChatEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
         if(inChannelPlayers.containsKey(uuid)) {
@@ -162,9 +162,8 @@ public class ChatChannelsModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("ChatChannels");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.chatChannelsModule)) {
-                plugin.pm.registerEvents(plugin.chatChannelsModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.chatChannelsModule);
+            plugin.pm.registerEvents(plugin.chatChannelsModule, plugin);
 
             plugin.logger.info("- ChatChannelModule Enabled");
         } else {

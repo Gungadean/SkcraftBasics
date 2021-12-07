@@ -255,12 +255,8 @@ public class StargateModule implements Listener {
         plugin.saveStargatesToFile();
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPlayerMoveEvent(PlayerMoveEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getPlayer().getLocation().getBlock().getType() != Material.NETHER_PORTAL) {
             return;
         }
@@ -349,12 +345,8 @@ public class StargateModule implements Listener {
         event.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void blockBreak(BlockBreakEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getBlock().hasMetadata("Stargate")) {
             String stargate = event.getBlock().getMetadata("Stargate").get(0).asString();
             if(stargateList.containsKey(stargate)) {
@@ -364,12 +356,8 @@ public class StargateModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onEnterStargate(PlayerEnterStargateEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         Stargate stargate = stargateList.get(event.getPlayer().getLocation().getBlock().getMetadata("Stargate").get(0).asString());
         event.getPlayer().teleport(stargate.getTeleportLocation());
     }
@@ -605,9 +593,8 @@ public class StargateModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Stargate");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.stargateModule)) {
-                plugin.pm.registerEvents(plugin.stargateModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.stargateModule);
+            plugin.pm.registerEvents(plugin.stargateModule, plugin);
 
             plugin.logger.info("- StargateModule Enabled");
         } else {

@@ -27,7 +27,7 @@ public class CraftingModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void prepareItemCraft(PrepareItemCraftEvent event) {
         if(event.getInventory().getRecipe() == null) {
             return;
@@ -138,9 +138,8 @@ public class CraftingModule implements Listener {
         disableRecipes();
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.craftingModule)) {
-                plugin.pm.registerEvents(plugin.craftingModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.craftingModule);
+            plugin.pm.registerEvents(plugin.craftingModule, plugin);
 
             addRecipes();
             plugin.logger.info("- CraftingModule Enabled");

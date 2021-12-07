@@ -41,7 +41,7 @@ public class MiningWorldModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPlayerPortal(PlayerPortalEvent event) {
         if(event.getPlayer().getWorld().getName().equals("Mining")) {
             event.setCancelled(true);
@@ -119,9 +119,8 @@ public class MiningWorldModule implements Listener {
         }
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.miningWorldModule)) {
-                plugin.pm.registerEvents(plugin.miningWorldModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.miningWorldModule);
+            plugin.pm.registerEvents(plugin.miningWorldModule, plugin);
 
             if(miningWorldTask != null) {
                 miningWorldTask.cancel();

@@ -36,7 +36,7 @@ public class ShopModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onSignChange(SignChangeEvent event) {
         if (event.isCancelled()) {
             return;
@@ -110,7 +110,7 @@ public class ShopModule implements Listener {
         plugin.saveShopsToFile();
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) {
             return;
@@ -214,7 +214,7 @@ public class ShopModule implements Listener {
         player.sendMessage(ChatColor.GREEN + "Transaction successful.");
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (event.isCancelled()) {
             return;
@@ -234,7 +234,7 @@ public class ShopModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
         if (event.isCancelled()) {
             return;
@@ -324,7 +324,7 @@ public class ShopModule implements Listener {
         return null;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onItemMoveInventory(InventoryMoveItemEvent event) {
         if (event.isCancelled()) {
             return;
@@ -345,7 +345,7 @@ public class ShopModule implements Listener {
         event.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPistonPush(BlockPistonExtendEvent event) {
         if (event.isCancelled()) {
             return;
@@ -361,7 +361,7 @@ public class ShopModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPistonPull(BlockPistonRetractEvent event) {
         if (event.isCancelled()) {
             return;
@@ -579,9 +579,8 @@ public class ShopModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Shop");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.shopModule)) {
-                plugin.pm.registerEvents(plugin.shopModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.shopModule);
+            plugin.pm.registerEvents(plugin.shopModule, plugin);
 
             plugin.logger.info("- ShopModule Enabled");
         } else {

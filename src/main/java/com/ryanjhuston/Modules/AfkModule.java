@@ -73,7 +73,7 @@ public class AfkModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (event.isCancelled()) {
             return;
@@ -96,9 +96,8 @@ public class AfkModule implements Listener {
         this.afkTime = plugin.getConfig().getInt("Module-Settings.Afk-Module.Afk-Time-Seconds");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.afkModule)) {
-                plugin.pm.registerEvents(plugin.afkModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.afkModule);
+            plugin.pm.registerEvents(plugin.afkModule, plugin);
 
             if(afkCheckerTask != null) {
                 afkCheckerTask.cancel();

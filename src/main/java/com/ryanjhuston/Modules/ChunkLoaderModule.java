@@ -76,7 +76,7 @@ public class ChunkLoaderModule implements Listener {
         return false;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onVehicleMove(VehicleMoveEvent event) {
         Location from = event.getFrom();
         Location to = event.getTo();
@@ -104,9 +104,8 @@ public class ChunkLoaderModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("ChunkLoader");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.chunkLoaderModule)) {
-                plugin.pm.registerEvents(plugin.chunkLoaderModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.chunkLoaderModule);
+            plugin.pm.registerEvents(plugin.chunkLoaderModule, plugin);
 
             if(chunkLoaderTask != null) {
                 chunkLoaderTask.cancel();

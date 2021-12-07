@@ -1,8 +1,8 @@
 main: com.ryanjhuston.SkcraftBasics
 name: SkcraftBasics
 author: Ryan Huston
-version: 1.3.0
-api-version: 1.16
+version: 1.3.2
+api-version: 1.18
 depend: [LuckPerms]
 commands:
   accept:

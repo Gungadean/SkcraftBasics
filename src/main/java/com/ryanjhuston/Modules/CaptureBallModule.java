@@ -27,7 +27,7 @@ public class CaptureBallModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onProjectileHit(ProjectileHitEvent event) {
         Entity entity = event.getHitEntity();
 
@@ -50,23 +50,15 @@ public class CaptureBallModule implements Listener {
         hitEntity.add(entity);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getDamager().getType() == EntityType.EGG) {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.EGG) {
             return;
         }
@@ -114,9 +106,9 @@ public class CaptureBallModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("CaptureBall");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.captureBallModule)) {
-                plugin.pm.registerEvents(plugin.captureBallModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.captureBallModule);
+            plugin.pm.registerEvents(plugin.captureBallModule, plugin);
+
             plugin.logger.info("- CaptureBallModule Enabled");
         } else {
             HandlerList.unregisterAll(plugin.captureBallModule);

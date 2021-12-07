@@ -42,12 +42,8 @@ public class MobTurretModule implements Listener {
     }
     
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!(event.getEntity() instanceof EnderCrystal)) {
             return;
         }
@@ -162,9 +158,8 @@ public class MobTurretModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("MobTurret");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.mobTurretModule)) {
-                plugin.pm.registerEvents(plugin.mobTurretModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.mobTurretModule);
+            plugin.pm.registerEvents(plugin.mobTurretModule, plugin);
 
             if(mobTurretTask != null) {
                 mobTurretTask.cancel();

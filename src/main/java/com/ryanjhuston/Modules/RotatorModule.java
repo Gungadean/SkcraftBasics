@@ -13,6 +13,7 @@ import org.bukkit.block.data.type.Piston;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -36,7 +37,7 @@ public class RotatorModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if(event.getAction() == Action.PHYSICAL) {
             return;
@@ -290,9 +291,8 @@ public class RotatorModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Rotator");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.rotatorModule)) {
-                plugin.pm.registerEvents(plugin.rotatorModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.rotatorModule);
+            plugin.pm.registerEvents(plugin.rotatorModule, plugin);
 
             plugin.logger.info("- RotatorModule Enabled");
         } else {

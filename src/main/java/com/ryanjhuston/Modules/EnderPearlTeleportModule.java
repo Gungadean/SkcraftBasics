@@ -31,12 +31,8 @@ public class EnderPearlTeleportModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void inventoryClick(InventoryClickEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getClickedInventory() == null) {
             return;
         }
@@ -116,12 +112,8 @@ public class EnderPearlTeleportModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerTeleportEnderPearl(PlayerEnderPearlTeleportEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if(event.isPlayerTeleport()) {
             event.getPlayer().closeInventory();
 
@@ -133,12 +125,8 @@ public class EnderPearlTeleportModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerTeleport(PlayerTeleportEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         Player player = event.getPlayer();
         if(event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
             return;
@@ -211,9 +199,8 @@ public class EnderPearlTeleportModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.enderPearlTeleportModule)) {
-                plugin.pm.registerEvents(plugin.enderPearlTeleportModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.enderPearlTeleportModule);
+            plugin.pm.registerEvents(plugin.enderPearlTeleportModule, plugin);
 
             plugin.logger.info("- EnderPearlTeleportModule Enabled");
         } else {

@@ -54,7 +54,7 @@ public class ProgressiveDeepslateModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onStartBlockBreak(BlockDamageEvent event) {
         Player player = event.getPlayer();
         SkcraftPlayer skcraftPlayer = plugin.getSkcraftPlayer(player);
@@ -92,7 +92,7 @@ public class ProgressiveDeepslateModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockDropItem(BlockDropItemEvent event) {
         if(deepslateBlocks.contains(event.getBlock().getType())) {
             event.getItems().addAll(event.getItems());
@@ -136,9 +136,8 @@ public class ProgressiveDeepslateModule implements Listener {
                     usablePicks.add(Material.getMaterial(pick));
                 }
 
-                if(!HandlerList.getHandlerLists().contains(plugin.progressiveDeepslateModule)) {
-                    plugin.pm.registerEvents(plugin.progressiveDeepslateModule, plugin);
-                }
+                HandlerList.unregisterAll(plugin.progressiveDeepslateModule);
+                plugin.pm.registerEvents(plugin.progressiveDeepslateModule, plugin);
 
                 plugin.logger.info("- ProgressiveDeepslateModule Enabled");
             } else {

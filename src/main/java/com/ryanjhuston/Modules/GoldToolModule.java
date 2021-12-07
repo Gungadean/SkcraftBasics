@@ -4,6 +4,7 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -32,54 +33,48 @@ public class GoldToolModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
-    public void playerBreakBlock(BlockBreakEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
+    @EventHandler (ignoreCancelled = true)
+    public void onBlockItemDrop(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        Location location = block.getLocation();
+        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
 
-        Location location = event.getBlock().getLocation();
+        if(tool.getType() == Material.GOLDEN_PICKAXE ||
+            tool.getType() == Material.GOLDEN_SHOVEL ||
+            tool.getType() == Material.GOLDEN_AXE ||
+            tool.getType() == Material.GOLDEN_SWORD ||
+            tool.getType() == Material.GOLDEN_HOE) {
 
-        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.GOLDEN_PICKAXE ||
-            event.getPlayer().getInventory().getItemInMainHand().getType() == Material.GOLDEN_SHOVEL ||
-            event.getPlayer().getInventory().getItemInMainHand().getType() == Material.GOLDEN_AXE ||
-            event.getPlayer().getInventory().getItemInMainHand().getType() == Material.GOLDEN_SWORD ||
-            event.getPlayer().getInventory().getItemInMainHand().getType() == Material.GOLDEN_HOE) {
-
-            if(event.getBlock().getType() == Material.SAND) {
+            if(Tag.SAND.getValues().contains(block.getType())) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.GLASS, 1));
-            } else if(Tag.LOGS.getValues().contains(event.getBlock().getType())) {
+            } else if(Tag.LOGS.getValues().contains(block.getType())) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.CHARCOAL, 1));
-            } else if(event.getBlock().getType() == Material.WET_SPONGE) {
+            } else if(block.getType() == Material.WET_SPONGE) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.SPONGE, 1));
             }
         }
 
-        if(event.getPlayer().getInventory().getItemInMainHand().getType() == Material.GOLDEN_PICKAXE) {
-            if(event.getBlock().getType() == Material.STONE || event.getBlock().getType() == Material.COBBLESTONE) {
+        if(tool.getType() == Material.GOLDEN_PICKAXE) {
+            if(block.getType() == Material.STONE || block.getType() == Material.COBBLESTONE) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.STONE, 1));
-
-            } else if(event.getBlock().getType() == Material.COPPER_ORE) {
-                event.setDropItems(false);
+            } else if(Tag.COPPER_ORES.getValues().contains(block.getType())) {
                 location.getWorld().dropItem(location, new ItemStack(Material.COPPER_INGOT, 1));
-            } else if(event.getBlock().getType() == Material.IRON_ORE) {
-                event.setDropItems(false);
+            } else if(Tag.IRON_ORES.getValues().contains(block.getType())) {
                 location.getWorld().dropItem(location, new ItemStack(Material.IRON_INGOT, 1));
-            } else if(event.getBlock().getType() == Material.GOLD_ORE) {
-                event.setDropItems(false);
+            } else if(Tag.GOLD_ORES.getValues().contains(block.getType())) {
                 location.getWorld().dropItem(location, new ItemStack(Material.GOLD_INGOT, 1));
-            } else if(event.getBlock().getType() == Material.NETHERRACK) {
+            } else if(block.getType() == Material.NETHERRACK) {
                 event.setDropItems(false);
                 location.getWorld().dropItem(location, new ItemStack(Material.NETHER_BRICK, 1));
             }
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerKillEntity(EntityDeathEvent event) {
         if(!(event.getEntity().getKiller() instanceof Player)) {
             return;
@@ -105,11 +100,7 @@ public class GoldToolModule implements Listener {
             }
             event.getDrops().clear();
 
-            //event.getDrops().addAll(newDrops);
-
-            for(ItemStack item : newDrops) {
-                event.getEntity().getWorld().dropItem(event.getEntity().getLocation(), item);
-            }
+            event.getDrops().addAll(newDrops);
         }
     }
 
@@ -119,9 +110,9 @@ public class GoldToolModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("GoldTools");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.goldToolModule)) {
-                plugin.pm.registerEvents(plugin.goldToolModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.goldToolModule);
+            plugin.pm.registerEvents(plugin.goldToolModule, plugin);
+
             plugin.logger.info("- GoldToolsModule Enabled");
         } else {
             HandlerList.unregisterAll(plugin.goldToolModule);

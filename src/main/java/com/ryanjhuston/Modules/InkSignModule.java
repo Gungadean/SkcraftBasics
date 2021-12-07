@@ -93,9 +93,8 @@ public class InkSignModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("InkSign");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.inkSignModule)) {
-                plugin.pm.registerEvents(plugin.inkSignModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.inkSignModule);
+            plugin.pm.registerEvents(plugin.inkSignModule, plugin);
 
             plugin.logger.info("- InkSignModule Enabled");
         } else {

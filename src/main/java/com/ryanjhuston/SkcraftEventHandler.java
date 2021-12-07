@@ -5,6 +5,7 @@ import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ComplexEntityPart;
 import org.bukkit.entity.EntityType;
@@ -121,12 +122,8 @@ public class SkcraftEventHandler implements Listener {
         event.setRespawnLocation(plugin.spawnLocation);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPlayerSleep(PlayerBedEnterEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(Bukkit.getWorlds().get(0).getTime() < 12545 && !Bukkit.getWorlds().get(0).hasStorm()) {
             return;
         }
@@ -134,12 +131,8 @@ public class SkcraftEventHandler implements Listener {
        plugin.checkSleep();
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onItemDispense(BlockDispenseEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("InfiniteCarts")) {
             return;
         }
@@ -152,17 +145,13 @@ public class SkcraftEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("InfiniteSigns")) {
             return;
         }
 
-        if(!event.getBlockPlaced().getType().toString().endsWith("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getBlockPlaced().getType())) {
             return;
         }
 
@@ -172,12 +161,8 @@ public class SkcraftEventHandler implements Listener {
         event.getPlayer().getInventory().setItem(event.getHand(), sign);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onItemPickup(EntityPickupItemEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("InfiniteSigns")) {
             return;
         }
@@ -189,7 +174,7 @@ public class SkcraftEventHandler implements Listener {
 
         Player player = (Player)event.getEntity();
 
-        if(!event.getItem().getItemStack().getType().toString().endsWith("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getItem().getItemStack().getType())) {
             return;
         }
 
@@ -199,12 +184,8 @@ public class SkcraftEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onWeatherChange(WeatherChangeEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         Random rand = new Random();
 
         if(event.toWeatherState()) {
@@ -214,7 +195,7 @@ public class SkcraftEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onExplosion(EntityExplodeEvent event) {
         if (!plugin.enabledModules.contains("DisableExplosions")) {
             return;
@@ -227,12 +208,8 @@ public class SkcraftEventHandler implements Listener {
         event.blockList().clear();
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onMobGrief(EntityChangeBlockEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("DisableExplosions")) {
             return;
         }
@@ -256,7 +233,7 @@ public class SkcraftEventHandler implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!plugin.enabledModules.contains("EnderEyeChests")) {
             return;

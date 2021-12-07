@@ -84,7 +84,7 @@ public class RailModule implements Listener {
         event.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onVehicleDamage(VehicleDamageEvent event) {
         Vehicle vehicle = event.getVehicle();
         Entity attacker = event.getAttacker();
@@ -94,7 +94,7 @@ public class RailModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void portalTeleport(VehicleMoveEvent event) {
         if(event.getTo().getBlock().getType() != Material.NETHER_PORTAL) {
             return;
@@ -153,7 +153,7 @@ public class RailModule implements Listener {
         }, 10L);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onEntityTeleport(PlayerPortalEvent event) {
         if(!event.getPlayer().hasMetadata("PortalLocation")) {
             return;
@@ -172,7 +172,7 @@ public class RailModule implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> teleportThroughPortal(entity, from, entity.getLocation(), vector), 2);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void stargateActivator(BlockRedstoneEvent event) {
         if(!plugin.enabledModules.contains("Stargate")) {
             return;
@@ -209,7 +209,7 @@ public class RailModule implements Listener {
         plugin.stargateModule.openPortalNamed(stargateLocation.getBlock(), sign.getLine(1));
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onSignPlace(SignChangeEvent event) {
         if(!event.getLine(0).equalsIgnoreCase("[Stargate Rail]")) {
             return;
@@ -425,9 +425,8 @@ public class RailModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Rail");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.railModule)) {
-                plugin.pm.registerEvents(plugin.railModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.railModule);
+            plugin.pm.registerEvents(plugin.railModule, plugin);
 
             plugin.logger.info("- RailModule Enabled");
         } else {

@@ -36,12 +36,8 @@ public class BetterPistonsModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         boolean hasSign = false;
         Sign sign;
 
@@ -78,12 +74,8 @@ public class BetterPistonsModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onSignPlace(SignChangeEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!Tag.WALL_SIGNS.getValues().contains(event.getBlock().getType())) {
             return;
         }
@@ -108,9 +100,8 @@ public class BetterPistonsModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("BetterPistons");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.betterPistonsModule)) {
-                plugin.pm.registerEvents(plugin.betterPistonsModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.betterPistonsModule);
+            plugin.pm.registerEvents(plugin.betterPistonsModule, plugin);
 
             plugin.logger.info("- BetterPistonsModule Enabled");
         } else {

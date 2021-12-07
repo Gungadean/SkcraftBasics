@@ -56,12 +56,8 @@ public class JetBootModule implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBeaconPlace(BlockPlaceEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!event.canBuild()) {
             return;
         }
@@ -88,12 +84,8 @@ public class JetBootModule implements Listener {
         }, 100);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBaseBlockPlace(BlockPlaceEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!event.canBuild()) {
             return;
         }
@@ -125,12 +117,8 @@ public class JetBootModule implements Listener {
         }, 100);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if(event.getBlock().getType() != Material.BEACON) {
             return;
         }
@@ -211,12 +199,8 @@ public class JetBootModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void removeJetboots(InventoryClickEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!(event.getWhoClicked() instanceof Player)) {
             return;
         }
@@ -252,7 +236,7 @@ public class JetBootModule implements Listener {
         deactivateJetboots((Player)event.getWhoClicked());
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void fallDamage(EntityDamageEvent event) {
         if(event.getCause() != EntityDamageEvent.DamageCause.FALL) {
             return;
@@ -371,9 +355,8 @@ public class JetBootModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("JetBoot");
 
         if(moduleEnabled) {
-            if(!HandlerList.getHandlerLists().contains(plugin.jetBootModule)) {
-                plugin.pm.registerEvents(plugin.jetBootModule, plugin);
-            }
+            HandlerList.unregisterAll(plugin.jetBootModule);
+            plugin.pm.registerEvents(plugin.jetBootModule, plugin);
 
             if(beaconCheckTask != null) {
                 beaconCheckTask.cancel();
