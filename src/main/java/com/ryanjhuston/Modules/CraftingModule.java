@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.inventory.*;
@@ -24,20 +25,10 @@ public class CraftingModule implements Listener {
 
     public CraftingModule(SkcraftBasics plugin) {
         this.plugin = plugin;
-
-        moduleEnabled = plugin.enabledModules.contains("Crafting");
-
-        if(moduleEnabled) {
-            addRecipes();
-        }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void prepareItemCraft(PrepareItemCraftEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getInventory().getRecipe() == null) {
             return;
         }
@@ -144,11 +135,16 @@ public class CraftingModule implements Listener {
 
         moduleEnabled = plugin.enabledModules.contains("Crafting");
 
+        disableRecipes();
+
         if(moduleEnabled) {
-            disableRecipes();
+            HandlerList.unregisterAll(plugin.craftingModule);
+            plugin.pm.registerEvents(plugin.craftingModule, plugin);
+
             addRecipes();
+            plugin.logger.info("- CraftingModule Enabled");
         } else {
-            disableRecipes();
+            HandlerList.unregisterAll(plugin.craftingModule);
         }
     }
 }

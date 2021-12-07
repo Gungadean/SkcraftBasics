@@ -1,12 +1,12 @@
 Enabled-Modules:
   - Admin
+  - Afk
   - BetterPistons
   - CaptureBall
   - ChatChannels
   - ChunkLoader
   - Crafting
   - EnderPearlTeleport
-  - Galapagos
   - GoldTool
   - InkSign
   - Invite
@@ -28,6 +28,8 @@ Default-Group: "default"
 Mod-Group: "mod"
 Chat-Color: true
 Module-Settings:
+  Afk-Module:
+    Afk-Time-Seconds: 300
   Stargate-Module:
     Portal-Reset-Time: 4
   JetBoot-Module:
@@ -38,12 +40,9 @@ Module-Settings:
     Tier-Three-Radius: 40
     Tier-Four-Radius: 50
   Rotator-Module:
-    Tool-Material: 'BLAZE_ROD'
+    Tool-Material: BLAZE_ROD
   InkSign-Module:
-    Tool-Material: 'INK_SAC'
-  Galapagos-Module:
-    #Percent chance of spawning
-    Spawn-Chance: 5
+    Tool-Material: INK_SAC
   ChatChannels-Module:
     Chat-Format: '&a[%channel%] %player%: %message%'
     Global-Chat-Format: '<%playerDisplay%> %message%'
@@ -51,11 +50,39 @@ Module-Settings:
     Join-Format: '&e[%channel%] User %player% has joined the channel.'
   MobTurret-Module:
     Turret-Radius: 45
+    Turret-Attack-Damage: 10
+    Turret-Attack-Interval: 10
+    Attackable-Mobs:
+      - BLAZE
+      - CAVE_SPIDER
+      - CREEPER
+      - DROWNED
+      - EVOKER
+      - ENDERMAN
+      - GHAST
+      - GUARDIAN
+      - HUSK
+      - ILLUSIONER
+      - MAGMA_CUBE
+      - PHANTOM
+      - PILLAGER
+      - RAVAGER
+      - SILVERFISH
+      - SKELETON
+      - SLIME
+      - SPIDER
+      - VEX
+      - VINDICATOR
+      - WITCH
+      - WITHER_SKELETON
+      - ZOMBIE
+      - ZOMBIE_VILLAGER
+  MiningWorld-Module:
+    World-Reset-Period: '0 0 2 ? * FRI'
   CaptureBall-Module:
     Banned-Mobs:
       - ARMOR_STAND
       - ENDER_DRAGON
-      - PLAYER
       - SHULKER
       - WANDERING_TRADER
       - TRADER_LLAMA

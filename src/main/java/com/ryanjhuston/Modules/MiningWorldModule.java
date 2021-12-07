@@ -1,12 +1,17 @@
 package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
+import com.ryanjhuston.Tasks.MiningWorldTask;
+import org.apache.logging.log4j.core.util.CronExpression;
 import org.bukkit.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -16,68 +21,28 @@ public class MiningWorldModule implements Listener {
 
     private boolean moduleEnabled;
 
-    private int resetTimer;
+    private BukkitTask miningWorldTask;
+
+    private Date resetDate;
+    private Calendar resetCal;
+
+    private CronExpression resetCronExpression;
 
     public MiningWorldModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
-
-        initializeWorldResetTimer();
-    }
-
-    public void initializeWorldResetTimer() {
-        resetTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            if(!moduleEnabled) {
-                return;
-            }
-
-            Date now = new Date();
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(now);
-
-            if(calendar.get(Calendar.DAY_OF_WEEK) != Calendar.FRIDAY) {
-                return;
-            }
-
-            int hour = calendar.get(Calendar.HOUR_OF_DAY);
-            int minute = calendar.get(Calendar.MINUTE);
-            int second = calendar.get(Calendar.SECOND);
-
-            if(hour == 6) {
-                if(minute == 0 && second == 0) {
-                    resetWorld();
-                }
-            } else if(hour == 5) {
-                if(minute == 0 && second == 0) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 1 hour.");
-                } else if(minute == 45 && second == 0) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 15 minutes.");
-                } else if(minute == 50 && second == 0) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 10 minutes.");
-                } else if(minute == 55 && second == 0) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 5 minutes.");
-                } else if(minute == 59 && second == 0) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 1 minute.");
-                } else if(minute == 59 && second == 30) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 30 seconds.");
-                } else if(minute == 59 && second == 50) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 10 seconds.");
-                } else if(minute == 59 && second == 55) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "The mining world will reset in 5 seconds.");
-                }
-            }
-        }, 0, 20);
+        this.plugin = plugin;
     }
 
     public void resetWorld() {
         plugin.worldManager.resetWorld("Mining");
+        try {
+            calculateResetDate();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPlayerPortal(PlayerPortalEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getPlayer().getWorld().getName().equals("Mining")) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "You cannot use nether portals in this world.");
@@ -116,8 +81,30 @@ public class MiningWorldModule implements Listener {
 
             event.getPlayer().teleport(location);
             event.getPlayer().getInventory().removeItem(new ItemStack(Material.ENDER_PEARL, 1));
-            event.getPlayer().sendMessage(ChatColor.RED + "This is the mining world, this world will be reset once a week so it is not advised to build here. Any items lost because of a reset will not be refunded.");
+            event.getPlayer().sendMessage(ChatColor.RED + "This is the mining world, this world will be reset once a week so it is not advised to build here. Any items lost as a result of a reset will not be refunded.");
         }, 1);
+    }
+
+    public void calculateResetDate() throws ParseException {
+        String resetExpression = plugin.getConfig().getString("Module-Settings.MiningWorld-Module.World-Reset-Period");
+        if(CronExpression.isValidExpression(resetExpression)) {
+            resetCronExpression = new CronExpression(resetExpression);
+        } else {
+            plugin.logger.severe("[SkcraftBasics] Entered cron expression is not valid. Defaulting to Friday resets at 0200.");
+            resetCronExpression = new CronExpression("0 0 2 ? * FRI");
+        }
+
+        resetDate = resetCronExpression.getNextValidTimeAfter(new Date());
+        resetCal = Calendar.getInstance();
+        resetCal.setTime(resetDate);
+    }
+
+    public Date getResetDate() {
+        return resetDate;
+    }
+
+    public Calendar getResetCal() {
+        return resetCal;
     }
 
     public void updateConfig(SkcraftBasics plugin) {
@@ -125,8 +112,29 @@ public class MiningWorldModule implements Listener {
 
         moduleEnabled = plugin.enabledModules.contains("MiningWorld");
 
+        try {
+            calculateResetDate();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.miningWorldModule);
+            plugin.pm.registerEvents(plugin.miningWorldModule, plugin);
+
+            if(miningWorldTask != null) {
+                miningWorldTask.cancel();
+            }
+
+            miningWorldTask = new MiningWorldTask(this).runTaskTimer(plugin, 0, 20);
+
             plugin.logger.info("- MiningWorldModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.miningWorldModule);
+
+            if(miningWorldTask != null) {
+                miningWorldTask.cancel();
+            }
         }
     }
 }

@@ -6,8 +6,10 @@ import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -26,19 +28,11 @@ public class EnderPearlTeleportModule implements Listener {
     private boolean moduleEnabled;
 
     public EnderPearlTeleportModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void inventoryClick(InventoryClickEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getClickedInventory() == null) {
             return;
         }
@@ -83,10 +77,6 @@ public class EnderPearlTeleportModule implements Listener {
 
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -115,23 +105,15 @@ public class EnderPearlTeleportModule implements Listener {
         }
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getPlayer().isSneaking()) {
-            if(event.getClickedBlock().getType().toString().contains("_BED")) {
+            if(Tag.BEDS.getValues().contains(event.getClickedBlock().getType())) {
                 event.getPlayer().setBedSpawnLocation(event.getClickedBlock().getLocation());
                 event.getPlayer().sendMessage(ChatColor.GOLD + "Spawn point has been set!");
             }
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerTeleportEnderPearl(PlayerEnderPearlTeleportEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if(event.isCancelled()) {
-            return;
-        }
-
         if(event.isPlayerTeleport()) {
             event.getPlayer().closeInventory();
 
@@ -143,16 +125,8 @@ public class EnderPearlTeleportModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerTeleport(PlayerTeleportEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
         Player player = event.getPlayer();
         if(event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
             return;
@@ -225,7 +199,12 @@ public class EnderPearlTeleportModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("EnderPearlTeleport");
 
         if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.enderPearlTeleportModule);
+            plugin.pm.registerEvents(plugin.enderPearlTeleportModule, plugin);
+
             plugin.logger.info("- EnderPearlTeleportModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.enderPearlTeleportModule);
         }
     }
 }

@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Sign;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -23,15 +24,11 @@ public class InkSignModule implements Listener {
     private boolean moduleEnabled;
 
     public InkSignModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -55,10 +52,6 @@ public class InkSignModule implements Listener {
         if(!(event.getClickedBlock().getState() instanceof Sign)) {
             return;
         }
-
-        /*if(!event.getClickedBlock().getType().toString().endsWith("_SIGN")) {
-            return;
-        }*/
 
         plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -100,7 +93,12 @@ public class InkSignModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("InkSign");
 
         if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.inkSignModule);
+            plugin.pm.registerEvents(plugin.inkSignModule, plugin);
+
             plugin.logger.info("- InkSignModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.inkSignModule);
         }
     }
 }

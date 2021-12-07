@@ -1,12 +1,15 @@
 package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
+import com.ryanjhuston.Tasks.JetBoot.BeaconCheckTask;
+import com.ryanjhuston.Tasks.JetBoot.JetBootDurabilityTask;
 import org.bukkit.*;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -20,6 +23,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,30 +39,25 @@ public class JetBootModule implements Listener {
     public HashMap<String, Integer> flyTime = new HashMap<>();
     public List<String> fallGraceCheck = new ArrayList<>();
 
-    private double tierOneRadius;
-    private double tierTwoRadius;
-    private double tierThreeRadius;
-    private double tierFourRadius;
+    public double tierOneRadius;
+    public double tierTwoRadius;
+    public double tierThreeRadius;
+    public double tierFourRadius;
 
-    private int jetbootDamage;
-    private int durabilityFreq;
+    public int jetbootDamage;
+    public int durabilityFreq;
+
+    private BukkitTask beaconCheckTask;
+    private BukkitTask jetBootDurabilityTask;
 
     private boolean moduleEnabled;
 
     public JetBootModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBeaconPlace(BlockPlaceEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!event.canBuild()) {
             return;
         }
@@ -85,24 +84,13 @@ public class JetBootModule implements Listener {
         }, 100);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBaseBlockPlace(BlockPlaceEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!event.canBuild()) {
             return;
         }
 
-        if(event.getBlockPlaced().getType() != Material.IRON_BLOCK &&
-                event.getBlockPlaced().getType() != Material.GOLD_BLOCK &&
-                event.getBlockPlaced().getType() != Material.DIAMOND_BLOCK &&
-                event.getBlockPlaced().getType() != Material.EMERALD_BLOCK) {
+        if(!Tag.BEACON_BASE_BLOCKS.getValues().contains(event.getBlockPlaced().getType())) {
             return;
         }
 
@@ -126,12 +114,8 @@ public class JetBootModule implements Listener {
         }, 100);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if(event.getBlock().getType() != Material.BEACON) {
             return;
         }
@@ -145,107 +129,8 @@ public class JetBootModule implements Listener {
         plugin.saveBeaconsToFile();
     }
 
-    public void registerJetbootDurabilityCheck() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            List<Player> forRemoval = new ArrayList<>();
-
-            if(!moduleEnabled) {
-                return;
-            }
-
-            for(String uuid : jetboots) {
-                Player player = Bukkit.getPlayer(UUID.fromString(uuid));
-                if(player != null) {
-                    if(player.getGameMode() != GameMode.CREATIVE) {
-                        if (player.isFlying()) {
-                            if(!flyTime.containsKey(player.getUniqueId().toString())) {
-                                flyTime.put(player.getUniqueId().toString(), 1);
-                            }
-
-                            int currentFlyTime = flyTime.get(player.getUniqueId().toString());
-
-                            if(currentFlyTime >= durabilityFreq) {
-                                boolean remove = updateDurability(player);
-                                if(remove) {
-                                    forRemoval.add(player);
-                                }
-
-                                flyTime.replace(player.getUniqueId().toString(), 1);
-                            } else {
-                                flyTime.replace(player.getUniqueId().toString(), (currentFlyTime + 1));
-                            }
-                        }
-                    }
-                }
-            }
-
-            for(Player player : forRemoval) {
-                deactivateJetboots(player);
-            }
-        }, 0, 20);
-    }
-
-    public void registerBeaconCheck() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            List<String> playerRemoval = new ArrayList<>();
-
-            if(!moduleEnabled) {
-                return;
-            }
-
-            for(Player player : Bukkit.getOnlinePlayers()) {
-                String uuid = player.getUniqueId().toString();
-
-                if(!checkBeaconList(uuid)) {
-                    if(jetboots.contains(uuid)) {
-                        playerRemoval.add(uuid);
-                    }
-                } else {
-                    if (player.getGameMode() == GameMode.CREATIVE) {
-                        continue;
-                    }
-
-                    if (player.getInventory().getBoots() == null) {
-                        deactivateJetboots(player);
-                        continue;
-                    }
-
-                    if (!player.getInventory().getBoots().hasItemMeta()) {
-                        deactivateJetboots(player);
-                        continue;
-                    }
-
-                    if (!player.getInventory().getBoots().getItemMeta().hasLore()) {
-                        deactivateJetboots(player);
-                        continue;
-                    }
-
-                    if (!player.getInventory().getBoots().getItemMeta().getLore().contains("Jetboots")) {
-                        deactivateJetboots(player);
-                        continue;
-                    }
-
-                    if(((Damageable)player.getInventory().getBoots().getItemMeta()).getDamage() >= (player.getInventory().getBoots().getType().getMaxDurability()-1)) {
-                        deactivateJetboots(player);
-                        continue;
-                    }
-
-                    activateJetboots(player);
-                }
-            }
-
-            for(String uuid : playerRemoval) {
-                deactivateJetboots(Bukkit.getPlayer(UUID.fromString(uuid)));
-            }
-        }, 0, 20);
-    }
-
     @EventHandler
     public void playerInteract(PlayerInteractEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -298,10 +183,6 @@ public class JetBootModule implements Listener {
 
     @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(jetboots.contains(event.getPlayer().getUniqueId().toString())) {
             event.getPlayer().setAllowFlight(true);
         }
@@ -315,12 +196,8 @@ public class JetBootModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void removeJetboots(InventoryClickEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(!(event.getWhoClicked() instanceof Player)) {
             return;
         }
@@ -356,7 +233,7 @@ public class JetBootModule implements Listener {
         deactivateJetboots((Player)event.getWhoClicked());
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void fallDamage(EntityDamageEvent event) {
         if(event.getCause() != EntityDamageEvent.DamageCause.FALL) {
             return;
@@ -424,9 +301,7 @@ public class JetBootModule implements Listener {
     public void deactivateJetboots(Player player) {
         String uuid = player.getUniqueId().toString();
 
-        if(jetboots.contains(uuid)) {
-            jetboots.remove(uuid);
-        }
+        jetboots.remove(uuid);
 
         if(player.getGameMode() != GameMode.CREATIVE) {
             player.setFlying(false);
@@ -434,11 +309,7 @@ public class JetBootModule implements Listener {
 
             fallGraceCheck.add(uuid);
 
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                if(fallGraceCheck.contains(uuid)) {
-                    fallGraceCheck.remove(uuid);
-                }
-            }, 200);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> fallGraceCheck.remove(uuid), 200);
         }
     }
 
@@ -479,7 +350,39 @@ public class JetBootModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("JetBoot");
 
         if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.jetBootModule);
+            plugin.pm.registerEvents(plugin.jetBootModule, plugin);
+
+            if(beaconCheckTask != null) {
+                beaconCheckTask.cancel();
+            }
+
+            if(jetBootDurabilityTask != null) {
+                jetBootDurabilityTask.cancel();
+            }
+
+            beaconCheckTask = new BeaconCheckTask(this).runTaskTimer(plugin, 0, 20);
+            jetBootDurabilityTask = new JetBootDurabilityTask(this).runTaskTimer(plugin, 0, 20);
+
             plugin.logger.info("- JetBootModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.jetBootModule);
+
+            List<String> forRemoval = new ArrayList<>();
+            forRemoval.addAll(jetboots);
+
+            for(String uuid : forRemoval) {
+                deactivateJetboots(Bukkit.getPlayer(UUID.fromString(uuid)));
+            }
+            jetboots.clear();
+
+            if(beaconCheckTask != null) {
+                beaconCheckTask.cancel();
+            }
+
+            if(jetBootDurabilityTask != null) {
+                jetBootDurabilityTask.cancel();
+            }
         }
     }
 }

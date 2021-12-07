@@ -1,59 +1,39 @@
 package com.ryanjhuston.Modules;
 
 import com.ryanjhuston.SkcraftBasics;
+import com.ryanjhuston.Tasks.AfkCheckerTask;
 import com.ryanjhuston.Types.AfkTracker;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class AfkModule implements Listener {
 
-    private final SkcraftBasics plugin;
+    private SkcraftBasics plugin;
+    private boolean moduleEnabled;
 
     private HashMap<String, AfkTracker> playerTracker = new HashMap<>();
     private List<String> afkPlayers = new ArrayList<>();
 
+    private int afkTime;
+
+    private BukkitTask afkCheckerTask;
 
     public AfkModule(SkcraftBasics plugin) {
         this.plugin = plugin;
-        scheduleTask();
-    }
-
-    private void scheduleTask() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            for(Player player : Bukkit.getOnlinePlayers()) {
-                AfkTracker afkTracker = playerTracker.get(player.getUniqueId().toString());
-
-                if(afkPlayers.contains(player.getUniqueId().toString())) {
-                    if(afkTracker.getStartLocation().equals(player.getLocation())) {
-                        continue;
-                    } else {
-                        removeAfk(player);
-                        continue;
-                    }
-                }
-
-                if(player.getLocation().equals(afkTracker.getStartLocation())) {
-                    afkTracker.setAfkTime(afkTracker.getAfkTime() + 5);
-                } else {
-                    afkTracker.setStartLocation(player.getLocation());
-                    afkTracker.setAfkTime(0);
-                }
-
-                if(afkTracker.getAfkTime() >= 300) {
-                    afkPlayers.add(player.getUniqueId().toString());
-                }
-            }
-        }, 0, 100);
     }
 
     @EventHandler
@@ -93,7 +73,7 @@ public class AfkModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (event.isCancelled()) {
             return;
@@ -108,6 +88,40 @@ public class AfkModule implements Listener {
         }
     }
 
+    public void updateConfig(SkcraftBasics plugin) {
+        this.plugin = plugin;
+
+        moduleEnabled = plugin.getConfig().getList("Enabled-Modules").contains("Afk");
+
+        this.afkTime = plugin.getConfig().getInt("Module-Settings.Afk-Module.Afk-Time-Seconds");
+
+        if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.afkModule);
+            plugin.pm.registerEvents(plugin.afkModule, plugin);
+
+            if(afkCheckerTask != null) {
+                afkCheckerTask.cancel();
+            }
+
+            afkCheckerTask = new AfkCheckerTask(this).runTaskTimer(plugin, 0, 100);
+            plugin.logger.info("- AfkModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.afkModule);
+
+            if(afkCheckerTask != null) {
+                afkCheckerTask.cancel();
+            }
+
+            List<String> forRemoval = new ArrayList<>();
+            forRemoval.addAll(afkPlayers);
+
+            for(String uuid : forRemoval) {
+                removeAfk(Bukkit.getPlayer(UUID.fromString(uuid)));
+            }
+            afkPlayers.clear();
+        }
+    }
+
     public void removeAfk(Player player) {
         if(!afkPlayers.contains(player.getUniqueId().toString())) {
             return;
@@ -116,12 +130,25 @@ public class AfkModule implements Listener {
         afkPlayers.remove(player.getUniqueId().toString());
         AfkTracker tracker = playerTracker.get(player.getUniqueId().toString());
 
+        player.setPlayerListName(ChatColor.WHITE + player.getName());
+
         tracker.setStartLocation(player.getLocation());
         tracker.setAfkTime(0);
+    }
+
+    public int getAfkTime() {
+        return afkTime;
+    }
+
+    public void setAfkTime(int afkTime) {
+        this.afkTime = afkTime;
     }
 
     public List<String> getAfkPlayers() {
         return afkPlayers;
     }
 
+    public HashMap<String, AfkTracker> getPlayerTracker() {
+        return playerTracker;
+    }
 }

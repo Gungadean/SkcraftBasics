@@ -7,6 +7,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
@@ -34,7 +35,7 @@ public class RailModule implements Listener {
     private Class<?> craftPlayerClass;
 
     public RailModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
     @EventHandler
@@ -50,10 +51,6 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onItemDispense(BlockDispenseEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getItem().getType() != Material.MINECART || event.getBlock().getType() != Material.DISPENSER) {
             return;
         }
@@ -87,12 +84,8 @@ public class RailModule implements Listener {
         event.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onVehicleDamage(VehicleDamageEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         Vehicle vehicle = event.getVehicle();
         Entity attacker = event.getAttacker();
 
@@ -101,12 +94,8 @@ public class RailModule implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void portalTeleport(VehicleMoveEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(event.getTo().getBlock().getType() != Material.NETHER_PORTAL) {
             return;
         }
@@ -143,12 +132,10 @@ public class RailModule implements Listener {
             passenger.setMetadata("xVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getX()));
             passenger.setMetadata("zVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getZ()));
 
-            if(passenger instanceof Player) {
-                try {
-                    setInvulnerable((Player)passenger, true);
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
+            try {
+                setInvulnerable((Player)passenger, true);
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                e.printStackTrace();
             }
 
             event.getVehicle().eject();
@@ -158,22 +145,16 @@ public class RailModule implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
             players.remove(passenger.getUniqueId().toString());
 
-            if(passenger instanceof Player) {
-                try {
-                    setInvulnerable((Player) passenger, false);
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
+            try {
+                setInvulnerable((Player) passenger, false);
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
+                e.printStackTrace();
             }
         }, 10L);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onEntityTeleport(PlayerPortalEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!event.getPlayer().hasMetadata("PortalLocation")) {
             return;
         }
@@ -191,12 +172,8 @@ public class RailModule implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> teleportThroughPortal(entity, from, entity.getLocation(), vector), 2);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void stargateActivator(BlockRedstoneEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!plugin.enabledModules.contains("Stargate")) {
             return;
         }
@@ -209,7 +186,7 @@ public class RailModule implements Listener {
             return;
         }
 
-        if(!event.getBlock().getRelative(0, -2, 0).getType().toString().contains("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getBlock().getRelative(0, -2, 0).getType())) {
             return;
         }
 
@@ -232,12 +209,8 @@ public class RailModule implements Listener {
         plugin.stargateModule.openPortalNamed(stargateLocation.getBlock(), sign.getLine(1));
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onSignPlace(SignChangeEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         if(!event.getLine(0).equalsIgnoreCase("[Stargate Rail]")) {
             return;
         }
@@ -412,7 +385,7 @@ public class RailModule implements Listener {
     }
 
     private static boolean isRail(Material mat) {
-        return mat == Material.RAIL || mat == Material.POWERED_RAIL || mat == Material.DETECTOR_RAIL || mat == Material.ACTIVATOR_RAIL;
+        return Tag.RAILS.getValues().contains(mat);
     }
 
     private static boolean isConcrete(Material mat) {
@@ -452,7 +425,12 @@ public class RailModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("Rail");
 
         if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.railModule);
+            plugin.pm.registerEvents(plugin.railModule, plugin);
+
             plugin.logger.info("- RailModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.railModule);
         }
     }
 

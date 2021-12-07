@@ -16,19 +16,24 @@ import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class SkcraftBasics extends JavaPlugin {
 
     public Logger logger = Logger.getLogger("Minecraft");
-    final PluginManager pm = Bukkit.getPluginManager();
+    public final PluginManager pm = Bukkit.getPluginManager();
     private SkcraftCommandHandler skcraftCommandHandler;
 
     public LuckPerms luckPerms;
@@ -55,10 +60,10 @@ public class SkcraftBasics extends JavaPlugin {
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
     public ShopModule shopModule;
-    public GalapagosModule galapagosModule;
     public InkSignModule inkSignModule;
     public MiningWorldModule miningWorldModule;
     public ChunkLoaderModule chunkLoaderModule;
+    public ProgressiveDeepslateModule progressiveDeepslateModule;
 
     public final File stargateDir = new File(getDataFolder(), "Stargates");
     public final File worldsDir = new File(getDataFolder(), "WorldManager");
@@ -100,27 +105,41 @@ public class SkcraftBasics extends JavaPlugin {
 
         enabledModules = getConfig().getStringList("Enabled-Modules");
 
-        enderPearlTeleportModule = new EnderPearlTeleportModule(this);
-
-        if(enabledModules.contains("Crafting")) {
-            craftingModule = new CraftingModule(this);
-        }
-
-        stargateModule = new StargateModule(this);
-        jetBootModule = new JetBootModule(this);
+        afkModule = new AfkModule(this);
+        betterPistonsModule = new BetterPistonsModule(this);
         captureBallModule = new CaptureBallModule(this);
         chatChannelsModule = new ChatChannelsModule(this);
+        chunkLoaderModule = new ChunkLoaderModule(this);
+        craftingModule = new CraftingModule(this);
+        enderPearlTeleportModule = new EnderPearlTeleportModule(this);
         goldToolModule = new GoldToolModule(this);
+        inkSignModule = new InkSignModule(this);
+        jetBootModule = new JetBootModule(this);
+        miningWorldModule = new MiningWorldModule(this);
+        mobTurretModule = new MobTurretModule(this);
         railModule = new RailModule(this);
         rotatorModule = new RotatorModule(this);
-        betterPistonsModule = new BetterPistonsModule(this);
-        afkModule = new AfkModule(this);
-        mobTurretModule = new MobTurretModule(this);
         shopModule = new ShopModule(this);
-        galapagosModule = new GalapagosModule(this);
-        inkSignModule = new InkSignModule(this);
-        miningWorldModule = new MiningWorldModule(this);
-        chunkLoaderModule = new ChunkLoaderModule(this);
+        stargateModule = new StargateModule(this);
+        //progressiveDeepslateModule = new ProgressiveDeepslateModule(this);
+
+        afkModule.updateConfig(this);
+        betterPistonsModule.updateConfig(this);
+        captureBallModule.updateConfig(this);
+        chatChannelsModule.updateConfig(this);
+        chunkLoaderModule.updateConfig(this);
+        craftingModule.updateConfig(this);
+        enderPearlTeleportModule.updateConfig(this);
+        goldToolModule.updateConfig(this);
+        inkSignModule.updateConfig(this);
+        jetBootModule.updateConfig(this);
+        miningWorldModule.updateConfig(this);
+        mobTurretModule.updateConfig(this);
+        //progressiveDeepslateModule.updateConfig(this);
+        railModule.updateConfig(this);
+        rotatorModule.updateConfig(this);
+        shopModule.updateConfig(this);
+        stargateModule.updateConfig(this);
 
         /*if(useMysql) {
             sql = new SqlHandler(username, password, address, port, database, this);
@@ -129,28 +148,6 @@ public class SkcraftBasics extends JavaPlugin {
         }*/
 
         pm.registerEvents(new SkcraftEventHandler(this), this);
-
-        pm.registerEvents(enderPearlTeleportModule, this);
-
-        if(enabledModules.contains("Crafting")) {
-            pm.registerEvents(craftingModule, this);
-        }
-
-        pm.registerEvents(stargateModule, this);
-        pm.registerEvents(jetBootModule, this);
-        pm.registerEvents(captureBallModule, this);
-        pm.registerEvents(chatChannelsModule, this);
-        pm.registerEvents(goldToolModule, this);
-        pm.registerEvents(railModule, this);
-        pm.registerEvents(rotatorModule, this);
-        pm.registerEvents(betterPistonsModule, this);
-        pm.registerEvents(afkModule, this);
-        pm.registerEvents(mobTurretModule, this);
-        pm.registerEvents(shopModule, this);
-        pm.registerEvents(galapagosModule, this);
-        pm.registerEvents(inkSignModule, this);
-        pm.registerEvents(miningWorldModule, this);
-        pm.registerEvents(chunkLoaderModule, this);
 
         if(getConfig().getString("Spawn-Location").equalsIgnoreCase("")) {
             spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
@@ -164,9 +161,6 @@ public class SkcraftBasics extends JavaPlugin {
         inventoriesDir.mkdirs();
         loadChatChannelsFromFile();
         logger.info("[SkcraftBasics] Finished loading data from configs.");
-
-        jetBootModule.registerJetbootDurabilityCheck();
-        jetBootModule.registerBeaconCheck();
 
         skcraftCommandHandler = new SkcraftCommandHandler(this);
         worldManager = new SkcraftWorldManager(this);
@@ -276,7 +270,7 @@ public class SkcraftBasics extends JavaPlugin {
 
         saveConfig();
         logger.info("[SkcraftBasics] Finished saving data to configs.");
-        logger.info("[SkcraftBasics] has stopped.");
+        logger.info("[SkcraftBasics] Plugin has stopped.");
     }
 
     private void loadConfig() {
@@ -291,6 +285,18 @@ public class SkcraftBasics extends JavaPlugin {
 
         this.disabledCommands = getConfig().getStringList("DisabledCommands");
         this.enabledModules = getConfig().getStringList("Enabled-Modules");
+    }
+
+    public void enableListeners(Listener listener) {
+        if(!HandlerList.getRegisteredListeners(this).contains(listener)) {
+            pm.registerEvents(listener, this);
+        }
+    }
+
+    public void disableListeners(Listener listener) {
+        if(HandlerList.getRegisteredListeners(this).contains(listener)) {
+            HandlerList.unregisterAll(listener);
+        }
     }
 
     public void reloadPlugin() {
@@ -316,18 +322,25 @@ public class SkcraftBasics extends JavaPlugin {
 
         createCustomConfigs();
 
+        if(enabledModules.contains("Admin")) {
+            logger.info("- AdminModule Enabled");
+        }
+        afkModule.updateConfig(this);
         betterPistonsModule.updateConfig(this);
         captureBallModule.updateConfig(this);
         chatChannelsModule.updateConfig(this);
         chunkLoaderModule.updateConfig(this);
         craftingModule.updateConfig(this);
         enderPearlTeleportModule.updateConfig(this);
-        galapagosModule.updateConfig(this);
         goldToolModule.updateConfig(this);
         inkSignModule.updateConfig(this);
+        if(enabledModules.contains("Invite")) {
+            logger.info("- InviteModule Enabled");
+        }
         jetBootModule.updateConfig(this);
         miningWorldModule.updateConfig(this);
         mobTurretModule.updateConfig(this);
+        //progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
         rotatorModule.updateConfig(this);
         shopModule.updateConfig(this);
@@ -551,9 +564,7 @@ public class SkcraftBasics extends JavaPlugin {
     public void removeInteractCooldown(String uuid) {
         interactCooldown.add(uuid);
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
-            interactCooldown.remove(uuid);
-        }, 1);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> interactCooldown.remove(uuid), 1);
     }
 
     public void savePlayerToFile(Player player) {

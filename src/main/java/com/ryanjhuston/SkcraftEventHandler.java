@@ -5,6 +5,7 @@ import com.ryanjhuston.Types.SkcraftPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ComplexEntityPart;
 import org.bukkit.entity.EntityType;
@@ -65,7 +66,7 @@ public class SkcraftEventHandler implements Listener {
                 skcraftPlayer = plugin.mapper.readValue(playerFile, SkcraftPlayer.class);
             } catch (Exception e) {
                 System.out.println("[SkcraftBasics] ERROR: It appears that " + event.getPlayer().getName() + "'s data file is corrupted. Creating new SkcraftPlayer instance.");
-                skcraftPlayer = new SkcraftPlayer(uuid, null, false, new ArrayList<>(), new ArrayList<>(), false, false);
+                skcraftPlayer = new SkcraftPlayer(uuid, null, false, false, new ArrayList<>(), new ArrayList<>(), false, false);
             }
         }else if(playerFileLegacy.exists()) {
             try {
@@ -74,7 +75,7 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") && playerConfig.getBoolean("InModMode")), playerConfig.getBoolean("IsAdmin"));
+            skcraftPlayer = new SkcraftPlayer(uuid, Material.matchMaterial(playerConfig.getString("TeleportItem")), playerConfig.getBoolean("WasFlying"), false, playerConfig.getStringList("PermanentTeleAuthed"), playerConfig.getStringList("TeleAuthed"), (playerConfig.contains("InModeMode") && playerConfig.getBoolean("InModMode")), playerConfig.getBoolean("IsAdmin"));
             playerFileLegacy.delete();
         } else {
             try {
@@ -84,7 +85,7 @@ public class SkcraftEventHandler implements Listener {
                 e.printStackTrace();
             }
 
-            skcraftPlayer = new SkcraftPlayer(uuid, null, false, new ArrayList<>(), new ArrayList<>(), false, false);
+            skcraftPlayer = new SkcraftPlayer(uuid, null, false, false, new ArrayList<>(), new ArrayList<>(), false, false);
         }
 
         Material teleportItem = skcraftPlayer.getTeleportItem();
@@ -121,12 +122,8 @@ public class SkcraftEventHandler implements Listener {
         event.setRespawnLocation(plugin.spawnLocation);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onPlayerSleep(PlayerBedEnterEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(Bukkit.getWorlds().get(0).getTime() < 12545 && !Bukkit.getWorlds().get(0).hasStorm()) {
             return;
         }
@@ -134,12 +131,8 @@ public class SkcraftEventHandler implements Listener {
        plugin.checkSleep();
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onItemDispense(BlockDispenseEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("InfiniteCarts")) {
             return;
         }
@@ -152,17 +145,13 @@ public class SkcraftEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("InfiniteSigns")) {
             return;
         }
 
-        if(!event.getBlockPlaced().getType().toString().endsWith("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getBlockPlaced().getType())) {
             return;
         }
 
@@ -172,12 +161,8 @@ public class SkcraftEventHandler implements Listener {
         event.getPlayer().getInventory().setItem(event.getHand(), sign);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onItemPickup(EntityPickupItemEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("InfiniteSigns")) {
             return;
         }
@@ -189,7 +174,7 @@ public class SkcraftEventHandler implements Listener {
 
         Player player = (Player)event.getEntity();
 
-        if(!event.getItem().getItemStack().getType().toString().endsWith("_SIGN")) {
+        if(!Tag.SIGNS.getValues().contains(event.getItem().getItemStack().getType())) {
             return;
         }
 
@@ -199,23 +184,18 @@ public class SkcraftEventHandler implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onWeatherChange(WeatherChangeEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         Random rand = new Random();
 
         if(event.toWeatherState()) {
             if(rand.nextInt(2) != 0) {
                 event.setCancelled(true);
-                return;
             }
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onExplosion(EntityExplodeEvent event) {
         if (!plugin.enabledModules.contains("DisableExplosions")) {
             return;
@@ -228,12 +208,8 @@ public class SkcraftEventHandler implements Listener {
         event.blockList().clear();
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onMobGrief(EntityChangeBlockEvent event) {
-        if(event.isCancelled()) {
-            return;
-        }
-
         if (!plugin.enabledModules.contains("DisableExplosions")) {
             return;
         }
@@ -253,12 +229,11 @@ public class SkcraftEventHandler implements Listener {
         if(event.getEntity() instanceof ComplexEntityPart) {
             if(((ComplexEntityPart)event.getEntity()).getParent().getType() == EntityType.ENDER_DRAGON) {
                 event.setCancelled(true);
-                return;
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (!plugin.enabledModules.contains("EnderEyeChests")) {
             return;

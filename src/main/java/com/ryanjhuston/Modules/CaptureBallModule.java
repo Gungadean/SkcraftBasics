@@ -4,6 +4,7 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -23,18 +24,18 @@ public class CaptureBallModule implements Listener {
     private boolean moduleEnabled;
 
     public CaptureBallModule(SkcraftBasics plugin) {
-        updateConfig(plugin);
+        this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onProjectileHit(ProjectileHitEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
         Entity entity = event.getHitEntity();
 
         if(entity == null) {
+            return;
+        }
+
+        if(entity instanceof Player) {
             return;
         }
 
@@ -53,31 +54,15 @@ public class CaptureBallModule implements Listener {
         hitEntity.add(entity);
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getDamager().getType() == EntityType.EGG) {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if(!moduleEnabled) {
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.EGG) {
             return;
         }
@@ -104,8 +89,8 @@ public class CaptureBallModule implements Listener {
 
         if(entity.getType() == EntityType.MUSHROOM_COW) {
             material = Material.MOOSHROOM_SPAWN_EGG;
-        } else if(Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG") != null) {
-            material = Material.matchMaterial(entity.getType().toString() + "_SPAWN_EGG");
+        } else if(Material.matchMaterial(entity.getType() + "_SPAWN_EGG") != null) {
+            material = Material.matchMaterial(entity.getType() + "_SPAWN_EGG");
         } else {
             return null;
         }
@@ -125,7 +110,12 @@ public class CaptureBallModule implements Listener {
         moduleEnabled = plugin.enabledModules.contains("CaptureBall");
 
         if(moduleEnabled) {
+            HandlerList.unregisterAll(plugin.captureBallModule);
+            plugin.pm.registerEvents(plugin.captureBallModule, plugin);
+
             plugin.logger.info("- CaptureBallModule Enabled");
+        } else {
+            HandlerList.unregisterAll(plugin.captureBallModule);
         }
     }
 }
