@@ -90,10 +90,7 @@ public class JetBootModule implements Listener {
             return;
         }
 
-        if(event.getBlockPlaced().getType() != Material.IRON_BLOCK &&
-                event.getBlockPlaced().getType() != Material.GOLD_BLOCK &&
-                event.getBlockPlaced().getType() != Material.DIAMOND_BLOCK &&
-                event.getBlockPlaced().getType() != Material.EMERALD_BLOCK) {
+        if(!Tag.BEACON_BASE_BLOCKS.getValues().contains(event.getBlockPlaced().getType())) {
             return;
         }
 
@@ -312,9 +309,7 @@ public class JetBootModule implements Listener {
 
             fallGraceCheck.add(uuid);
 
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                fallGraceCheck.remove(uuid);
-            }, 200);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> fallGraceCheck.remove(uuid), 200);
         }
     }
 

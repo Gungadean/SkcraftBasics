@@ -35,6 +35,10 @@ public class CaptureBallModule implements Listener {
             return;
         }
 
+        if(entity instanceof Player) {
+            return;
+        }
+
         if (event.getEntity().getType() != EntityType.EGG) {
             return;
         }

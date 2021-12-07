@@ -568,12 +568,8 @@ public class StargateModule implements Listener {
         }.runTaskLater(plugin, (resetDelay*20));
     }
 
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void playerTeleport(PlayerPortalEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         for(int x = -1; x < 2; x++) {
             for(int z = -1; z < 2; z++) {
                 Block block = event.getPlayer().getLocation().getBlock().getRelative(x, 0, z);

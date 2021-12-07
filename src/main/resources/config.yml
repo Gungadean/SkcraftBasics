@@ -83,7 +83,6 @@ Module-Settings:
     Banned-Mobs:
       - ARMOR_STAND
       - ENDER_DRAGON
-      - PLAYER
       - SHULKER
       - WANDERING_TRADER
       - TRADER_LLAMA
