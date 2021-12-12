@@ -75,10 +75,6 @@ public class AfkModule implements Listener {
 
     @EventHandler (ignoreCancelled = true)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         if(event.getEntity() instanceof Player) {
             Player player = (Player)event.getEntity();
 
@@ -112,8 +108,7 @@ public class AfkModule implements Listener {
                 afkCheckerTask.cancel();
             }
 
-            List<String> forRemoval = new ArrayList<>();
-            forRemoval.addAll(afkPlayers);
+            List<String> forRemoval = new ArrayList<>(afkPlayers);
 
             for(String uuid : forRemoval) {
                 removeAfk(Bukkit.getPlayer(UUID.fromString(uuid)));

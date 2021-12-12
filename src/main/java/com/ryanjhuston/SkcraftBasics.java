@@ -3,13 +3,10 @@ package com.ryanjhuston;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.ryanjhuston.Database.SqlHandler;
+import com.ryanjhuston.Hooks.LuckPermsHook;
 import com.ryanjhuston.Modules.*;
-import com.ryanjhuston.Types.EnderTurret;
+import com.ryanjhuston.Types.*;
 import com.ryanjhuston.Types.Serializers.*;
-import com.ryanjhuston.Types.Shop;
-import com.ryanjhuston.Types.SkcraftPlayer;
-import com.ryanjhuston.Types.Stargate;
-import net.luckperms.api.LuckPerms;
 import org.bukkit.*;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.EnderCrystal;
@@ -19,7 +16,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -36,7 +32,7 @@ public class SkcraftBasics extends JavaPlugin {
     public final PluginManager pm = Bukkit.getPluginManager();
     private SkcraftCommandHandler skcraftCommandHandler;
 
-    public LuckPerms luckPerms;
+    public LuckPermsHook luckPerms = null;
 
     private SqlHandler sql;
 
@@ -55,7 +51,7 @@ public class SkcraftBasics extends JavaPlugin {
     public ChatChannelsModule chatChannelsModule;
     public GoldToolModule goldToolModule;
     public RailModule railModule;
-    public RotatorModule rotatorModule;
+    public BuilderModule builderModule;
     public BetterPistonsModule betterPistonsModule;
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
@@ -118,7 +114,7 @@ public class SkcraftBasics extends JavaPlugin {
         miningWorldModule = new MiningWorldModule(this);
         mobTurretModule = new MobTurretModule(this);
         railModule = new RailModule(this);
-        rotatorModule = new RotatorModule(this);
+        builderModule = new BuilderModule(this);
         shopModule = new ShopModule(this);
         stargateModule = new StargateModule(this);
         //progressiveDeepslateModule = new ProgressiveDeepslateModule(this);
@@ -137,7 +133,7 @@ public class SkcraftBasics extends JavaPlugin {
         mobTurretModule.updateConfig(this);
         //progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
-        rotatorModule.updateConfig(this);
+        builderModule.updateConfig(this);
         shopModule.updateConfig(this);
         stargateModule.updateConfig(this);
 
@@ -153,6 +149,13 @@ public class SkcraftBasics extends JavaPlugin {
             spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
         } else {
             spawnLocation = stringToLocation(getConfig().getString("Spawn-Location"));
+        }
+
+        Bukkit.getPluginManager().isPluginEnabled("luckperms");
+        if(Bukkit.getPluginManager().isPluginEnabled("luckperms")) {
+            logger.info("[SkcraftBasics] LuckPerms found, initializing LuckPermsHook.");
+
+            luckPerms = new LuckPermsHook(this);
         }
 
         logger.info("[SkcraftBasics] Loading data from configs.");
@@ -229,13 +232,6 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("mod").setExecutor(skcraftCommandHandler);
         this.getCommand("worldmanager").setExecutor(skcraftCommandHandler);
         this.getCommand("wm").setExecutor(skcraftCommandHandler);
-
-        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
-        if(provider != null) {
-            logger.info("LuckPerms found, loading api.");
-
-            luckPerms = provider.getProvider();
-        }
 
         logger.info("has started.");
     }
@@ -342,7 +338,7 @@ public class SkcraftBasics extends JavaPlugin {
         mobTurretModule.updateConfig(this);
         //progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
-        rotatorModule.updateConfig(this);
+        builderModule.updateConfig(this);
         shopModule.updateConfig(this);
         stargateModule.updateConfig(this);
 
@@ -428,10 +424,11 @@ public class SkcraftBasics extends JavaPlugin {
     public void loadBeaconsFromFile() {
         if(beaconsFile.exists()) {
             try {
-                SerializedLocation[] beacons = mapper.readValue(beaconsFile, SerializedLocation[].class);
+                SerializedJetbootBeacon[] beacons = mapper.readValue(beaconsFile, SerializedJetbootBeacon[].class);
 
-                for(SerializedLocation serializedLocation : beacons) {
-                    jetBootModule.activeBeacons.add(serializedLocation.deserialize());
+                for(SerializedJetbootBeacon serializedJetbootBeacon : beacons) {
+                    jetBootModule.activeBeacons.add(serializedJetbootBeacon.deserialize());
+
                 }
             } catch (Exception e) {
                 System.out.println("[SkcraftBasics] ERROR: It appears that the beacons file's data is corrupted. Creating new beacons file.");
@@ -440,14 +437,14 @@ public class SkcraftBasics extends JavaPlugin {
     }
 
     public void saveBeaconsToFile() {
-        List<SerializedLocation> beaconLocations = new ArrayList<>();
+        List<SerializedJetbootBeacon> beacons = new ArrayList<>();
 
-        for(Location location : jetBootModule.activeBeacons) {
-            beaconLocations.add(new SerializedLocation(location));
+        for(JetbootBeacon jetbootBeacon : jetBootModule.activeBeacons) {
+            beacons.add(new SerializedJetbootBeacon(jetbootBeacon.getLocation(), jetbootBeacon.getBeaconTier(), jetbootBeacon.getBaseTier()));
         }
 
         try {
-            mapper.writeValue(beaconsFile, beaconLocations);
+            mapper.writeValue(beaconsFile, beacons);
         } catch (Exception e) {
             e.printStackTrace();
         }

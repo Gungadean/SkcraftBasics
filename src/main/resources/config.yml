@@ -35,11 +35,18 @@ Module-Settings:
   JetBoot-Module:
     JetBoot-Damage: 1
     Durability-Update-Freq: 10
-    Tier-One-Radius: 20
-    Tier-Two-Radius: 30
-    Tier-Three-Radius: 40
-    Tier-Four-Radius: 50
-  Rotator-Module:
+    Tiers:
+      Tier-One-Radius: 20
+      Tier-Two-Radius: 30
+      Tier-Three-Radius: 40
+      Tier-Four-Radius: 50
+    Multipliers:
+      Iron-Multiplier: 1
+      Gold-Multiplier: 1.2
+      Diamond-Multiplier: 1.4
+      Emerald-Multiplier: 1.6
+      Netherite-Multiplier: 1.8
+  Builder-Module:
     Tool-Material: BLAZE_ROD
   InkSign-Module:
     Tool-Material: INK_SAC

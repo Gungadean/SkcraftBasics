@@ -9,6 +9,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.List;
+
 public class MobTurretTask extends BukkitRunnable {
 
     private final MobTurretModule mobTurretModule;

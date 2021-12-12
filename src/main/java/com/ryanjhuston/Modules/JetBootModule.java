@@ -3,8 +3,10 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Tasks.JetBoot.BeaconCheckTask;
 import com.ryanjhuston.Tasks.JetBoot.JetBootDurabilityTask;
+import com.ryanjhuston.Types.JetbootBeacon;
 import org.bukkit.*;
 import org.bukkit.block.Beacon;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -23,18 +25,19 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Predicate;
+
+import static org.bukkit.Material.*;
 
 public class JetBootModule implements Listener {
 
     private SkcraftBasics plugin;
 
-    public List<Location> activeBeacons = new ArrayList<>();
+    public List<JetbootBeacon> activeBeacons = new ArrayList<>();
     public List<String> jetboots = new ArrayList<>();
     public HashMap<String, Integer> flyTime = new HashMap<>();
     public List<String> fallGraceCheck = new ArrayList<>();
@@ -43,6 +46,12 @@ public class JetBootModule implements Listener {
     public double tierTwoRadius;
     public double tierThreeRadius;
     public double tierFourRadius;
+
+    public double ironMultiplier;
+    public double goldMultiplier;
+    public double diamondMultiplier;
+    public double emeraldMultiplier;
+    public double netheriteMultiplier;
 
     public int jetbootDamage;
     public int durabilityFreq;
@@ -62,7 +71,7 @@ public class JetBootModule implements Listener {
             return;
         }
 
-        if(event.getBlockPlaced().getType() != Material.BEACON) {
+        if(event.getBlockPlaced().getType() != BEACON) {
             return;
         }
 
@@ -78,7 +87,17 @@ public class JetBootModule implements Listener {
                 return;
             }
 
-            activeBeacons.add(beacon.getLocation());
+            List<Location> baseLocations = new ArrayList<>();
+            for(int i = 1; i <= beacon.getTier(); i++) {
+                for(int x = -i; x <= i; x++) {
+                    for(int z = -i; z <= i; z++) {
+                        baseLocations.add(beacon.getBlock().getRelative(x, -i, z).getLocation());
+                        beacon.getBlock().getRelative(x, -i, z).setMetadata("Jetboots", new FixedMetadataValue(plugin, beacon.getLocation()));
+                    }
+                }
+            }
+
+            activeBeacons.add(createJetbootBeacon(beacon.getLocation(), beacon.getTier()));
 
             plugin.saveBeaconsToFile();
         }, 100);
@@ -95,18 +114,27 @@ public class JetBootModule implements Listener {
         }
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-            for(int x = (event.getBlock().getChunk().getX()-1); x <= 1; x++) {
-                for(int z = (event.getBlock().getChunk().getZ()-1); z <=1; z++) {
+            for(int x = (event.getBlock().getChunk().getX()-1); x <= (event.getBlock().getChunk().getX()+1); x++) {
+                for(int z = (event.getBlock().getChunk().getZ()-1); z <= (event.getBlock().getChunk().getZ()+1); z++) {
                     Chunk chunk = event.getBlock().getWorld().getChunkAt(x, z);
                     for(BlockState state : chunk.getTileEntities()) {
+
                         if(state instanceof Beacon) {
-                            if(((Beacon) state).getTier() == 0) {
+                            int tier = ((Beacon) state).getTier();
+                            if(tier == 0) {
                                 continue;
                             }
 
-                            if(!activeBeacons.contains(state.getLocation())) {
-                                activeBeacons.add(state.getLocation());
+                            JetbootBeacon beacon = getJetbootBeacon(state.getLocation());
+
+                            if(beacon != null) {
+                                System.out.println("Beacon found");
+                                activeBeacons.remove(beacon);
+                                System.out.println(activeBeacons);
+                            } else {
+                                System.out.println("No Beacon found");
                             }
+                            activeBeacons.add(createJetbootBeacon(state.getLocation(), tier));
                         }
                     }
                 }
@@ -116,7 +144,11 @@ public class JetBootModule implements Listener {
 
     @EventHandler (ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if(event.getBlock().getType() != Material.BEACON) {
+        if(event.getBlock().getType() != BEACON) {
+            return;
+        }
+
+        if(!event.getBlock().hasMetadata("Jetboots")) {
             return;
         }
 
@@ -150,15 +182,15 @@ public class JetBootModule implements Listener {
             return;
         }
 
-        if(event.getClickedBlock().getType() != Material.BEACON) {
+        if(event.getClickedBlock().getType() != BEACON) {
             return;
         }
 
-        if(item.getType() == Material.IRON_BOOTS ||
-                item.getType() == Material.CHAINMAIL_BOOTS ||
-                item.getType() == Material.GOLDEN_BOOTS ||
-                item.getType() == Material.DIAMOND_BOOTS ||
-                item.getType() == Material.NETHERITE_BOOTS) {
+        if(item.getType() == IRON_BOOTS ||
+                item.getType() == CHAINMAIL_BOOTS ||
+                item.getType() == GOLDEN_BOOTS ||
+                item.getType() == DIAMOND_BOOTS ||
+                item.getType() == NETHERITE_BOOTS) {
 
             plugin.removeInteractCooldown(event.getPlayer().getUniqueId().toString());
 
@@ -210,11 +242,11 @@ public class JetBootModule implements Listener {
             return;
         }
 
-        if(event.getCurrentItem().getType() != Material.IRON_BOOTS &&
-                event.getCurrentItem().getType() != Material.CHAINMAIL_BOOTS &&
-                event.getCurrentItem().getType() != Material.GOLDEN_BOOTS &&
-                event.getCurrentItem().getType() != Material.DIAMOND_BOOTS &&
-                event.getCurrentItem().getType() != Material.NETHERITE_BOOTS) {
+        if(event.getCurrentItem().getType() != IRON_BOOTS &&
+                event.getCurrentItem().getType() != CHAINMAIL_BOOTS &&
+                event.getCurrentItem().getType() != GOLDEN_BOOTS &&
+                event.getCurrentItem().getType() != DIAMOND_BOOTS &&
+                event.getCurrentItem().getType() != NETHERITE_BOOTS) {
             return;
         }
 
@@ -253,26 +285,60 @@ public class JetBootModule implements Listener {
         event.setCancelled(true);
     }
 
+    public int getMaterialTier(Material material) {
+        switch(material) {
+            case IRON_BLOCK: return 1;
+            case GOLD_BLOCK: return 2;
+            case DIAMOND_BLOCK: return 3;
+            case EMERALD_BLOCK: return 4;
+            case NETHERITE_BLOCK: return 5;
+            default: return 6;
+        }
+    }
+
+    public JetbootBeacon createJetbootBeacon(Location location, int tier) {
+        Material lowestMaterial = location.getBlock().getRelative(0, -1, 0).getType();
+
+        Block currentBlock;
+        for(int i = 1; i <= tier; i++) {
+            for (int x = -i; x <= i; x++) {
+                for (int z = -i; z <= i; z++) {
+                    currentBlock = location.getBlock().getRelative(x, -i, z);
+                    if (getMaterialTier(lowestMaterial) > getMaterialTier(currentBlock.getType())) {
+                        lowestMaterial = currentBlock.getType();
+                    }
+                }
+            }
+        }
+
+        plugin.logger.info(location + " - " + tier + " - " + lowestMaterial);
+
+        return new JetbootBeacon(location, tier, lowestMaterial);
+    }
+
     public boolean checkBeaconList(String uuid) {
-        List<Location> forRemoval = new ArrayList<>();
+        List<JetbootBeacon> forRemoval = new ArrayList<>();
 
-        for(Location location : activeBeacons) {
-            if(!(location.getBlock().getType() == Material.BEACON)) {
-                forRemoval.add(location);
+        for(JetbootBeacon jetbootBeacon : activeBeacons) {
+            System.out.println(jetbootBeacon.getLocation());
+            if(!(jetbootBeacon.getLocation().getBlock().getType() == BEACON)) {
+                forRemoval.add(jetbootBeacon);
                 continue;
             }
 
-            if(!(location.getBlock().getState() instanceof Beacon)) {
-                forRemoval.add(location);
+            if(!(jetbootBeacon.getLocation().getBlock().getState() instanceof Beacon)) {
+                forRemoval.add(jetbootBeacon);
                 continue;
             }
 
-            Beacon beacon = (Beacon)location.getBlock().getState();
+            Beacon beacon = (Beacon)jetbootBeacon.getLocation().getBlock().getState();
 
             if(beacon.getTier() == 0) {
-                forRemoval.add(beacon.getLocation());
+                forRemoval.add(jetbootBeacon);
             } else {
-                double radius = getRadius(beacon.getTier());
+                System.out.println(jetbootBeacon.getBaseTier());
+                double radius = (getRadius(beacon.getTier()) * getMultiplier(jetbootBeacon.getBaseTier()));
+                System.out.println(jetbootBeacon.getLocation() + " - " + radius);
                 for(Entity entity : beacon.getWorld().getNearbyEntities(beacon.getLocation(), radius, radius, radius)) {
                     if(entity == null) {
                         continue;
@@ -288,7 +354,19 @@ public class JetBootModule implements Listener {
                 }
             }
         }
+
+        for(JetbootBeacon beacon : forRemoval) {
+            activeBeacons.remove(beacon);
+        }
         return false;
+    }
+
+    public void removeMetadata(List<Location> blocks) {
+        for(Location location : blocks) {
+            if (location.getBlock().hasMetadata("Jetboots")) {
+                location.getBlock().removeMetadata("Jetboots", plugin);
+            }
+        }
     }
 
     public void activateJetboots(Player player) {
@@ -336,13 +414,47 @@ public class JetBootModule implements Listener {
         }
     }
 
+    public double getMultiplier(Material material) {
+        switch(material) {
+            case IRON_BLOCK:
+                return ironMultiplier;
+            case GOLD_BLOCK:
+                return goldMultiplier;
+            case DIAMOND_BLOCK:
+                return diamondMultiplier;
+            case EMERALD_BLOCK:
+                return emeraldMultiplier;
+            case NETHERITE_BLOCK:
+                return netheriteMultiplier;
+            default:
+                return 1;
+        }
+    }
+
+    public JetbootBeacon getJetbootBeacon(Location location) {
+        JetbootBeacon result = null;
+
+        for(JetbootBeacon beacon : activeBeacons) {
+            if(beacon.getLocation().equals(location)) {
+                result = beacon;
+            }
+        }
+        return result;
+    }
+
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
 
-        tierOneRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-One-Radius");
-        tierTwoRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-Two-Radius");
-        tierThreeRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-Three-Radius");
-        tierFourRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tier-Four-Radius");
+        tierOneRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tiers.Tier-One-Radius");
+        tierTwoRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tiers.Tier-Two-Radius");
+        tierThreeRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tiers.Tier-Three-Radius");
+        tierFourRadius = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Tiers.Tier-Four-Radius");
+
+        ironMultiplier = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Multipliers.Iron-Multiplier");
+        goldMultiplier = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Multipliers.Gold-Multiplier");;
+        diamondMultiplier = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Multipliers.Diamond-Multiplier");;
+        emeraldMultiplier = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Multipliers.Emerald-Multiplier");;
+        netheriteMultiplier = plugin.getConfig().getDouble("Module-Settings.JetBoot-Module.Multipliers.Netherite-Multiplier");;
 
         jetbootDamage = plugin.getConfig().getInt("Module-Settings.JetBoot-Module.JetBoot-Damage");
         durabilityFreq = plugin.getConfig().getInt("Module-Settings.JetBoot-Module.Durability-Update-Freq");

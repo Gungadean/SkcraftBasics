@@ -3,7 +3,7 @@ name: SkcraftBasics
 author: Ryan Huston
 version: 1.3.2
 api-version: 1.18
-depend: [LuckPerms]
+softdepend: [LuckPerms]
 commands:
   accept:
     description: Accept teleport requests from player.
