@@ -3,6 +3,7 @@ package com.ryanjhuston.Modules;
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Stargate;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.*;
@@ -32,7 +33,6 @@ public class RailModule implements Listener {
     private List<String> players = new ArrayList<>();
 
     private boolean moduleEnabled;
-    private Class<?> craftPlayerClass;
 
     public RailModule(SkcraftBasics plugin) {
         this.plugin = plugin;
@@ -40,12 +40,8 @@ public class RailModule implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if(event.getPlayer().isInvulnerable() && event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-            try {
-                setInvulnerable(event.getPlayer(), false);
-            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                e.printStackTrace();
-            }
+        if (event.getPlayer().isInvulnerable() && event.getPlayer().getGameMode() != GameMode.CREATIVE) {
+            setInvulnerable(event.getPlayer(), false);
         }
     }
 
@@ -132,25 +128,17 @@ public class RailModule implements Listener {
             passenger.setMetadata("xVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getX()));
             passenger.setMetadata("zVel", new FixedMetadataValue(plugin, event.getVehicle().getVelocity().getZ()));
 
-            try {
-                setInvulnerable((Player)passenger, true);
-            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                e.printStackTrace();
-            }
+            setInvulnerable((Player) passenger, true);
 
             event.getVehicle().eject();
-            event.getVehicle().remove();
-        }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-            players.remove(passenger.getUniqueId().toString());
+            passenger.teleport(event.getTo());
 
-            try {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                players.remove(passenger.getUniqueId().toString());
                 setInvulnerable((Player) passenger, false);
-            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | NoSuchFieldException e) {
-                e.printStackTrace();
-            }
-        }, 10L);
+            }, 3);
+        }
     }
 
     @EventHandler (ignoreCancelled = true)
@@ -159,17 +147,17 @@ public class RailModule implements Listener {
             return;
         }
 
-        Entity entity = event.getPlayer();
+        Player player = event.getPlayer();
 
         Location from = plugin.stringToLocation(event.getPlayer().getMetadata("PortalLocation").get(0).asString());
 
         Vector vector = new Vector(event.getPlayer().getMetadata("xVel").get(0).asDouble(), 0, event.getPlayer().getMetadata("zVel").get(0).asDouble());
 
-        entity.removeMetadata("PortalLocation", plugin);
-        entity.removeMetadata("xVel", plugin);
-        entity.removeMetadata("zVel", plugin);
+        player.removeMetadata("PortalLocation", plugin);
+        player.removeMetadata("xVel", plugin);
+        player.removeMetadata("zVel", plugin);
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> teleportThroughPortal(entity, from, entity.getLocation(), vector), 2);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> teleportThroughPortal(player, from, player.getLocation(), vector), 2);
     }
 
     @EventHandler (ignoreCancelled = true)
@@ -434,24 +422,90 @@ public class RailModule implements Listener {
         }
     }
 
-    public boolean setInvulnerable(Player player, boolean invulnerable) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
-        if(craftPlayerClass == null) {
-            craftPlayerClass = Class.forName("org.bukkit.craftbukkit." + getServerVersion() +".entity.CraftPlayer");
+    //"Borrowed" from InstantNetherPortals
+
+    private boolean playerAbilitiesOldType;
+    private String playerAbilitiesName = null;
+    private String invulnerableName = null;
+
+    public void setInvulnerable(Player player, boolean bool) {
+        if(player.getGameMode() == GameMode.CREATIVE) {
+            return;
         }
 
-        Method getHandle = craftPlayerClass.getMethod("getHandle");
-
-        Object entityPlayer = getHandle.invoke(player);
-        Object playerAbilities = entityPlayer.getClass().getSuperclass().getDeclaredField("abilities").get(entityPlayer);
-
-        if(player.getGameMode() != GameMode.CREATIVE) {
-            Field field = playerAbilities.getClass().getDeclaredField("isInvulnerable");
-            field.setAccessible(true);
-            field.setBoolean(playerAbilities, invulnerable);
-            field.setAccessible(false);
-            return true;
+        if (playerAbilitiesName == null) {
+            setPlayerAbilitiesMethodName(player);
         }
-        return false;
+
+        if (playerAbilitiesName != null && invulnerableName == null) {
+            setInvulnerableBooleanName(player);
+        }
+
+        if (playerAbilitiesName != null && invulnerableName != null) {
+            try {
+                Object playerAbilitiesObject = getPlayerAbilitiesObject(player);
+                Field invulnerableField = playerAbilitiesObject.getClass().getDeclaredField(invulnerableName);
+
+                invulnerableField.setAccessible(true);
+                invulnerableField.setBoolean(playerAbilitiesObject, bool);
+                invulnerableField.setAccessible(false);
+            } catch (IllegalAccessException | NoSuchFieldException exception) {
+                exception.printStackTrace();
+            }
+        } else {
+            System.out.println("Error: Deobfuscation failed");
+        }
+    }
+
+    public Object getPlayerAbilitiesObject(Player player) {
+        try {
+            Object playerObject = player.getClass().getMethod("getHandle").invoke(player);
+
+            return playerAbilitiesOldType ? playerObject.getClass().getSuperclass()
+                    .getDeclaredField(playerAbilitiesName).get(playerObject) : playerObject.getClass().getSuperclass()
+                    .getMethod(playerAbilitiesName).invoke(playerObject);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException
+                 | NoSuchFieldException exception) {
+            exception.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private void setPlayerAbilitiesMethodName(Player player) {
+        try {
+            Object playerObject = player.getClass().getMethod("getHandle").invoke(player);
+
+            for (Method method : playerObject.getClass().getSuperclass().getMethods()) {
+                if (method.getReturnType().getName().endsWith("PlayerAbilities")) {
+                    playerAbilitiesOldType = false;
+                    playerAbilitiesName = method.getName();
+
+                    return;
+                }
+            }
+
+            for (Field field : playerObject.getClass().getSuperclass().getDeclaredFields()) {
+                if (field.getType().getName().endsWith("PlayerAbilities")) {
+                    playerAbilitiesOldType = true;
+                    playerAbilitiesName = field.getName();
+
+                    return;
+                }
+            }
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    private void setInvulnerableBooleanName(Player player) {
+        Object playerAbilitiesObject = getPlayerAbilitiesObject(player);
+
+        invulnerableName = playerAbilitiesObject.getClass().getDeclaredFields()[0].getName();
+    }
+
+    public boolean isNetherPortal(Block block) {
+        return block.getType().name().equals("NETHER_PORTAL") || block.getType().name().equals("PORTAL");
     }
 
     public String getServerVersion() {

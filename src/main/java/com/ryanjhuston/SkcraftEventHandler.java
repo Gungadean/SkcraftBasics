@@ -93,7 +93,7 @@ public class SkcraftEventHandler implements Listener {
             Random random = new Random();
             do {
                 teleportItem = Material.values()[random.nextInt(Material.values().length - 1)];
-            } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR || !teleportItem.isItem());
+            } while (teleportItem.toString().contains("Legacy") || teleportItem == Material.AIR || teleportItem == Material.RED_BED || teleportItem == Material.CAMPFIRE || !teleportItem.isItem());
         }
 
         skcraftPlayer.setTeleportItem(teleportItem);
@@ -168,7 +168,6 @@ public class SkcraftEventHandler implements Listener {
         }
 
         if(!(event.getEntity() instanceof Player)) {
-            event.setCancelled(true);
             return;
         }
 

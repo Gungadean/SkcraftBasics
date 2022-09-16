@@ -8,6 +8,7 @@ import org.bukkit.*;
 import org.bukkit.block.Beacon;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,11 +26,12 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 import static org.bukkit.Material.*;
 
@@ -55,6 +57,7 @@ public class JetBootModule implements Listener {
 
     public int jetbootDamage;
     public int durabilityFreq;
+    public boolean ignoreUnbreaking;
 
     private BukkitTask beaconCheckTask;
     private BukkitTask jetBootDurabilityTask;
@@ -85,16 +88,6 @@ public class JetBootModule implements Listener {
             Beacon beacon = (Beacon)location.getBlock().getState();
             if(beacon.getTier() == 0) {
                 return;
-            }
-
-            List<Location> baseLocations = new ArrayList<>();
-            for(int i = 1; i <= beacon.getTier(); i++) {
-                for(int x = -i; x <= i; x++) {
-                    for(int z = -i; z <= i; z++) {
-                        baseLocations.add(beacon.getBlock().getRelative(x, -i, z).getLocation());
-                        beacon.getBlock().getRelative(x, -i, z).setMetadata("Jetboots", new FixedMetadataValue(plugin, beacon.getLocation()));
-                    }
-                }
             }
 
             activeBeacons.add(createJetbootBeacon(beacon.getLocation(), beacon.getTier()));
@@ -128,13 +121,12 @@ public class JetBootModule implements Listener {
                             JetbootBeacon beacon = getJetbootBeacon(state.getLocation());
 
                             if(beacon != null) {
-                                System.out.println("Beacon found");
                                 activeBeacons.remove(beacon);
-                                System.out.println(activeBeacons);
-                            } else {
-                                System.out.println("No Beacon found");
                             }
+
                             activeBeacons.add(createJetbootBeacon(state.getLocation(), tier));
+
+                            plugin.saveBeaconsToFile();
                         }
                     }
                 }
@@ -311,8 +303,6 @@ public class JetBootModule implements Listener {
             }
         }
 
-        plugin.logger.info(location + " - " + tier + " - " + lowestMaterial);
-
         return new JetbootBeacon(location, tier, lowestMaterial);
     }
 
@@ -320,7 +310,6 @@ public class JetBootModule implements Listener {
         List<JetbootBeacon> forRemoval = new ArrayList<>();
 
         for(JetbootBeacon jetbootBeacon : activeBeacons) {
-            System.out.println(jetbootBeacon.getLocation());
             if(!(jetbootBeacon.getLocation().getBlock().getType() == BEACON)) {
                 forRemoval.add(jetbootBeacon);
                 continue;
@@ -336,9 +325,7 @@ public class JetBootModule implements Listener {
             if(beacon.getTier() == 0) {
                 forRemoval.add(jetbootBeacon);
             } else {
-                System.out.println(jetbootBeacon.getBaseTier());
                 double radius = (getRadius(beacon.getTier()) * getMultiplier(jetbootBeacon.getBaseTier()));
-                System.out.println(jetbootBeacon.getLocation() + " - " + radius);
                 for(Entity entity : beacon.getWorld().getNearbyEntities(beacon.getLocation(), radius, radius, radius)) {
                     if(entity == null) {
                         continue;
@@ -359,14 +346,6 @@ public class JetBootModule implements Listener {
             activeBeacons.remove(beacon);
         }
         return false;
-    }
-
-    public void removeMetadata(List<Location> blocks) {
-        for(Location location : blocks) {
-            if (location.getBlock().hasMetadata("Jetboots")) {
-                location.getBlock().removeMetadata("Jetboots", plugin);
-            }
-        }
     }
 
     public void activateJetboots(Player player) {
@@ -393,6 +372,32 @@ public class JetBootModule implements Listener {
 
     public boolean updateDurability(Player player) {
         ItemMeta meta = player.getInventory().getBoots().getItemMeta();
+
+        if(!ignoreUnbreaking) {
+            if(meta.getEnchants().containsKey(Enchantment.DURABILITY)) {
+                double chance;
+                switch(meta.getEnchants().get(Enchantment.DURABILITY).intValue()) {
+                    case 1:
+                        chance = 80;
+                        break;
+                    case 2:
+                        chance = 73.3;
+                        break;
+                    case 3:
+                        chance = 70;
+                        break;
+                    default:
+                        chance = 100;
+                }
+
+                double rand = Math.random() * 100;
+
+                if(rand > chance) {
+                    return false;
+                }
+            }
+        }
+
         ((Damageable)meta).setDamage(((Damageable)meta).getDamage() + jetbootDamage);
         player.getInventory().getBoots().setItemMeta(meta);
 
@@ -458,6 +463,7 @@ public class JetBootModule implements Listener {
 
         jetbootDamage = plugin.getConfig().getInt("Module-Settings.JetBoot-Module.JetBoot-Damage");
         durabilityFreq = plugin.getConfig().getInt("Module-Settings.JetBoot-Module.Durability-Update-Freq");
+        ignoreUnbreaking = plugin.getConfig().getBoolean("Module-Settings.JetBoot-Module.Ignore-Unbreaking");
 
         moduleEnabled = plugin.enabledModules.contains("JetBoot");
 

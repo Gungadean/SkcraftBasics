@@ -29,35 +29,35 @@ public class SkcraftCommandHandler implements CommandExecutor {
         }
 
         try {
-            if (command.equalsIgnoreCase("invite")) {
+            if (command.equalsIgnoreCase("invite") && !plugin.disabledCommands.contains("invite")) {
                 InviteCommand.command(commandSender, args, plugin);
             }
 
-            if (command.equalsIgnoreCase("accept") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("accept") && commandSender instanceof Player && !plugin.disabledCommands.contains("accept")) {
                 AcceptCommand.command((Player) commandSender, args, plugin.getSkcraftPlayer((Player)commandSender));
             }
 
-            if (command.equalsIgnoreCase("paccept") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("paccept") && commandSender instanceof Player && !plugin.disabledCommands.contains("paccept")) {
                 PermanentAcceptCommand.command((Player) commandSender, args, plugin.getSkcraftPlayer((Player)commandSender), plugin);
             }
 
-            if (command.equalsIgnoreCase("nethercoords") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("nethercoords") && commandSender instanceof Player && !plugin.disabledCommands.contains("nethercoords")) {
                 NetherCoordsCommand.command((Player) commandSender);
             }
 
-            if (command.equalsIgnoreCase("here") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("here") && commandSender instanceof Player && !plugin.disabledCommands.contains("here")) {
                 HereCommand.command((Player) commandSender, args, plugin);
             }
 
-            if (command.equalsIgnoreCase("join") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("join") && commandSender instanceof Player && !plugin.disabledCommands.contains("join")) {
                 JoinCommand.command((Player) commandSender, args, plugin);
             }
 
-            if (command.equalsIgnoreCase("leave") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("leave") && commandSender instanceof Player && !plugin.disabledCommands.contains("leave")) {
                 LeaveCommand.command((Player) commandSender, args, plugin);
             }
 
-            if (command.equalsIgnoreCase("mod") && commandSender instanceof Player) {
+            if (command.equalsIgnoreCase("mod") && commandSender instanceof Player && !plugin.disabledCommands.contains("mod")) {
                 ModCommand.command((Player) commandSender, plugin);
             }
 

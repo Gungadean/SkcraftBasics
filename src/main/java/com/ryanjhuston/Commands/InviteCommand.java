@@ -23,7 +23,6 @@ public class InviteCommand {
     private static final Pattern UUID_FIX = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
 
     public static void command(CommandSender commandSender, String[] args, SkcraftBasics plugin) throws CommandException{
-
         if(args.length != 1) {
             throw new CommandException("Correct Usage: /invite {player-name}");
         }
@@ -32,7 +31,7 @@ public class InviteCommand {
             throw new CommandException("You cannot invite yourself.");
         }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             String url = "https://api.mojang.com/users/profiles/minecraft/"+args[0];
 
             String uuid = null;
@@ -69,6 +68,6 @@ public class InviteCommand {
             }
 
             commandSender.sendMessage(ChatColor.RED + "Player was not found. Please check the spelling and try again.");
-        }, 0);
+        });
     }
 }

@@ -7,14 +7,15 @@ import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
 public class SkcraftBasicAdminCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender sender, String[] args) {
         if(sender instanceof Player) {
-            if (!plugin.getSkcraftPlayer((Player)sender).getIsAdmin() && !sender.isOp()) {
-                throw new CommandException("You do not have permission for this command.");
+            if(!sender.hasPermission("skcraftbasics.admin")) {
+                throw new CommandException("You do not have permission to use this command.");
             }
         }
 
@@ -31,7 +32,7 @@ public class SkcraftBasicAdminCommand {
         }
 
         if(args[0].equalsIgnoreCase("spawn")) {
-            if(!(sender instanceof Player)) {
+            if(sender instanceof ConsoleCommandSender) {
                 throw new CommandException("You must be a player to execute this command.");
             }
 
@@ -43,7 +44,7 @@ public class SkcraftBasicAdminCommand {
         }
 
         if(args[0].equalsIgnoreCase("home")) {
-            if(!(sender instanceof Player)) {
+            if(sender instanceof ConsoleCommandSender) {
                 throw new CommandException("You must be a player to execute this command.");
             }
 

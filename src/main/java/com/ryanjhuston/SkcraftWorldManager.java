@@ -14,12 +14,14 @@ public class SkcraftWorldManager {
 
     public List<String> resetting = new ArrayList<>();
 
+    private String nameRegex = "[^A-Za-z0-9_\\\\-]";
+
     public SkcraftWorldManager(SkcraftBasics plugin) {
         this.plugin = plugin;
     }
 
     public World loadWorld(String worldName) throws CommandException {
-        worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
+        worldName = worldName.replaceAll(nameRegex, "");
         World world = Bukkit.getWorld(worldName);
 
         if (world != null) {
@@ -47,7 +49,7 @@ public class SkcraftWorldManager {
     }
 
     public World createWorld(String worldName, WorldType worldType, World.Environment environment, Long seed, String generator) throws CommandException {
-        worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
+        worldName = worldName.replaceAll(nameRegex, "");
         World world = Bukkit.getWorld(worldName);
 
         if (world != null) {
@@ -89,7 +91,7 @@ public class SkcraftWorldManager {
     }
 
     public void unloadWorld(String worldName) throws CommandException {
-        worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
+        worldName = worldName.replaceAll(nameRegex, "");
         World world = Bukkit.getWorld(worldName);
 
         if (world == null) {
@@ -117,7 +119,7 @@ public class SkcraftWorldManager {
     }
 
     public void deleteWorld(String worldName) throws CommandException {
-        worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
+        worldName = worldName.replaceAll(nameRegex, "");
         World world = Bukkit.getWorld(worldName);
 
         if(isDefaultWorld(worldName)) {
@@ -151,7 +153,7 @@ public class SkcraftWorldManager {
     }
 
     public World resetWorld(String worldName) throws CommandException {
-        worldName = worldName.replaceAll("[^A-Za-z0-9_\\\\-]", "");
+        worldName = worldName.replaceAll(nameRegex, "");
         World world = Bukkit.getWorld(worldName);
 
         if(world == null) {

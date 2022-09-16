@@ -2,6 +2,7 @@ Enabled-Modules:
   - Admin
   - Afk
   - BetterPistons
+  - Builder
   - CaptureBall
   - ChatChannels
   - ChunkLoader
@@ -14,7 +15,6 @@ Enabled-Modules:
   - MiningWorld
   - MobTurret
   - Rail
-  - Rotator
   - Shop
   - Stargate
   - InfiniteCarts
@@ -30,11 +30,29 @@ Chat-Color: true
 Module-Settings:
   Afk-Module:
     Afk-Time-Seconds: 300
+  Builder-Module:
+    RotatorTool-Material: BLAZE_ROD
+  CaptureBall-Module:
+    Banned-Mobs:
+      - ARMOR_STAND
+      - ENDER_DRAGON
+      - SHULKER
+      - WANDERING_TRADER
+      - TRADER_LLAMA
+      - WITHER
+      - VILLAGER
+      - ZOMBIE_VILLAGER
+  ChatChannels-Module:
+    Chat-Format: '&a[%channel%] %player%: %message%'
+    Global-Chat-Format: '<%playerDisplay%> %message%'
+    Leave-Format: '&e[%channel%] User %player% has left the channel.'
+    Join-Format: '&e[%channel%] User %player% has joined the channel.'
   Stargate-Module:
     Portal-Reset-Time: 4
   JetBoot-Module:
     JetBoot-Damage: 1
     Durability-Update-Freq: 10
+    Ignore-Unbreaking: false
     Tiers:
       Tier-One-Radius: 20
       Tier-Two-Radius: 30
@@ -46,15 +64,8 @@ Module-Settings:
       Diamond-Multiplier: 1.4
       Emerald-Multiplier: 1.6
       Netherite-Multiplier: 1.8
-  Builder-Module:
-    Tool-Material: BLAZE_ROD
   InkSign-Module:
     Tool-Material: INK_SAC
-  ChatChannels-Module:
-    Chat-Format: '&a[%channel%] %player%: %message%'
-    Global-Chat-Format: '<%playerDisplay%> %message%'
-    Leave-Format: '&e[%channel%] User %player% has left the channel.'
-    Join-Format: '&e[%channel%] User %player% has joined the channel.'
   MobTurret-Module:
     Turret-Radius: 45
     Turret-Attack-Damage: 10
@@ -86,13 +97,3 @@ Module-Settings:
       - ZOMBIE_VILLAGER
   MiningWorld-Module:
     World-Reset-Period: '0 0 2 ? * FRI'
-  CaptureBall-Module:
-    Banned-Mobs:
-      - ARMOR_STAND
-      - ENDER_DRAGON
-      - SHULKER
-      - WANDERING_TRADER
-      - TRADER_LLAMA
-      - WITHER
-      - VILLAGER
-      - ZOMBIE_VILLAGER

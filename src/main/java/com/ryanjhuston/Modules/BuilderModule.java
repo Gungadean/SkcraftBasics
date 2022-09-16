@@ -21,24 +21,20 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.Vector;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 public class BuilderModule implements Listener {
 
     private SkcraftBasics plugin;
 
     private boolean moduleEnabled;
 
-    private Material tool;
+    private Material rotatorTool;
 
     public BuilderModule(SkcraftBasics plugin) {
         this.plugin = plugin;
     }
 
     @EventHandler (priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onPlayerInteract(PlayerInteractEvent event) {
+    public void onRotatorInteract(PlayerInteractEvent event) {
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -51,7 +47,7 @@ public class BuilderModule implements Listener {
             return;
         }
 
-        if (event.getPlayer().getInventory().getItemInMainHand().getType() != tool) {
+        if (event.getPlayer().getInventory().getItemInMainHand().getType() != rotatorTool) {
             return;
         }
 
@@ -286,7 +282,7 @@ public class BuilderModule implements Listener {
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
 
-        tool = Material.getMaterial(plugin.getConfig().getString("Module-Settings.Builder-Module.Tool-Material"));
+        rotatorTool = Material.getMaterial(plugin.getConfig().getString("Module-Settings.Builder-Module.RotatorTool-Material"));
 
         moduleEnabled = plugin.enabledModules.contains("Builder");
 
