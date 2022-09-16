@@ -3,13 +3,11 @@ package com.ryanjhuston;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.ryanjhuston.Database.SqlHandler;
+import com.ryanjhuston.Hooks.CoreProtectHook;
+import com.ryanjhuston.Hooks.LuckPermsHook;
 import com.ryanjhuston.Modules.*;
-import com.ryanjhuston.Types.EnderTurret;
+import com.ryanjhuston.Types.*;
 import com.ryanjhuston.Types.Serializers.*;
-import com.ryanjhuston.Types.Shop;
-import com.ryanjhuston.Types.SkcraftPlayer;
-import com.ryanjhuston.Types.Stargate;
-import net.luckperms.api.LuckPerms;
 import org.bukkit.*;
 import org.bukkit.command.CommandException;
 import org.bukkit.entity.EnderCrystal;
@@ -19,11 +17,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +32,8 @@ public class SkcraftBasics extends JavaPlugin {
     public final PluginManager pm = Bukkit.getPluginManager();
     private SkcraftCommandHandler skcraftCommandHandler;
 
-    public LuckPerms luckPerms;
+    public LuckPermsHook luckPerms = null;
+    public CoreProtectHook coreProtect = null;
 
     private SqlHandler sql;
 
@@ -55,7 +52,7 @@ public class SkcraftBasics extends JavaPlugin {
     public ChatChannelsModule chatChannelsModule;
     public GoldToolModule goldToolModule;
     public RailModule railModule;
-    public RotatorModule rotatorModule;
+    public BuilderModule builderModule;
     public BetterPistonsModule betterPistonsModule;
     public AfkModule afkModule;
     public MobTurretModule mobTurretModule;
@@ -118,7 +115,7 @@ public class SkcraftBasics extends JavaPlugin {
         miningWorldModule = new MiningWorldModule(this);
         mobTurretModule = new MobTurretModule(this);
         railModule = new RailModule(this);
-        rotatorModule = new RotatorModule(this);
+        builderModule = new BuilderModule(this);
         shopModule = new ShopModule(this);
         stargateModule = new StargateModule(this);
         //progressiveDeepslateModule = new ProgressiveDeepslateModule(this);
@@ -137,7 +134,7 @@ public class SkcraftBasics extends JavaPlugin {
         mobTurretModule.updateConfig(this);
         //progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
-        rotatorModule.updateConfig(this);
+        builderModule.updateConfig(this);
         shopModule.updateConfig(this);
         stargateModule.updateConfig(this);
 
@@ -153,6 +150,18 @@ public class SkcraftBasics extends JavaPlugin {
             spawnLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
         } else {
             spawnLocation = stringToLocation(getConfig().getString("Spawn-Location"));
+        }
+
+        if(Bukkit.getPluginManager().isPluginEnabled("luckperms")) {
+            logger.info("[SkcraftBasics] LuckPerms found, initializing LuckPermsHook.");
+
+            luckPerms = new LuckPermsHook(this);
+        }
+
+        if(Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) {
+            logger.info("[SkcraftBasics] CoreProtect found, initializing CoreProtectHook.");
+
+            coreProtect = new CoreProtectHook(this);
         }
 
         logger.info("[SkcraftBasics] Loading data from configs.");
@@ -230,13 +239,6 @@ public class SkcraftBasics extends JavaPlugin {
         this.getCommand("worldmanager").setExecutor(skcraftCommandHandler);
         this.getCommand("wm").setExecutor(skcraftCommandHandler);
 
-        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
-        if(provider != null) {
-            logger.info("LuckPerms found, loading api.");
-
-            luckPerms = provider.getProvider();
-        }
-
         logger.info("has started.");
     }
 
@@ -287,7 +289,7 @@ public class SkcraftBasics extends JavaPlugin {
         this.enabledModules = getConfig().getStringList("Enabled-Modules");
     }
 
-    public void enableListeners(Listener listener) {
+    /*public void enableListeners(Listener listener) {
         if(!HandlerList.getRegisteredListeners(this).contains(listener)) {
             pm.registerEvents(listener, this);
         }
@@ -297,7 +299,7 @@ public class SkcraftBasics extends JavaPlugin {
         if(HandlerList.getRegisteredListeners(this).contains(listener)) {
             HandlerList.unregisterAll(listener);
         }
-    }
+    }*/
 
     public void reloadPlugin() {
         logger.info("[SkcraftBasics] Reloading config...");
@@ -342,7 +344,7 @@ public class SkcraftBasics extends JavaPlugin {
         mobTurretModule.updateConfig(this);
         //progressiveDeepslateModule.updateConfig(this);
         railModule.updateConfig(this);
-        rotatorModule.updateConfig(this);
+        builderModule.updateConfig(this);
         shopModule.updateConfig(this);
         stargateModule.updateConfig(this);
 
@@ -376,7 +378,7 @@ public class SkcraftBasics extends JavaPlugin {
                     chatChannelsModule.chatChannels.put(channel.getChannel(), channel.getPlayers());
                 }
             } catch (Exception e) {
-                System.out.println("[SkcraftBasics] ERROR: It appears that the chat channel file's data is corrupted. Creating new chat channel file.");
+                logger.severe("[SkcraftBasics] ERROR: It appears that the chat channel file's data is corrupted. Creating new chat channel file.");
             }
         }
     }
@@ -406,7 +408,7 @@ public class SkcraftBasics extends JavaPlugin {
                     shopModule.getShops().put(shop.getShopLocation(), shop);
                 }
             } catch (Exception e) {
-                System.out.println("[SkcraftBasics] ERROR: It appears that the shop file's data is corrupted. Creating new shop file.");
+                logger.severe("[SkcraftBasics] ERROR: It appears that the shop file's data is corrupted. Creating new shop file.");
             }
         }
     }
@@ -428,26 +430,27 @@ public class SkcraftBasics extends JavaPlugin {
     public void loadBeaconsFromFile() {
         if(beaconsFile.exists()) {
             try {
-                SerializedLocation[] beacons = mapper.readValue(beaconsFile, SerializedLocation[].class);
+                SerializedJetbootBeacon[] beacons = mapper.readValue(beaconsFile, SerializedJetbootBeacon[].class);
 
-                for(SerializedLocation serializedLocation : beacons) {
-                    jetBootModule.activeBeacons.add(serializedLocation.deserialize());
+                for(SerializedJetbootBeacon serializedJetbootBeacon : beacons) {
+                    jetBootModule.activeBeacons.add(serializedJetbootBeacon.deserialize());
+
                 }
             } catch (Exception e) {
-                System.out.println("[SkcraftBasics] ERROR: It appears that the beacons file's data is corrupted. Creating new beacons file.");
+                logger.info("[SkcraftBasics] ERROR: It appears that the beacons file's data is corrupted. Creating new beacons file.");
             }
         }
     }
 
     public void saveBeaconsToFile() {
-        List<SerializedLocation> beaconLocations = new ArrayList<>();
+        List<SerializedJetbootBeacon> beacons = new ArrayList<>();
 
-        for(Location location : jetBootModule.activeBeacons) {
-            beaconLocations.add(new SerializedLocation(location));
+        for(JetbootBeacon jetbootBeacon : jetBootModule.activeBeacons) {
+            beacons.add(new SerializedJetbootBeacon(jetbootBeacon.getLocation(), jetbootBeacon.getBeaconTier(), jetbootBeacon.getBaseTier()));
         }
 
         try {
-            mapper.writeValue(beaconsFile, beaconLocations);
+            mapper.writeValue(beaconsFile, beacons);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -470,7 +473,7 @@ public class SkcraftBasics extends JavaPlugin {
                     stargateModule.networkList.put(serializedNetwork.getName(), serializedNetwork.getPortals());
                 }
             } catch (Exception e) {
-                System.out.println("[SkcraftBasics] ERROR: It appears that the stargate network file's data is corrupted. Creating new stargate network file.");
+                logger.info("[SkcraftBasics] ERROR: It appears that the stargate network file's data is corrupted. Creating new stargate network file.");
             }
         }
 
@@ -484,7 +487,7 @@ public class SkcraftBasics extends JavaPlugin {
                     stargateModule.stargateList.put(stargate.getName(), stargate);
                 }
             } catch (Exception e) {
-                System.out.println("[SkcraftBasics] ERROR: It appears that the stargate file's data is corrupted. Creating new stargate file.");
+                logger.info("[SkcraftBasics] ERROR: It appears that the stargate file's data is corrupted. Creating new stargate file.");
             }
         }
     }
@@ -520,7 +523,7 @@ public class SkcraftBasics extends JavaPlugin {
                     }
                 }
             } catch (Exception e) {
-                System.out.println("[SkcraftBasics] ERROR: It appears that the turret file's data is corrupted. Creating new turret file.");
+                logger.info("[SkcraftBasics] ERROR: It appears that the turret file's data is corrupted. Creating new turret file.");
             }
         }
     }

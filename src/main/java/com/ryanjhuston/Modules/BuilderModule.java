@@ -21,24 +21,20 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.Vector;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-public class RotatorModule implements Listener {
+public class BuilderModule implements Listener {
 
     private SkcraftBasics plugin;
 
     private boolean moduleEnabled;
 
-    private Material tool;
+    private Material rotatorTool;
 
-    public RotatorModule(SkcraftBasics plugin) {
+    public BuilderModule(SkcraftBasics plugin) {
         this.plugin = plugin;
     }
 
     @EventHandler (priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onPlayerInteract(PlayerInteractEvent event) {
+    public void onRotatorInteract(PlayerInteractEvent event) {
         if(event.getAction() == Action.PHYSICAL) {
             return;
         }
@@ -51,7 +47,7 @@ public class RotatorModule implements Listener {
             return;
         }
 
-        if (event.getPlayer().getInventory().getItemInMainHand().getType() != tool) {
+        if (event.getPlayer().getInventory().getItemInMainHand().getType() != rotatorTool) {
             return;
         }
 
@@ -286,17 +282,17 @@ public class RotatorModule implements Listener {
     public void updateConfig(SkcraftBasics plugin) {
         this.plugin = plugin;
 
-        tool = Material.getMaterial(plugin.getConfig().getString("Module-Settings.Rotator-Module.Tool-Material"));
+        rotatorTool = Material.getMaterial(plugin.getConfig().getString("Module-Settings.Builder-Module.RotatorTool-Material"));
 
-        moduleEnabled = plugin.enabledModules.contains("Rotator");
+        moduleEnabled = plugin.enabledModules.contains("Builder");
 
         if(moduleEnabled) {
-            HandlerList.unregisterAll(plugin.rotatorModule);
-            plugin.pm.registerEvents(plugin.rotatorModule, plugin);
+            HandlerList.unregisterAll(plugin.builderModule);
+            plugin.pm.registerEvents(plugin.builderModule, plugin);
 
-            plugin.logger.info("- RotatorModule Enabled");
+            plugin.logger.info("- BuilderModule Enabled");
         } else {
-            HandlerList.unregisterAll(plugin.rotatorModule);
+            HandlerList.unregisterAll(plugin.builderModule);
         }
     }
 }

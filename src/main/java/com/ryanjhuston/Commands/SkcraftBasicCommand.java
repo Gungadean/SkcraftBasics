@@ -2,19 +2,11 @@ package com.ryanjhuston.Commands;
 
 import com.ryanjhuston.SkcraftBasics;
 import org.bukkit.ChatColor;
-import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 public class SkcraftBasicCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender sender, String[] args) {
-        if(sender instanceof Player) {
-            if (!plugin.getSkcraftPlayer((Player)sender).getIsAdmin()) {
-                throw new CommandException("You do not have permission for this command.");
-            }
-        }
-
         if(args.length == 0 || (args[0].equalsIgnoreCase("help"))) {
             sender.sendMessage(ChatColor.GREEN + "SkcraftBasics Commands:");
             sender.sendMessage(ChatColor.GREEN + " /accept {player-name}" + ChatColor.GRAY + " - Allow a player to teleport to you once.");

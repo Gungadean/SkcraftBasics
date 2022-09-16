@@ -13,8 +13,8 @@ public class WorldManagerCommand {
 
     public static void command(SkcraftBasics plugin, CommandSender commandSender, String[] args) throws CommandException{
         if(commandSender instanceof Player) {
-            if (!plugin.getSkcraftPlayer((Player)commandSender).getIsAdmin()) {
-                throw new CommandException("You do not have permission for this command.");
+            if(!commandSender.hasPermission("skcraftbasics.admin")) {
+                throw new CommandException("You do not have permission to use this command.");
             }
         }
 

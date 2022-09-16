@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ryanjhuston.SkcraftBasics;
 import com.ryanjhuston.Types.Serializers.SerializedPlayer;
 import com.ryanjhuston.Types.SkcraftPlayer;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.types.InheritanceNode;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.command.CommandException;
@@ -28,7 +26,7 @@ public class ModCommand {
         SerializedPlayer toSaveSerializedPlayer = new SerializedPlayer(player);
         SerializedPlayer fromSaveSerializedPlayer;
 
-        File invFile = new File(plugin.inventoriesDir, player.getUniqueId().toString() + ".inventory.json");
+        File invFile = new File(plugin.inventoriesDir, player.getUniqueId() + ".inventory.json");
 
         if(!invFile.exists()) {
             try {
@@ -65,11 +63,8 @@ public class ModCommand {
             player.sendMessage(ChatColor.YELLOW + "You have entered mod mode.");
         }
 
-        User user = plugin.luckPerms.getUserManager().getUser(player.getUniqueId());
-        if (user.getPrimaryGroup().equals(plugin.getConfig().getString("Default-Group"))) {
-            user.data().add(InheritanceNode.builder(plugin.getConfig().getString("Mod-Group")).build());
-        } else if (user.getPrimaryGroup().equals(plugin.getConfig().getString("Mod-Group"))) {
-            user.data().remove(InheritanceNode.builder(plugin.getConfig().getString("Default-Group")).build());
+        if(plugin.luckPerms != null) {
+            plugin.luckPerms.switchGroup(player);
         }
     }
 }
